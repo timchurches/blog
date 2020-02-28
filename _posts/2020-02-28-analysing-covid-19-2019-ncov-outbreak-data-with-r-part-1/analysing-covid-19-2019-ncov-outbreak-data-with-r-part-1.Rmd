@@ -1,0 +1,127 @@
+---
+title: "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1"
+description: "A new article created using the Distill format."
+author:
+  - name: Tim Churches 
+    url: https://example.com/norajones
+    affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
+    affiliation_url: https://example.com/spacelysprokets
+creative_commons: CC BY-SA
+date: "2020-02-20"
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
+    self_contained: false
+---
+
+```{r setup, include=FALSE}
+version <- "1.8"
+version_date <- lubridate::ymd("2020-02-20")
+
+knitr::opts_chunk$set(echo = FALSE, cache=TRUE)
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(tibble)
+library(ggplot2)
+library(ggthemes)
+library(hrbrthemes)
+library(rvest)
+library(gt)
+library(deSolve)
+library(EpiEstim)
+library(incidence)
+library(distcrete)
+library(epitrix)
+library(projections)
+```
+
+# Pre-amble
+
+This curiosity-driven analysis of COVID-19 data started as a Friday afternoon exercise, but expanded to occupy much of the very wet Sydney weekend of 8th & 9th February 2020. There have been a few updates since then. It is intended very much as an exploratory exercise, both of the available data and of some methods for analysing it, but could readily be expanded as a teaching resource for both UNSW Medicine undergraduate and postgraduate courses -- in particular the MSc in Health Data Science offered by the [Centre for Big Data Research in Health](https://cbdrh.med.unsw.edu.au), and possibly for courses offered by [SPHCM](https://sphcm.med.unsw.edu.au).
+
+Please note that this document has **not** been peer-reviewed, and that I claim no particular expertise in modelling communicable disease outbreaks, although I was involved in outbreak preparedness work, including [establishing surveillance systems and developing case-contact tracking systems](https://www.publish.csiro.au/nb/nb09046) for the public health response to the 2009 influenza A/H1N1 "swine flu" pandemic while at the NSW Ministry (previously Department) of Health, over a decade ago.
+
+Please also note that **this document only uses data for Chinese cases up to 15th February 2020**, and thus it cannot be considered a **situation report** reflecting the latest available data. The reason for truncating data at 15th February is due to major changes the case definitions used by the authorities in Hubei province from that date forward, which add additional complications to the modelling presented here. If time permits, this document will be updated to include possible solutions to the modelling challenges presented by sudden case definition changes.
+
+# NSW public health response
+
+NSW Health has been issuing daily reports on its response to the 2019 novel coronavirus (2019-nCoV, henceforth referred to as COVID-19) outbreak, which look like this:
+
+```{r, out.width="95%", out.extra='style="background-color: #9ecff7; padding:2px; display: inline-block;"', eval=TRUE, echo=FALSE}
+knitr::include_graphics("assets/example_NSW_Health_media_release.png")
+```
+
+So let's collect the data from each of these media releases and visualise it as a time-series:
+
+```{r nsw_graph, message=FALSE, warning=FALSE, layout="l-body-outset", fig.width=10, fig.height=6.6}
+nCoV_2019_nsw <- tribble(~dt,~Confirmed,~Investigating,~Cleared, ~Admitted, ~Discharged, ~ScreenedCumulative, ~TestedCumulative,~ChinaArrivals,~ChinaArrivalsTested,
+                  dmy_h("25-01-2020 11"), 0, 5, NA, NA, NA, NA, NA, NA, NA,
+                  dmy_h("25-01-2020 17"), 0, 7, NA, NA, NA, NA, NA, NA, NA,
+                  dmy_h("26-01-2020 9"), 3, 2, NA, NA, NA, NA, NA, NA, NA,
+                  dmy_h("26-01-2020 17"), 3, 1, NA, NA, NA, NA, NA, NA, NA,
+                  dmy_h("27-01-2020 12"), 4, 5, NA, NA, NA, NA, NA, NA, NA,
+                  dmy_hm("28-01-2020 11:30"), 4, 6, NA, NA, NA, NA, NA, NA, NA,
+                  dmy_h("29-01-2020 10"), 4, 6, NA, NA, NA, NA, NA, NA, NA,
+                  dmy_hm("30-01-2020 9:30"), 4, 7, 50, NA, NA, NA, NA, NA, NA,
+                  dmy_hm("30-01-2020 16:00"), 4, 20, 50, 2, 2, NA, NA, NA, NA,
+                  dmy_hm("31-01-2020 10:30"), 4, 9, 67, 2, 2, NA, NA, NA, NA,
+                  dmy_hm("01-02-2020 10:30"), 4, 12, 86, 1, 3, NA, NA, NA, NA,
+                  dmy_hm("02-02-2020 12:00"), 4, 27, 101, 1, 3, NA, NA, NA, NA,
+                  dmy_hm("03-02-2020 12:00"), 4, 24, 134, 1, 3, NA, NA, NA, NA,
+                  dmy_hm("04-02-2020 12:00"), 4, 29, 170, 1, 3, NA, NA, NA, NA,
+                  dmy_hm("05-02-2020 10:30"), 4, 21, 252, 1, 3, 2043, 9, NA, NA,
+                  dmy_hm("05-02-2020 14:30"), 4, 35, 300, 1, 3, 1382, 11, NA, NA,
+                  dmy_hm("06-02-2020 13:45"), 4, 28, 307, 1, 3, 7397, 39, 1672, 13,
+                  dmy_hm("07-02-2020 09:30"), 4, 22, 371, 1, 3, 9163, 44, 1766, 5,
+                  dmy_hm("08-02-2020 11:00"), 4, 22, 540, 1, 3, 10473, 50, 1310, 6,
+                  dmy_hm("09-02-2020 09:30"), 4, 15, 614, 1, 3, 11924, 55, 1451, 5,
+                  dmy_hm("10-02-2020 12:30"), 4, 22, 652, 1, 3, 14459, 57, 677, 1,
+                  dmy_hm("11-02-2020 12:30"), 4, 18, 673, 1, 3, 15035, 61, 505, 4,
+                  dmy_hm("12-02-2020 09:30"), 4, 54, 764, 1, 3, 15044, 61, 513, 4,
+                  dmy_hm("13-02-2020 14:30"), 4, 14, 870, 0, 4, 16295, 63, 555, 0,
+                  dmy_hm("14-02-2020 14:30"), 4, 61, 992, 0, 4, 16804, 64, 503, 1,
+                  dmy_hm("16-02-2020 11:00"), 4, 13, 1175, 0, 4, 17093, 64, 263, 0,
+                  dmy_hm("17-02-2020 14:30"), 4, 36, 1186, 0, 4, 17783, 65, 198, 1,
+                  dmy_hm("18-02-2020 16:30"), 4, 159, 1242, 0, 4, 18096, 66, 290, 1
+                  ) %>% 
+                pivot_longer(Confirmed:ChinaArrivalsTested, names_to="status", values_to="count") %>%
+                mutate(status=factor(status, levels=c("Confirmed", "Admitted", "Discharged",
+                                                      "Investigating", "Cleared", "ScreenedCumulative",
+                                                      "TestedCumulative", "ChinaArrivals",
+                                                      "ChinaArrivalsTested"),
+                                             labels=c("Confirmed\n(cumulative)", "Admitted\n(cumulative)",
+                                                      "Discharged\n(cumulative)",
+                                                      "Investigating\n(currently)", "Cleared\n(cumulative)",
+                                                      "Screened\n(cumulative)",
+                                                      "Tested\n(cumulative)",
+                                                      "Arrivals from\nmainland\nChina\n(previous day)",
+                                                      "China arrivals\n tested"),
+                                             ordered=TRUE))
+
+p <- nCoV_2019_nsw %>%
+    filter(!status %in% c("Admitted\n(cumulative)", "Discharged\n(cumulative)",
+                          "China arrivals\n tested"),
+           dt <= version_date) %>%
+    ggplot(aes(x=dt, y=count, colour=status)) + geom_point() + geom_line() +
+    facet_grid(status~., scales = "free_y") + 
+    labs(x="Date/time of media release", y="Persons", title="NSW COVID-19 statistics, 2020",
+         caption = "Source: NSW Health media releases at https://www.health.nsw.gov.au/news/Pages/2020-nsw-health.aspx") + 
+    scale_x_datetime(date_breaks="2 days", date_labels = "%d %b") +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_colour_brewer(palette = "Set2") +
+    # theme_minimal() +
+    theme(legend.position = "none", 
+          strip.text.y = element_text(size=7),
+          plot.caption = element_text(hjust = 0)) 
+    
+# ggsave(filename = "novel_coronavirus_nsw.png", plot = p, width = 20, height=16, units = "cm")
+
+print(p)
+```
+
+The ensemble of time-series charts clearly show that the NSW public health control efforts, including intensive airport screening, voluntary isolation and, of course, travel restrictions, are working. 
+
+Having been involved in the public health response to 2009 A/H1N1 swine flu pandemic, I know how much round-the-clock work is involved in mounting such a response. NSW Health should be praised for its efforts, which deserve a more informative presentation than the little table in the daily press release as shown above.
+

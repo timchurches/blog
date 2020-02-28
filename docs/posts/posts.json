@@ -13,5 +13,20 @@
     "categories": [],
     "preview": {},
     "last_modified": "2020-02-28T13:16:57+11:00"
+  },
+  {
+    "path": "posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/",
+    "title": "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1",
+    "description": "A new article created using the Distill format.",
+    "author": [
+      {
+        "name": "Tim Churches",
+        "url": "https://example.com/norajones"
+      }
+    ],
+    "date": "2020-02-20",
+    "categories": [],
+    "preview": {},
+    "last_modified": "2020-02-29T09:48:06+11:00"
   }
 ]

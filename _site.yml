@@ -3,6 +3,7 @@ title: "Tim Churches Health Data Science Blog"
 description: |
   Tim Churches Health Data Science Blog
 output_dir: "docs"
+base_url: https://timchurches.github.io/blog/
 navbar:
   right:
     - text: "Home"
