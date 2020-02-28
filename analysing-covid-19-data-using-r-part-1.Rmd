@@ -1,0 +1,24 @@
+---
+title: "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1"
+description: "A new article created using the Distill format."
+author:
+  - name: Tim Churches 
+    url: https://example.com/norajones
+    affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
+    affiliation_url: https://example.com/spacelysprokets
+date: "2020-02-20"
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
+    self_contained: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+Hi there.
+
+
+

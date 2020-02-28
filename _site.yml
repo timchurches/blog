@@ -1,7 +1,7 @@
 name: "blog"
-title: "Tim Churches' Health Data Science Blog"
+title: "Tim Churches Health Data Science Blog"
 description: |
-  Tim Churches' Health Data Science Blog
+  Tim Churches Health Data Science Blog
 output_dir: "docs"
 navbar:
   right:

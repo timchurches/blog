@@ -1,10 +1,10 @@
 ---
-title: "Welcome to Tim Churches' Health Data Science Blog"
+title: "Welcome to Tim Churches Health Data Science Blog"
 description: |
-  Welcome to our new blog, Tim Churches' Health Data Science Blog. We hope you enjoy 
+  Welcome to our new blog, Tim Churches Health Data Science Blog. We hope you enjoy 
   reading what we have to say!
 author:
-  - name: Nora Jones 
+  - name: Tim Churches 
     url: https://example.com/norajones
     affiliation: Spacely Sprockets
     affiliation_url: https://example.com/spacelysprokets
