@@ -1,5 +1,5 @@
-name: "tim-churches-hds-blog"
-title: "Tim Churches HDS Blog"
+name: "tim-churches-health-data-science-blog"
+title: "Tim Churches Health Data Science Blog"
 description: |
   A blog dedicated to noodlings about health data science.
 output_dir: "docs"
