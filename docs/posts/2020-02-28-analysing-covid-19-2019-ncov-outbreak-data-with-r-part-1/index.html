@@ -63,7 +63,7 @@
   <!--radix_placeholder_rmarkdown_metadata-->
 
 <script type="text/json" id="radix-rmarkdown-metadata">
-{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","author","creative_commons","date","output","citation_url","canonical_url"]}},"value":[{"type":"character","attributes":{},"value":["Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1"]},{"type":"character","attributes":{},"value":["An exploration of COVID-19 incidence data using R tools and packages."]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","affiliation","affiliation_url"]}},"value":[{"type":"character","attributes":{},"value":["Tim Churches"]},{"type":"character","attributes":{},"value":["South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia"]},{"type":"character","attributes":{},"value":["https://swscs.med.unsw.edu.au"]}]}]},{"type":"character","attributes":{},"value":["CC BY-SA"]},{"type":"character","attributes":{},"value":["2020-02-28"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc","toc_depth","self_contained"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"integer","attributes":{},"value":[2]},{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["https://timchurches.github.io/blog/posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/"]},{"type":"character","attributes":{},"value":["https://timchurches.github.io/blog/posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/"]}]}
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","categories","author","creative_commons","date","output","citation_url","canonical_url"]}},"value":[{"type":"character","attributes":{},"value":["Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1"]},{"type":"character","attributes":{},"value":["An exploration of COVID-19 incidence data using R tools and packages."]},{"type":"character","attributes":{},"value":["R","COVID-19"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","affiliation","affiliation_url"]}},"value":[{"type":"character","attributes":{},"value":["Tim Churches"]},{"type":"character","attributes":{},"value":["South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia"]},{"type":"character","attributes":{},"value":["https://swscs.med.unsw.edu.au"]}]}]},{"type":"character","attributes":{},"value":["CC BY-SA"]},{"type":"character","attributes":{},"value":["2020-02-28"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc","toc_depth","self_contained"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"integer","attributes":{},"value":[2]},{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["https://timchurches.github.io/blog/posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/"]},{"type":"character","attributes":{},"value":["https://timchurches.github.io/blog/posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/"]}]}
 </script>
 <!--/radix_placeholder_rmarkdown_metadata-->
   
@@ -1314,6 +1314,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="nav-right">
 <a href="../../index.html">Home</a>
 <a href="../../about.html">About</a>
+<a href="../../index.xml">
+<i class="fa fa-rss"></i>
+</a>
 <a href="javascript:void(0);" class="nav-toggle">&#9776;</a>
 </div>
 </nav>
@@ -1346,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <p>This article is the first of several that have been distilled from [a much longer document]((<a href="https://cbdrh.github.io/NovelCoronavirus/on-COVID-19.html" class="uri">https://cbdrh.github.io/NovelCoronavirus/on-COVID-19.html</a>) which started as a typical late-Friday-afternoon, curiosity-driven exploration of COVID-19 data and the R tools and packages that might be used to analyse them. Work on that document rapidly expanded to occupy much of the very wet Sydney weekend of 8th &amp; 9th February 2020, with a view to using it as ateaching resource for both UNSW Medicine undergraduate and postgraduate courses – in particular the MSc in Health Data Science offered by the <a href="https://cbdrh.med.unsw.edu.au">Centre for Big Data Research in Health</a>.</p>
 <p>Please note that these posts nor the parent document have <strong>not</strong> been peer-reviewed, and that I claim no particular expertise in modelling communicable disease outbreaks, although I have been involved in outbreak preparedness work a decade ago, including <a href="https://www.publish.csiro.au/nb/nb09046">establishing surveillance systems and developing case-contact tracking systems</a> for the public health response to the 2009 influenza A/H1N1 “swine flu” pandemic while at the NSW Ministry (previously Department) of Health.</p>
 <p>Please also note that this post <strong>only uses data for Chinese cases up to 15th February 2020</strong>, and thus it cannot be considered a <strong>situation report</strong> reflecting the latest available data. The reason for truncating data at 15th February is due to major changes the case definitions used by the authorities in Hubei province from that date forward, which add additional complications to the modelling presented here.</p>
-<p>The full code is avaalable from the GitHub repository linked at the foot of this post.</p>
+<p>The full code is available from the GitHub repository linked at the foot of this post.</p>
 <h1 id="the-local-situation">The local situation</h1>
 <p>Since this post is being written in Sydney, Australia, capital of the state of New South Wales (NSW), we’ll start by looking at the work of NSW Health, which is the umbrella name for the various public-sector health services and authorities in NSW. NSW Health has been issuing daily reports on its response to the 2019 novel coronavirus (2019-nCoV, henceforth referred to as COVID-19) outbreak, which look like this:</p>
 <div class="layout-chunk" data-layout="l-body">
@@ -1359,6 +1362,38 @@ document.addEventListener('DOMContentLoaded', function() {
 <p>The ensemble of time-series charts clearly show that the NSW public health control efforts, including intensive airport screening, voluntary isolation and, of course, travel restrictions, are working.</p>
 <p>Having been involved in the public health response to 2009 A/H1N1 swine flu pandemic, I know how much round-the-clock work is involved in mounting such a response. NSW Health should be praised for its efforts, which deserve a more informative presentation than the little table in the daily press release as shown above.</p>
 <!--radix_placeholder_article_footer-->
+<div class="article-footer">
+  <p class="social_footer">
+    <span class="disqus-comments">
+      <i class="fas fa-comments"></i>
+      &nbsp;
+      <span class="disqus-comment-count" data-disqus-identifier="posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/">Comment on this article</span>
+    </span>
+    <span class="article-sharing">
+      Share: &nbsp;
+      <a href="https://twitter.com/share?text=Analysing%20COVID-19%20%282019-nCoV%29%20outbreak%20data%20with%20R%20-%20part%201&amp;url=https%3A%2F%2Ftimchurches.github.io%2Fblog%2Fposts%2F2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1%2F">
+        <i class="fab fa-twitter"></i>
+      </a>
+      <a href="https://www.facebook.com/sharer/sharer.php?s=100&amp;p[url]=https%3A%2F%2Ftimchurches.github.io%2Fblog%2Fposts%2F2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1%2F">
+        <i class="fab fa-facebook"></i>
+      </a>
+    </span>
+  </p>
+  <script id="dsq-count-scr" src="https://tim-churches-hds-blog.disqus.com/count.js" async></script>
+  <div id="disqus_thread" class="hidden"></div>
+  <script>
+var disqus_config = function () {
+  this.page.url = 'https://timchurches.github.io/blog/posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/';
+  this.page.identifier = 'posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/';
+};
+(function() {
+  var d = document, s = d.createElement('script');
+  s.src = 'https://tim-churches-hds-blog.disqus.com/embed.js';
+  s.setAttribute('data-timestamp', +new Date());
+  (d.head || d.body).appendChild(s);
+})();
+</script>
+</div>
 <!--/radix_placeholder_article_footer-->
 </div>
 

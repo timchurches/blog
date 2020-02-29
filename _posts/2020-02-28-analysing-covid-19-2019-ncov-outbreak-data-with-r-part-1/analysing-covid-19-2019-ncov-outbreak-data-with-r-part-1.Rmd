@@ -1,6 +1,9 @@
 ---
 title: "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1"
 description: "An exploration of COVID-19 incidence data using R tools and packages."
+categories:
+  - R
+  - "COVID-19"
 author:
   - name: Tim Churches 
     affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
@@ -45,7 +48,7 @@ Please note that these posts nor the parent document have **not** been peer-revi
 
 Please also note that this post **only uses data for Chinese cases up to 15th February 2020**, and thus it cannot be considered a **situation report** reflecting the latest available data. The reason for truncating data at 15th February is due to major changes the case definitions used by the authorities in Hubei province from that date forward, which add additional complications to the modelling presented here. 
 
-The full code is avaalable from the GitHub repository linked at the foot of this post.
+The full code is available from the GitHub repository linked at the foot of this post.
 
 # The local situation
 
