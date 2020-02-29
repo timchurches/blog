@@ -20,6 +20,7 @@ version <- "1.8"
 version_date <- lubridate::ymd("2020-02-20")
 
 knitr::opts_chunk$set(echo = FALSE, cache=TRUE)
+
 library(tidyverse)
 library(magrittr)
 library(lubridate)
@@ -49,7 +50,9 @@ Please also note that **this document only uses data for Chinese cases up to 15t
 
 NSW Health has been issuing daily reports on its response to the 2019 novel coronavirus (2019-nCoV, henceforth referred to as COVID-19) outbreak, which look like this:
 
+
 ```{r, out.width="95%", out.extra='style="background-color: #9ecff7; padding:2px; display: inline-block;"', eval=TRUE, echo=FALSE}
+
 knitr::include_graphics("assets/example_NSW_Health_media_release.png")
 ```
 
