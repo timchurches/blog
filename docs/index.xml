@@ -1,29 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
   <channel>
-    <title>Tim Churches Health Data Science Blog</title>
+    <title>Tim Churches HDS Blog</title>
     <link>https://timchurches.github.io/blog/</link>
     <atom:link href="https://timchurches.github.io/blog/index.xml" rel="self" type="application/rss+xml"/>
-    <description>Tim Churches Health Data Science Blog
+    <description>A blog dedicated to noodlings about health data science.
 </description>
     <generator>Distill</generator>
     <lastBuildDate>Fri, 28 Feb 2020 00:00:00 +0000</lastBuildDate>
     <item>
-      <title>Welcome to Tim Churches' Health Data Science Blog</title>
-      <dc:creator>Nora Jones</dc:creator>
-      <link>https://timchurches.github.io/blog/posts/welcome</link>
-      <description>Welcome to our new blog, Tim Churches' Health Data Science Blog. We hope you enjoy 
-reading what we have to say!</description>
-      <guid>https://timchurches.github.io/blog/posts/welcome</guid>
-      <pubDate>Fri, 28 Feb 2020 00:00:00 +0000</pubDate>
-    </item>
-    <item>
       <title>Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1</title>
       <dc:creator>Tim Churches</dc:creator>
       <link>https://timchurches.github.io/blog/posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1</link>
-      <description>A new article created using the Distill format.</description>
+      <description>An exploration of COVID-19 incidence data using R tools and packages.</description>
       <guid>https://timchurches.github.io/blog/posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1</guid>
-      <pubDate>Wed, 19 Feb 2020 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 28 Feb 2020 00:00:00 +0000</pubDate>
       <media:content url="https://timchurches.github.io/blog/posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/assets/example_NSW_Health_media_release.png" medium="image" type="image/png" width="1426" height="842"/>
     </item>
   </channel>

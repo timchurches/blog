@@ -1,33 +1,18 @@
 [
   {
-    "path": "posts/welcome/",
-    "title": "Welcome to Tim Churches' Health Data Science Blog",
-    "description": "Welcome to our new blog, Tim Churches' Health Data Science Blog. We hope you enjoy \nreading what we have to say!",
+    "path": "posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/",
+    "title": "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1",
+    "description": "An exploration of COVID-19 incidence data using R tools and packages.",
     "author": [
       {
-        "name": "Nora Jones",
-        "url": "https://example.com/norajones"
+        "name": "Tim Churches",
+        "url": {}
       }
     ],
     "date": "2020-02-28",
     "categories": [],
-    "preview": {},
-    "last_modified": "2020-02-28T13:16:57+11:00"
-  },
-  {
-    "path": "posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/",
-    "title": "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1",
-    "description": "A new article created using the Distill format.",
-    "author": [
-      {
-        "name": "Tim Churches",
-        "url": "https://example.com/norajones"
-      }
-    ],
-    "date": "2020-02-20",
-    "categories": [],
     "preview": "posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/assets/example_NSW_Health_media_release.png",
-    "last_modified": "2020-02-29T11:39:10+11:00",
+    "last_modified": "2020-02-29T12:27:59+11:00",
     "preview_width": 1426,
     "preview_height": 842
   }

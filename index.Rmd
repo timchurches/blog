@@ -1,5 +1,5 @@
 ---
-title: "Tim Churches Health Data Science Blog"
+title: "Posts"
 site: distill::distill_website
 listing: posts
 ---

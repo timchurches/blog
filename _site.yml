@@ -1,10 +1,11 @@
 name: "blog"
-title: "Tim Churches Health Data Science Blog"
+title: "Tim Churches HDS Blog"
 description: |
-  Tim Churches Health Data Science Blog
+  A blog dedicated to noodlings about health data science.
 output_dir: "docs"
 base_url: https://timchurches.github.io/blog/
 navbar:
+  logo: assets/TimC.jpg
   right:
     - text: "Home"
       href: index.html
