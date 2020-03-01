@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+  <meta name="generator" content="distill" />
+
+  <style type="text/css">
+  /* Hide doc at startup (prevent jankiness while JS renders/transforms) */
+  body {
+    visibility: hidden;
+  }
+  </style>
+
+ <!--radix_placeholder_import_source-->
+ <!--/radix_placeholder_import_source-->
+
+  <!--radix_placeholder_meta_tags-->
+  <title>Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1</title>
+  
+  <meta property="description" itemprop="description" content="An exploration of COVID-19 incidence data using R tools and packages."/>
+  
+  <link rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/"/>
+  
+  <!--  https://schema.org/Article -->
+  <meta property="article:published" itemprop="datePublished" content="2020-02-18"/>
+  <meta property="article:created" itemprop="dateCreated" content="2020-02-18"/>
+  <meta name="article:author" content="Tim Churches"/>
+  
+  <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
+  <meta property="og:title" content="Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:description" content="An exploration of COVID-19 incidence data using R tools and packages."/>
+  <meta property="og:image" content="https://timchurches.github.io/blog/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png"/>
+  <meta property="og:image:width" content="1248"/>
+  <meta property="og:image:height" content="768"/>
+  <meta property="og:locale" content="en_US"/>
+  
+  <!--  https://dev.twitter.com/cards/types/summary -->
+  <meta property="twitter:card" content="summary_large_image"/>
+  <meta property="twitter:title" content="Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1"/>
+  <meta property="twitter:description" content="An exploration of COVID-19 incidence data using R tools and packages."/>
+  <meta property="twitter:image" content="https://timchurches.github.io/blog/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png"/>
+  <meta property="twitter:image:width" content="1248"/>
+  <meta property="twitter:image:height" content="768"/>
+  <meta property="twitter:creator" content="@timchurches"/>
+  
+  <!--/radix_placeholder_meta_tags-->
+  <!--radix_placeholder_rmarkdown_metadata-->
+  
+  <script type="text/json" id="radix-rmarkdown-metadata">
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","categories","author","creative_commons","date","base_url","slug","twitter","output","repository_url"]}},"value":[{"type":"character","attributes":{},"value":["Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1"]},{"type":"character","attributes":{},"value":["An exploration of COVID-19 incidence data using R tools and packages."]},{"type":"character","attributes":{},"value":["R","COVID-19"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","affiliation","affiliation_url"]}},"value":[{"type":"character","attributes":{},"value":["Tim Churches"]},{"type":"character","attributes":{},"value":["South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia"]},{"type":"character","attributes":{},"value":["https://swscs.med.unsw.edu.au"]}]}]},{"type":"character","attributes":{},"value":["CC BY-SA"]},{"type":"character","attributes":{},"value":["2020-02-18"]},{"type":"character","attributes":{},"value":["https://timchurches.github.io/blog/"]},{"type":"character","attributes":{},"value":["churches2020covid19rpart1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["creator"]}},"value":[{"type":"character","attributes":{},"value":["@timchurches"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc","toc_depth","self_contained"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"integer","attributes":{},"value":[2]},{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["https://github.com/timchurches/blog/tree/master/_posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1"]}]}
+  </script>
+  <!--/radix_placeholder_rmarkdown_metadata-->
+  
+  <script type="text/json" id="radix-resource-manifest">
+  {"type":"character","attributes":{},"value":["analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/bowser-1.9.3/bowser.min.js","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/distill-2.2.21/template.v2.js","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/all_provinces_cum_incidence-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/all_provinces_incidence-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_empirical_si_model_fit_hubei_daily-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_model_get_data_not_hubei-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_model_get_data_wuhan-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_parametric_si_model_fit_hubei-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_parametric_si_model_fit2_hubei-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_uncertain_si_model_fit_hubei_daily-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_uncertain_si_model_fit_hubei-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/cumulative_deaths-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/cumulative_incidence-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/daily_case_deaths_plot-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/daily_deaths_plot-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/daily_incidence-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/est_R0_decay-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/est_R0_growth-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/hubei_daily_incidence_adj-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/JHU_incidence-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/log_cumulative_incidence-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/nsw_graph-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/plot_incidence_object-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_extrapolated-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_fitted_data-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_no_intervention_ascertainment_adjustment-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_no_intervention_log-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_no_intervention-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/test_projection_Hubei_decay_lower_re-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/test_projection_Hubei_decay-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/test_projection_Hubei_growth-1.png","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/jquery-1.11.3/jquery.min.js","analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/webcomponents-2.0.0/webcomponents.js","assets/example_NSW_Health_media_release.png","assets/Hubei_Health_Commission_page.png","assets/Li_et_al_fig3.png","assets/provinces_confirmed_jh.rda","assets/SIR.png"]}
+  </script>
+  <!--radix_placeholder_navigation_in_header-->
+  <!--/radix_placeholder_navigation_in_header-->
+  <!--radix_placeholder_distill-->
+  
+  <style type="text/css">
+  
+  body {
+    background-color: white;
+  }
+  
+  .pandoc-table {
+    width: 100%;
+  }
+  
+  .pandoc-table>caption {
+    margin-bottom: 10px;
+  }
+  
+  .pandoc-table th:not([align]) {
+    text-align: left;
+  }
+  
+  .pagedtable-footer {
+    font-size: 15px;
+  }
+  
+  .html-widget {
+    margin-bottom: 2.0em;
+  }
+  
+  .l-screen-inset {
+    padding-right: 16px;
+  }
+  
+  .l-screen .caption {
+    margin-left: 10px;
+  }
+  
+  .shaded {
+    background: rgb(247, 247, 247);
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .shaded .html-widget {
+    margin-bottom: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .shaded .shaded-content {
+    background: white;
+  }
+  
+  .text-output {
+    margin-top: 0;
+    line-height: 1.5em;
+  }
+  
+  .hidden {
+    display: none !important;
+  }
+  
+  d-article {
+    padding-bottom: 30px;
+  }
+  
+  d-appendix {
+    padding-top: 30px;
+  }
+  
+  d-article>p>img {
+    width: 100%;
+  }
+  
+  d-article iframe {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 2.0em;
+    width: 100%;
+  }
+  
+  figure img.external {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+    padding: 18px;
+    box-sizing: border-box;
+  }
+  
+  /* CSS for table of contents */
+  
+  .d-toc {
+    color: rgba(0,0,0,0.8);
+    font-size: 0.8em;
+    line-height: 1em;
+  }
+  
+  .d-toc-header {
+    font-size: 0.6rem;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+    margin-top: 0;
+    margin-bottom: 1.3em;
+  }
+  
+  .d-toc a {
+    border-bottom: none;
+  }
+  
+  .d-toc ul {
+    padding-left: 0;
+  }
+  
+  .d-toc li>ul {
+    padding-top: 0.8em;
+    padding-left: 16px;
+    margin-bottom: 0.6em;
+  }
+  
+  .d-toc ul,
+  .d-toc li {
+    list-style-type: none;
+  }
+  
+  .d-toc li {
+    margin-bottom: 0.9em;
+  }
+  
+  .d-toc-separator {
+    margin-top: 20px;
+    margin-bottom: 2em;
+  }
+  
+  .d-article-with-toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  
+  
+  
+  /* Tweak code blocks (note that this CSS is repeated above in an injection
+     into the d-code shadow dom) */
+  
+  d-code {
+    overflow-x: auto !important;
+  }
+  
+  pre.d-code code.d-code {
+    padding-left: 10px;
+    font-size: 12px;
+    border-left: 2px solid rgba(0,0,0,0.1);
+  }
+  
+  pre.text-output {
+  
+    font-size: 12px;
+    color: black;
+    background: none;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    line-height: 1.5;
+  
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+  
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+  }
+  
+  @media(min-width: 768px) {
+  
+  d-code {
+    overflow-x: visible !important;
+  }
+  
+  pre.d-code code.d-code  {
+      padding-left: 18px;
+      font-size: 14px;
+  }
+  pre.text-output {
+    font-size: 14px;
+  }
+  }
+  
+  /* Figure */
+  
+  .figure {
+    position: relative;
+    margin-bottom: 2.5em;
+    margin-top: 1.5em;
+  }
+  
+  .figure img {
+    width: 100%;
+  }
+  
+  .figure .caption {
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    line-height: 1.5em;
+  }
+  
+  .figure img.external {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+    padding: 18px;
+    box-sizing: border-box;
+  }
+  
+  .figure .caption a {
+    color: rgba(0, 0, 0, 0.6);
+  }
+  
+  .figure .caption b,
+  .figure .caption strong, {
+    font-weight: 600;
+    color: rgba(0, 0, 0, 1.0);
+  }
+  
+  
+  
+  /* Tweak 1000px media break to show more text */
+  
+  @media(min-width: 1000px) {
+    .base-grid,
+    distill-header,
+    d-title,
+    d-abstract,
+    d-article,
+    d-appendix,
+    distill-appendix,
+    d-byline,
+    d-footnote-list,
+    d-citation-list,
+    distill-footer {
+      grid-template-columns: [screen-start] 1fr [page-start kicker-start] 80px [middle-start] 50px [text-start kicker-end] 65px 65px 65px 65px 65px 65px 65px 65px [text-end gutter-start] 65px [middle-end] 65px [page-end gutter-end] 1fr [screen-end];
+      grid-column-gap: 16px;
+    }
+  
+    .grid {
+      grid-column-gap: 16px;
+    }
+  
+    d-article {
+      font-size: 1.06rem;
+      line-height: 1.7em;
+    }
+    figure .caption, .figure .caption, figure figcaption {
+      font-size: 13px;
+    }
+  }
+  
+  @media(min-width: 1180px) {
+    .base-grid,
+    distill-header,
+    d-title,
+    d-abstract,
+    d-article,
+    d-appendix,
+    distill-appendix,
+    d-byline,
+    d-footnote-list,
+    d-citation-list,
+    distill-footer {
+      grid-template-columns: [screen-start] 1fr [page-start kicker-start] 60px [middle-start] 60px [text-start kicker-end] 60px 60px 60px 60px 60px 60px 60px 60px [text-end gutter-start] 60px [middle-end] 60px [page-end gutter-end] 1fr [screen-end];
+      grid-column-gap: 32px;
+    }
+  
+    .grid {
+      grid-column-gap: 32px;
+    }
+  }
+  
+  
+  /* Get the citation styles for the appendix (not auto-injected on render since
+     we do our own rendering of the citation appendix) */
+  
+  d-appendix .citation-appendix,
+  .d-appendix .citation-appendix {
+    font-size: 11px;
+    line-height: 15px;
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    padding-left: 18px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(0, 0, 0, 0.02);
+    padding: 10px 18px;
+    border-radius: 3px;
+    color: rgba(150, 150, 150, 1);
+    overflow: hidden;
+    margin-top: -12px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  
+  
+  /* Social footer */
+  
+  .social_footer {
+    margin-top: 30px;
+    margin-bottom: 0;
+    color: rgba(0,0,0,0.67);
+  }
+  
+  .disqus-comments {
+    margin-right: 30px;
+  }
+  
+  .disqus-comment-count {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+  }
+  
+  #disqus_thread {
+    margin-top: 30px;
+  }
+  
+  .article-sharing a {
+    border-bottom: none;
+    margin-right: 8px;
+  }
+  
+  .article-sharing a:hover {
+    border-bottom: none;
+  }
+  
+  .sidebar-section.subscribe {
+    font-size: 12px;
+    line-height: 1.6em;
+  }
+  
+  .subscribe p {
+    margin-bottom: 0.5em;
+  }
+  
+  
+  .article-footer .subscribe {
+    font-size: 15px;
+    margin-top: 45px;
+  }
+  
+  
+  /* Improve display for browsers without grid (IE/Edge <= 15) */
+  
+  .downlevel {
+    line-height: 1.6em;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+  }
+  
+  .downlevel .d-title {
+    padding-top: 6rem;
+    padding-bottom: 1.5rem;
+  }
+  
+  .downlevel .d-title h1 {
+    font-size: 50px;
+    font-weight: 700;
+    line-height: 1.1em;
+    margin: 0 0 0.5rem;
+  }
+  
+  .downlevel .d-title p {
+    font-weight: 300;
+    font-size: 1.2rem;
+    line-height: 1.55em;
+    margin-top: 0;
+  }
+  
+  .downlevel .d-byline {
+    padding-top: 0.8em;
+    padding-bottom: 0.8em;
+    font-size: 0.8rem;
+    line-height: 1.8em;
+  }
+  
+  .downlevel .section-separator {
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .downlevel .d-article {
+    font-size: 1.06rem;
+    line-height: 1.7em;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+  }
+  
+  
+  .downlevel .d-appendix {
+    padding-left: 0;
+    padding-right: 0;
+    max-width: none;
+    font-size: 0.8em;
+    line-height: 1.7em;
+    margin-bottom: 0;
+    color: rgba(0,0,0,0.5);
+    padding-top: 40px;
+    padding-bottom: 48px;
+  }
+  
+  .downlevel .footnotes ol {
+    padding-left: 13px;
+  }
+  
+  .downlevel .base-grid,
+  .downlevel .distill-header,
+  .downlevel .d-title,
+  .downlevel .d-abstract,
+  .downlevel .d-article,
+  .downlevel .d-appendix,
+  .downlevel .distill-appendix,
+  .downlevel .d-byline,
+  .downlevel .d-footnote-list,
+  .downlevel .d-citation-list,
+  .downlevel .distill-footer,
+  .downlevel .appendix-bottom,
+  .downlevel .posts-container {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  
+  @media(min-width: 768px) {
+    .downlevel .base-grid,
+    .downlevel .distill-header,
+    .downlevel .d-title,
+    .downlevel .d-abstract,
+    .downlevel .d-article,
+    .downlevel .d-appendix,
+    .downlevel .distill-appendix,
+    .downlevel .d-byline,
+    .downlevel .d-footnote-list,
+    .downlevel .d-citation-list,
+    .downlevel .distill-footer,
+    .downlevel .appendix-bottom,
+    .downlevel .posts-container {
+    padding-left: 150px;
+    padding-right: 150px;
+    max-width: 900px;
+  }
+  }
+  
+  .downlevel pre code {
+    display: block;
+    border-left: 2px solid rgba(0, 0, 0, .1);
+    padding: 0 0 0 20px;
+    font-size: 14px;
+  }
+  
+  .downlevel code, .downlevel pre {
+    color: black;
+    background: none;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    line-height: 1.5;
+  
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+  
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+  }
+  
+  </style>
+  
+  <script type="application/javascript">
+  
+  function is_downlevel_browser() {
+    if (bowser.isUnsupportedBrowser({ msie: "12", msedge: "16"},
+                                   window.navigator.userAgent)) {
+      return true;
+    } else {
+      return window.load_distill_framework === undefined;
+    }
+  }
+  
+  // show body when load is complete
+  function on_load_complete() {
+  
+    // set body to visible
+    document.body.style.visibility = 'visible';
+  
+    // force redraw for leaflet widgets
+    if (window.HTMLWidgets) {
+      var maps = window.HTMLWidgets.findAll(".leaflet");
+      $.each(maps, function(i, el) {
+        var map = this.getMap();
+        map.invalidateSize();
+        map.eachLayer(function(layer) {
+          if (layer instanceof L.TileLayer)
+            layer.redraw();
+        });
+      });
+    }
+  
+    // trigger 'shown' so htmlwidgets resize
+    $('d-article').trigger('shown');
+  }
+  
+  function init_distill() {
+  
+    init_common();
+  
+    // create front matter
+    var front_matter = $('<d-front-matter></d-front-matter>');
+    $('#distill-front-matter').wrap(front_matter);
+  
+    // create d-title
+    $('.d-title').changeElementType('d-title');
+  
+    // create d-byline
+    var byline = $('<d-byline></d-byline>');
+    $('.d-byline').replaceWith(byline);
+  
+    // create d-article
+    var article = $('<d-article></d-article>');
+    $('.d-article').wrap(article).children().unwrap();
+  
+    // move posts container into article
+    $('.posts-container').appendTo($('d-article'));
+  
+    // create d-appendix
+    $('.d-appendix').changeElementType('d-appendix');
+  
+    // create d-bibliography
+    var bibliography = $('<d-bibliography></d-bibliography>');
+    $('#distill-bibliography').wrap(bibliography);
+  
+    // flag indicating that we have appendix items
+    var appendix = $('.appendix-bottom').children('h3').length > 0;
+  
+    // replace citations with <d-cite>
+    $('.citation').each(function(i, val) {
+      appendix = true;
+      var cites = $(this).attr('data-cites').split(" ");
+      var dt_cite = $('<d-cite></d-cite>');
+      dt_cite.attr('key', cites.join());
+      $(this).replaceWith(dt_cite);
+    });
+    // remove refs
+    $('#refs').remove();
+  
+    // replace footnotes with <d-footnote>
+    $('.footnote-ref').each(function(i, val) {
+      appendix = true;
+      var href = $(this).attr('href');
+      var id = href.replace('#', '');
+      var fn = $('#' + id);
+      var fn_p = $('#' + id + '>p');
+      fn_p.find('.footnote-back').remove();
+      var text = fn_p.html();
+      var dtfn = $('<d-footnote></d-footnote>');
+      dtfn.html(text);
+      $(this).replaceWith(dtfn);
+    });
+    // remove footnotes
+    $('.footnotes').remove();
+  
+    $('h1.appendix, h2.appendix').each(function(i, val) {
+      $(this).changeElementType('h3');
+    });
+    $('h3.appendix').each(function(i, val) {
+      var id = $(this).attr('id');
+      $('.d-toc a[href="#' + id + '"]').parent().remove();
+      appendix = true;
+      $(this).nextUntil($('h1, h2, h3')).addBack().appendTo($('d-appendix'));
+    });
+  
+    // show d-appendix if we have appendix content
+    $("d-appendix").css('display', appendix ? 'grid' : 'none');
+  
+    // replace code blocks with d-code
+    $('pre>code').each(function(i, val) {
+      var code = $(this);
+      var pre = code.parent();
+      var clz = "";
+      var language = pre.attr('class');
+      if (language) {
+        // map unknown languages to "clike" (without this they just dissapear)
+        if ($.inArray(language, ["bash", "clike", "css", "go", "html",
+                                 "javascript", "js", "julia", "lua", "markdown",
+                                 "markup", "mathml", "python", "svg", "xml"]) == -1)
+          language = "clike";
+        language = ' language="' + language + '"';
+        var dt_code = $('<d-code block' + language + clz + '></d-code>');
+        dt_code.text(code.text());
+        pre.replaceWith(dt_code);
+      } else {
+        code.addClass('text-output').unwrap().changeElementType('pre');
+      }
+    });
+  
+    // localize layout chunks to just output
+    $('.layout-chunk').each(function(i, val) {
+  
+      // capture layout
+      var layout = $(this).attr('data-layout');
+  
+      // apply layout to markdown level block elements
+      var elements = $(this).children().not('d-code, pre.text-output, script');
+      elements.each(function(i, el) {
+        var layout_div = $('<div class="' + layout + '"></div>');
+        if (layout_div.hasClass('shaded')) {
+          var shaded_content = $('<div class="shaded-content"></div>');
+          $(this).wrap(shaded_content);
+          $(this).parent().wrap(layout_div);
+        } else {
+          $(this).wrap(layout_div);
+        }
+      });
+  
+  
+      // unwrap the layout-chunk div
+      $(this).children().unwrap();
+    });
+  
+    // load distill framework
+    load_distill_framework();
+  
+    // wait for window.distillRunlevel == 4 to do post processing
+    function distill_post_process() {
+  
+      if (!window.distillRunlevel || window.distillRunlevel < 4)
+        return;
+  
+      // hide author/affiliations entirely if we have no authors
+      var front_matter = JSON.parse($("#distill-front-matter").html());
+      var have_authors = front_matter.authors && front_matter.authors.length > 0;
+      if (!have_authors)
+        $('d-byline').addClass('hidden');
+  
+      // table of contents
+      if (have_authors) // adjust border if we are in authors
+        $('.d-toc').parent().addClass('d-article-with-toc');
+  
+      // strip links that point to #
+      $('.authors-affiliations').find('a[href="#"]').removeAttr('href');
+  
+      // hide elements of author/affiliations grid that have no value
+      function hide_byline_column(caption) {
+        $('d-byline').find('h3:contains("' + caption + '")').parent().css('visibility', 'hidden');
+      }
+  
+      // affiliations
+      var have_affiliations = false;
+      for (var i = 0; i<front_matter.authors.length; ++i) {
+        var author = front_matter.authors[i];
+        if (author.affiliation !== "&nbsp;") {
+          have_affiliations = true;
+          break;
+        }
+      }
+      if (!have_affiliations)
+        $('d-byline').find('h3:contains("Affiliations")').css('visibility', 'hidden');
+  
+      // published date
+      if (!front_matter.publishedDate)
+        hide_byline_column("Published");
+  
+      // document object identifier
+      var doi = $('d-byline').find('h3:contains("DOI")');
+      var doi_p = doi.next().empty();
+      if (!front_matter.doi) {
+        // if we have a citation and valid citationText then link to that
+        if ($('#citation').length > 0 && front_matter.citationText) {
+          doi.html('Citation');
+          $('<a href="#citation"></a>')
+            .text(front_matter.citationText)
+            .appendTo(doi_p);
+        } else {
+          hide_byline_column("DOI");
+        }
+      } else {
+        $('<a></a>')
+           .attr('href', "https://doi.org/" + front_matter.doi)
+           .html(front_matter.doi)
+           .appendTo(doi_p);
+      }
+  
+       // change plural form of authors/affiliations
+      if (front_matter.authors.length === 1) {
+        var grid = $('.authors-affiliations');
+        grid.children('h3:contains("Authors")').text('Author');
+        grid.children('h3:contains("Affiliations")').text('Affiliation');
+      }
+  
+      // inject pre code styles (can't do this with a global stylesheet b/c a shadow root is used)
+      $('d-code').each(function(i, val) {
+        var style = document.createElement('style');
+        style.innerHTML = 'pre code { padding-left: 10px; font-size: 12px; border-left: 2px solid rgba(0,0,0,0.1); } ' +
+                          '@media(min-width: 768px) { pre code { padding-left: 18px; font-size: 14px; } }';
+        if (this.shadowRoot)
+          this.shadowRoot.appendChild(style);
+      });
+  
+      // move appendix-bottom entries to the bottom
+      $('.appendix-bottom').appendTo('d-appendix').children().unwrap();
+      $('.appendix-bottom').remove();
+  
+      // clear polling timer
+      clearInterval(tid);
+  
+      // show body now that everything is ready
+      on_load_complete();
+    }
+  
+    var tid = setInterval(distill_post_process, 50);
+    distill_post_process();
+  
+  }
+  
+  function init_downlevel() {
+  
+    init_common();
+  
+     // insert hr after d-title
+    $('.d-title').after($('<hr class="section-separator"/>'));
+  
+    // check if we have authors
+    var front_matter = JSON.parse($("#distill-front-matter").html());
+    var have_authors = front_matter.authors && front_matter.authors.length > 0;
+  
+    // manage byline/border
+    if (!have_authors)
+      $('.d-byline').remove();
+    $('.d-byline').after($('<hr class="section-separator"/>'));
+    $('.d-byline a').remove();
+  
+    // remove toc
+    $('.d-toc-header').remove();
+    $('.d-toc').remove();
+    $('.d-toc-separator').remove();
+  
+    // move appendix elements
+    $('h1.appendix, h2.appendix').each(function(i, val) {
+      $(this).changeElementType('h3');
+    });
+    $('h3.appendix').each(function(i, val) {
+      $(this).nextUntil($('h1, h2, h3')).addBack().appendTo($('.d-appendix'));
+    });
+  
+  
+    // inject headers into references and footnotes
+    var refs_header = $('<h3></h3>');
+    refs_header.text('References');
+    $('#refs').prepend(refs_header);
+  
+    var footnotes_header = $('<h3></h3');
+    footnotes_header.text('Footnotes');
+    $('.footnotes').children('hr').first().replaceWith(footnotes_header);
+  
+    // move appendix-bottom entries to the bottom
+    $('.appendix-bottom').appendTo('.d-appendix').children().unwrap();
+    $('.appendix-bottom').remove();
+  
+    // remove appendix if it's empty
+    if ($('.d-appendix').children().length === 0)
+      $('.d-appendix').remove();
+  
+    // prepend separator above appendix
+    $('.d-appendix').before($('<hr class="section-separator" style="clear: both"/>'));
+  
+    // trim code
+    $('pre>code').each(function(i, val) {
+      $(this).html($.trim($(this).html()));
+    });
+  
+    // move posts-container right before article
+    $('.posts-container').insertBefore($('.d-article'));
+  
+    $('body').addClass('downlevel');
+  
+    on_load_complete();
+  }
+  
+  
+  function init_common() {
+  
+    // jquery plugin to change element types
+    (function($) {
+      $.fn.changeElementType = function(newType) {
+        var attrs = {};
+  
+        $.each(this[0].attributes, function(idx, attr) {
+          attrs[attr.nodeName] = attr.nodeValue;
+        });
+  
+        this.replaceWith(function() {
+          return $("<" + newType + "/>", attrs).append($(this).contents());
+        });
+      };
+    })(jQuery);
+  
+    // prevent underline for linked images
+    $('a > img').parent().css({'border-bottom' : 'none'});
+  
+    // mark non-body figures created by knitr chunks as 100% width
+    $('.layout-chunk').each(function(i, val) {
+      var figures = $(this).find('img, .html-widget');
+      if ($(this).attr('data-layout') !== "l-body") {
+        figures.css('width', '100%');
+      } else {
+        figures.css('max-width', '100%');
+        figures.filter("[width]").each(function(i, val) {
+          var fig = $(this);
+          fig.css('width', fig.attr('width') + 'px');
+        });
+  
+      }
+    });
+  
+    // auto-append index.html to post-preview links in file: protocol
+    // and in rstudio ide preview
+    $('.post-preview').each(function(i, val) {
+      if (window.location.protocol === "file:")
+        $(this).attr('href', $(this).attr('href') + "index.html");
+    });
+  
+    // get rid of index.html references in header
+    if (window.location.protocol !== "file:") {
+      $('.distill-site-header a[href]').each(function(i,val) {
+        $(this).attr('href', $(this).attr('href').replace("index.html", "./"));
+      });
+    }
+  
+    // add class to pandoc style tables
+    $('tr.header').parent('thead').parent('table').addClass('pandoc-table');
+    $('.kable-table').children('table').addClass('pandoc-table');
+  
+    // add figcaption style to table captions
+    $('caption').parent('table').addClass("figcaption");
+  
+    // initialize posts list
+    if (window.init_posts_list)
+      window.init_posts_list();
+  
+    // implmement disqus comment link
+    $('.disqus-comment-count').click(function() {
+      window.headroom_prevent_pin = true;
+      $('#disqus_thread').toggleClass('hidden');
+      if (!$('#disqus_thread').hasClass('hidden')) {
+        var offset = $(this).offset();
+        $(window).resize();
+        $('html, body').animate({
+          scrollTop: offset.top - 35
+        });
+      }
+    });
+  }
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    if (is_downlevel_browser())
+      init_downlevel();
+    else
+      window.addEventListener('WebComponentsReady', init_distill);
+  });
+  
+  </script>
+  
+  <!--/radix_placeholder_distill-->
+  <script src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/jquery-1.11.3/jquery.min.js"></script>
+  <script src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/bowser-1.9.3/bowser.min.js"></script>
+  <script src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/webcomponents-2.0.0/webcomponents.js"></script>
+  <script src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/distill-2.2.21/template.v2.js"></script>
+  <!--radix_placeholder_site_in_header-->
+  <!--/radix_placeholder_site_in_header-->
+
+
+</head>
+
+<body>
+
+<!--radix_placeholder_front_matter-->
+
+<script id="distill-front-matter" type="text/json">
+{"title":"Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1","description":"An exploration of COVID-19 incidence data using R tools and packages.","authors":[{"author":"Tim Churches","authorURL":"#","affiliation":"South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia","affiliationURL":"https://swscs.med.unsw.edu.au"}],"publishedDate":"2020-02-18T00:00:00.000+11:00","citationText":"Churches, 2020"}
+</script>
+
+<!--/radix_placeholder_front_matter-->
+<!--radix_placeholder_navigation_before_body-->
+<!--/radix_placeholder_navigation_before_body-->
+<!--radix_placeholder_site_before_body-->
+<!--/radix_placeholder_site_before_body-->
+
+<div class="d-title">
+<h1>Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1</h1>
+<p>An exploration of COVID-19 incidence data using R tools and packages.</p>
+</div>
+
+<div class="d-byline">
+  Tim Churches  (South Western Sydney Clinical School, UNSW Medicine &amp; Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia)<a href="https://swscs.med.unsw.edu.au" class="uri">https://swscs.med.unsw.edu.au</a>
+  
+<br/>2020-02-18
+</div>
+
+<div class="d-article">
+<h3 class="d-toc-header">Table of Contents</h3>
+<nav class="d-toc" id="TOC">
+<ul>
+<li><a href="#pre-amble">Pre-amble</a></li>
+<li><a href="#the-local-situation">The local situation</a></li>
+<li><a href="#modelling-the-covid-19-epidemic-in-china">Modelling the COVID-19 epidemic in China</a><ul>
+<li><a href="#obtaining-data">Obtaining data</a></li>
+<li><a href="#checking-the-data">Checking the data</a></li>
+<li><a href="#exploratory-data-analysis">Exploratory data analysis</a></li>
+</ul></li>
+<li><a href="#fitting-an-sir-model-to-the-hubei-province-data">Fitting an SIR model to the Hubei province data</a><ul>
+<li><a href="#using-the-sir-model-for-hubei-province-to-make-predictions">Using the SIR model for Hubei province to make predictions</a></li>
+<li><a href="#using-our-model-to-let-the-outbreak-run-its-course-without-intervention">Using our model to let the outbreak “run its course” without intervention</a></li>
+<li><a href="#ascertainment-rates">Ascertainment rates</a></li>
+</ul></li>
+<li><a href="#modelling-the-epidemic-trajectory-using-log-linear-models">Modelling the epidemic trajectory using log-linear models</a><ul>
+<li><a href="#estimating-the-reproduction-number-from-log-linear-models">Estimating the reproduction number from log-linear models</a></li>
+</ul></li>
+<li><a href="#estimating-changes-in-the-effective-reproduction-number">Estimating changes in the <em>effective reproduction number</em></a><ul>
+<li><a href="#estimating-changes-in-the-effective-reproduction-number-for-wuhan-and-other-provinces">Estimating changes in the <em>effective reproduction number</em> for Wuhan and other provinces</a></li>
+<li><a href="#estimating-changes-in-the-effective-reproduction-number-outside-hubei">Estimating changes in the <em>effective reproduction number</em> outside Hubei</a></li>
+</ul></li>
+<li><a href="#projections">Projections</a><ul>
+<li><a href="#conclusions">Conclusions</a></li>
+</ul></li>
+</ul>
+</nav>
+<hr class="d-toc-separator"/>
+<h1 id="pre-amble">Pre-amble</h1>
+<p>This article is the first of several that have been distilled from <a href="https://cbdrh.github.io/NovelCoronavirus/on-COVID-19.html">a much longer document</a> which started as a typical late-Friday-afternoon, curiosity-driven exploration of COVID-19 data and the R tools and packages that might be used to analyse them. Work on that document rapidly expanded to occupy much of the very wet Sydney weekend of 8th &amp; 9th February 2020, with a view to using it as ateaching resource for both UNSW Medicine undergraduate and postgraduate courses – in particular the MSc in Health Data Science offered by the <a href="https://cbdrh.med.unsw.edu.au">Centre for Big Data Research in Health</a>.</p>
+<p>Please note that neither these posts nor the parent document have been peer-reviewed, and that I claim no particular expertise in modelling communicable disease outbreaks, although I have been involved in outbreak preparedness work a decade ago, including <a href="https://www.publish.csiro.au/nb/nb09046">establishing surveillance systems and developing case-contact tracking systems</a> for the public health response to the 2009 influenza A/H1N1 “swine flu” pandemic while at the NSW Ministry (previously Department) of Health.</p>
+<p>Please also note that this post <strong>only uses data for Chinese cases up to 15th February 2020</strong>, and thus it cannot be considered a <strong>situation report</strong> reflecting the latest available data. The reason for truncating data at 15th February is due to major changes the case definitions used by the authorities in Hubei province from that date forward, which add additional complications to the modelling presented here.</p>
+<p>The full code is available from the GitHub repository linked at the foot of this post.</p>
+<h1 id="the-local-situation">The local situation</h1>
+<p>Since this post is being written in Sydney, Australia, capital of the state of New South Wales (NSW), we’ll start by looking at the work of NSW Health, which is the umbrella name for the various public-sector health services and authorities in NSW. NSW Health has been issuing daily reports on its response to the 2019 novel coronavirus (2019-nCoV, henceforth referred to as COVID-19) outbreak, which look like this:</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="figure"><span id="fig:unnamed-chunk-1"></span>
+<img src="assets/example_NSW_Health_media_release.png" alt="[Figure from a COVID-19 daily media release from NSW Health](https://www.health.nsw.gov.au/news/pages/2020-nsw-health.aspx)" width="95%" style="background-color: #9ecff7; padding:2px; display: inline-block;" />
+<p class="caption">
+Figure 1: <a href="https://www.health.nsw.gov.au/news/pages/2020-nsw-health.aspx">Figure from a COVID-19 daily media release from NSW Health</a>
+</p>
+</div>
+</div>
+<p>So let’s collect the data from each of these media releases and visualise it as a time-series<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. Automated web-scraping was not used for these data because only a few data items need to be abstracted from each report, and the format of the daily reports evolved quite a lot – sometimes it is easier to just capture the required data manually.</p>
+<p>We can do a bit of value-adding to the data by calculating daily counts of people screened, tested and cleared from the cumulative totals given in the NSW Health media releases, and of course presentation of the data as time-series reveals information not obvious from the individual daily reports.</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/nsw_graph-1.png" width="960" /></p>
+</div>
+<p>The ensemble of time-series charts clearly show that the NSW public health control efforts, including intensive airport screening, voluntary isolation and, of course, travel restrictions<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>, are working.</p>
+<p>Having been involved in the public health response to 2009 A/H1N1 swine flu pandemic, I know how much round-the-clock work is involved in mounting such a response. NSW Health should be praised for its efforts, which deserve a more informative presentation than the little table in the daily press release as shown above!</p>
+<p>This admittedly parochial example is provided to illustrate the potential value of providing even simple visualisations and modest value-adding analyses (such as merely differencing cumulative counts to yield daily counts) – tasks that that health authorities may not have the capacity to do themselves while dealing with an epidemic.</p>
+<h1 id="modelling-the-covid-19-epidemic-in-china">Modelling the COVID-19 epidemic in China</h1>
+<p>On 4th February <a href="https://blog.ephorie.de/epidemiology-how-contagious-is-novel-coronavirus-2019-ncov">this blog post</a> by blogger <em>Learning Machines</em> was featured on <a href="https://www.r-bloggers.com">R-bloggers</a>. It very nicely sets out how to use <code>R</code> to solve the three simultaneous differential equations which describe the classic SIR (Susceptible-Infectious-Recovered) compartmental model of communicable disease outbreaks (see <a href="https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology">this wikipedia page</a> for an more thorough treatment of compartmental models), and use one of the optimisers in base <code>R</code> to fit that SIR model to the observed COVID-19 incidence data by minimising the residual sum of squares. This lets us estimate the basic reproduction number <span class="math inline">\(R_{0}\)</span> and be able to make (possibly naïve) predictions about the epidemic. The blog post used data for all of China, but given that Wuhan and other cities in Hubei province have effectively been partitioned from the rest of China since about 24th January, it makes sense to model the situation in Hubei only, so we’ll repeat the oh-so-elegant model fitting process here. But first we need some data, and of course we need to do an initial exploratory data analysis before we fit any models!</p>
+<h2 id="obtaining-data">Obtaining data</h2>
+<p>Naturally we want our analysis to be reproducible, and that means avoiding all manual abstracting and transcribing of data (um, like the manual abstracting and transcribing of NSW Health data I did above…). Thus we will programmatically acquire the relevant data from the web to avoid having to manually update the document as more data becomes available – we want to be able to just re-run the program code and have the document automatically update itself. There are now many potential sources, but when I first started working on this analysis on 8th February, there were very few accessible, detailed and current sources of machine-readable data for COVID-19 incidence in China. <a href="https://en.wikipedia.org/wiki/Timeline_of_the_2019–20_Wuhan_coronavirus_outbreak">This wikipedia page</a>, which is currently being updated very promptly as new data is released, is a detailed and well-referenced source, and, being wikipedia, it is also versioned, and editable (I had to make a few edits to the tables on the wikipedia page we are scraping in order to make table parsing easier and more reliable). So, with (quite) a few lines of code, we can download and scrape the data contained in the relevant tables on that page that gives counts of laboratory-confirmed cases, and deaths in confirmed cases, by day and by province, clean it up and have it ready to use in our analysis. Note that counts of clinically-confirmed cases (by lung CT) that were being reported by Hubei province for a while are not used in this analysis, so we will remove them from the data we acquire.</p>
+<p>The alternative is laboriously visiting many different web sites and abstracting the data from text such as this:</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="figure"><span id="fig:unnamed-chunk-2"></span>
+<img src="assets/Hubei_Health_Commission_page.png" alt="[Figure from Health Commission of Hubei](http://www.hubei.gov.cn/zhuanti/2020/gzxxgzbd/zxtb/)" width="95%" />
+<p class="caption">
+Figure 2: <a href="http://www.hubei.gov.cn/zhuanti/2020/gzxxgzbd/zxtb/">Figure from Health Commission of Hubei</a>
+</p>
+</div>
+</div>
+<p>Here is the code used to acquire data from wikipedia. Notice that the code references a specific version of the relevant wikipedia page.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# download the wikipedia web page we use a specific version
+# of the template page directly version of the wikipedia page
+# that is used by this version of this document
+wikipedia_data_url &lt;- paste(&quot;https://en.wikipedia.org/w/index.php?title=Template:&quot;, 
+    &quot;2019–20_Wuhan_coronavirus_data/&quot;, &quot;China_medical_cases_by_province&amp;oldid=941235662&quot;, 
+    sep = &quot;&quot;)
+
+outbreak_webpage &lt;- read_html(wikipedia_data_url)
+
+# parse the web page and extract the data from the first
+# table
+provinces_confirmed &lt;- outbreak_webpage %&gt;% html_nodes(&quot;table&quot;) %&gt;% 
+    .[[1]] %&gt;% html_table(fill = TRUE) %&gt;% rename(Date = &quot;Date (CST)&quot;)
+
+# fix up the column names, get rid of footnotes and other
+# non-data and convert columns to appropriate data types.
+excl_hubei &lt;- provinces_confirmed %&gt;% select(starts_with(&quot;ExcludingHubei&quot;)) %&gt;% 
+    pull(1)
+
+hubei_sans_wuhan &lt;- provinces_confirmed %&gt;% select(starts_with(&quot;Hubei:&quot;)) %&gt;% 
+    select(-contains(&quot;clinical&quot;, ignore.case = TRUE)) %&gt;% pull(1)
+
+# utility function to remove commas in numbers as character
+# strings
+rm_commas &lt;- function(x) gsub(&quot;,&quot;, &quot;&quot;, x)
+
+provinces_confirmed &lt;- provinces_confirmed %&gt;% select(-starts_with(&quot;ExcludingHubei&quot;)) %&gt;% 
+    select(-starts_with(&quot;Hubei:&quot;)) %&gt;% rename(Wuhan = &quot;Wuhan,Hubei&quot;, 
+    National = &quot;National(confirmed)&quot;) %&gt;% mutate(NationalSansHubei = excl_hubei, 
+    HubeiSansWuhan = hubei_sans_wuhan, Date = ymd(Date), National = stringr::str_split(National, 
+        &quot;\\[&quot;, simplify = TRUE)[, 1], Hubei = stringr::str_split(Hubei, 
+        &quot;\\[&quot;, simplify = TRUE)[, 1], Wuhan = stringr::str_split(Wuhan, 
+        &quot;\\[&quot;, simplify = TRUE)[, 1]) %&gt;% select(-contains(&quot;clinical&quot;, 
+    ignore.case = TRUE)) %&gt;% select(-contains(&quot;inclusive&quot;, ignore.case = TRUE)) %&gt;% 
+    filter(!is.na(Date)) %&gt;% mutate_if(is.character, rm_commas) %&gt;% 
+    mutate_if(is.character, as.integer)
+
+# work out the order for the columns from the data,
+# descending order
+province_order &lt;- provinces_confirmed %&gt;% pivot_longer(-Date, 
+    names_to = &quot;province&quot;, values_to = &quot;incident_cases&quot;) %&gt;% 
+    group_by(province) %&gt;% summarise(total = sum(incident_cases, 
+    na.rm = TRUE)) %&gt;% arrange(desc(total)) %&gt;% pull(province)
+
+# re-arrange the columns in the dataset and fill in some
+# missing values, but not all, with zeroes.  Also,
+# lab-confirmed and clinical counts for Wuhan are combined on
+# the source Hubei health Commission from 15 Feb so set to NA
+# since we cannot split out the lab-confirmed only
+provinces_confirmed &lt;- provinces_confirmed %&gt;% select(c(&quot;Date&quot;, 
+    province_order)) %&gt;% arrange(Date) %&gt;% mutate(National = ifelse(is.na(National), 
+    0, National), Hubei = ifelse(is.na(Hubei), 0, Hubei), Wuhan = ifelse(is.na(Wuhan), 
+    0, Wuhan)) %&gt;% mutate(Wuhan = ifelse(Date &gt;= ymd(&quot;2020-02-15&quot;), 
+    NA, Wuhan), HubeiSansWuhan = ifelse(Date &gt;= ymd(&quot;2020-02-15&quot;), 
+    NA, HubeiSansWuhan))
+
+# repeat for deaths parse the web page and extract the data
+# from the second table
+provinces_deaths &lt;- outbreak_webpage %&gt;% html_nodes(&quot;table&quot;) %&gt;% 
+    .[[2]] %&gt;% html_table(fill = TRUE) %&gt;% rename(Date = &quot;Date (CST)&quot;)
+
+# fix up the column names, get rid of footnotes and other
+# non-data and convert columns to appropriate data types.
+hubei_sans_wuhan &lt;- provinces_deaths %&gt;% select(starts_with(&quot;Hubei:&quot;)) %&gt;% 
+    select(-contains(&quot;clinical&quot;, ignore.case = TRUE)) %&gt;% pull(1)
+
+provinces_deaths &lt;- provinces_deaths %&gt;% select(-starts_with(&quot;Hubei:&quot;)) %&gt;% 
+    rename(Wuhan = &quot;Wuhan,Hubei&quot;, National = &quot;National(confirmed)&quot;) %&gt;% 
+    mutate(HubeiSansWuhan = hubei_sans_wuhan, Date = ymd(Date), 
+        National = stringr::str_split(National, &quot;\\[&quot;, simplify = TRUE)[, 
+            1], Hubei = stringr::str_split(Hubei, &quot;\\[&quot;, simplify = TRUE)[, 
+            1], Wuhan = stringr::str_split(Wuhan, &quot;\\[&quot;, simplify = TRUE)[, 
+            1]) %&gt;% select(-contains(&quot;clinical&quot;, ignore.case = TRUE)) %&gt;% 
+    select(-contains(&quot;inclusive&quot;, ignore.case = TRUE)) %&gt;% filter(!is.na(Date)) %&gt;% 
+    mutate_if(is.character, rm_commas) %&gt;% mutate_if(is.character, 
+    as.integer) %&gt;% mutate(NationalSansHubei = National - Hubei)
+
+
+# work out the order for the columns from the data,
+# descending order
+province_order_deaths &lt;- provinces_deaths %&gt;% pivot_longer(-Date, 
+    names_to = &quot;province&quot;, values_to = &quot;deaths_in_confirmed_cases&quot;) %&gt;% 
+    group_by(province) %&gt;% summarise(total = sum(deaths_in_confirmed_cases, 
+    na.rm = TRUE)) %&gt;% arrange(desc(total)) %&gt;% pull(province)
+
+# re-arrange the columns in the dataset and fill in some
+# missing values, but not all, with zeroes Also,
+# lab-confirmed and clinical deaths for Wuhan are combined on
+# the source Hubei health Commission from 15 Feb so set to NA
+# since we cannot split out the deaths in lab-confirmed cases
+# only
+provinces_deaths &lt;- provinces_deaths %&gt;% select(c(&quot;Date&quot;, province_order_deaths)) %&gt;% 
+    arrange(Date) %&gt;% mutate(National = ifelse(is.na(National), 
+    0, National), Hubei = ifelse(is.na(Hubei), 0, Hubei), Wuhan = ifelse(is.na(Wuhan), 
+    0, Wuhan)) %&gt;% mutate(Wuhan = ifelse(Date &gt;= ymd(&quot;2020-02-15&quot;), 
+    NA, Wuhan), HubeiSansWuhan = ifelse(Date &gt;= ymd(&quot;2020-02-15&quot;), 
+    NA, HubeiSansWuhan))
+
+# there are still issues with death counts in lab-confirmed
+# after 12th Feb.  in particular the national count is less
+# than tha Hubei count.  So we will just truncate the deaths
+# at 12th Feb.
+provinces_deaths &lt;- provinces_deaths %&gt;% filter(Date &lt;= ymd(&quot;2020-02-12&quot;))</code></pre>
+</div>
+<p>Yes, that’s all a bit fiddly, and the code requires constant maintenance as the format of the source tables are changed by wikepedia editors, often in arbitrary ways. In the next section, we will compare the wikipedia source to a widely-used source provided by Johns Hopkins University in the US. Why doesn’t the WHO have a nice API for obtaining all these data, I hear you ask? That’s what humankind deserves. Anyway, in the meantime, thank goodness for wikipedia and its tireless contributors and editors, and thanks to the Johns Hopkins University team maintaining their version of the data. But I can’t help but feel that there ought to be a well-resourced, canonical source with a nice web API for these data.</p>
+<p>In the interests of brevity, we won’t display the scraped incidence and deaths data in a table here<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>, but doing so would be good practice.</p>
+<h2 id="checking-the-data">Checking the data</h2>
+<p>Wikipedia is <em>crowd-sourced</em>, and anyone can edit the pages at any time, although incorrect information is usually corrected very rapidly by a community of editors and contributors, at least for active pages of interest. That is certainly the case for the wikipedia pages on COVID-19 incidence and deaths data we are using in this document. Nonetheless, it is <strong>always</strong> a good idea to check sources wherever possible.</p>
+<p>In fact, there is <a href="https://github.com/CSSEGISandData/COVID-19">another source of similar, collated COVID-19 data</a>, maintained by Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) and used as the source for <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the dashboard</a> which they provide.</p>
+<p>So let’s download that data and compare it to the data we are scraping from wikipedia. We are using a cached copy of<a href="https://github.com/CSSEGISandData/COVID-19/blob/5a0760fcfee8f698cff0251b6e578385153f396e/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv">this revision</a> of the data as it was at 15:18 2002-02-19 AEDT (Australia/Sydney timezone). Note that timezones are taken into account as far as possible: the JHU data is supposed to be the data as at 23:59hrs UTC for each day, whereas the wikipedia data is just described as “Date (CST)“, where CST is presumed to be China Standard Time, which is the same as Beijing time.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+destfile = &quot;./assets/provinces_confirmed_jh.rda&quot;
+if (!file.exists(destfile)) {
+    provinces_confirmed_jh &lt;- read_csv(&quot;https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv&quot;) %&gt;% 
+        rename(province = &quot;Province/State&quot;, country_region = &quot;Country/Region&quot;) %&gt;% 
+        pivot_longer(-c(province, country_region, Lat, Long), 
+            names_to = &quot;Date&quot;, values_to = &quot;cumulative_cases&quot;) %&gt;% 
+        mutate(Date = as.Date(mdy_hm(paste(Date, &quot;23:59&quot;, tz = &quot;UTC&quot;)), 
+            tz = &quot;China/Beijing&quot;)) %&gt;% filter(country_region == 
+        &quot;Mainland China&quot;) %&gt;% group_by(province) %&gt;% arrange(province, 
+        Date) %&gt;% group_by(province) %&gt;% mutate(incident_cases = c(0, 
+        diff(cumulative_cases))) %&gt;% ungroup() %&gt;% select(-c(country_region, 
+        Lat, Long, cumulative_cases)) %&gt;% pivot_wider(Date, names_from = province, 
+        values_from = incident_cases) %&gt;% rename(InnerMongolia = &quot;Inner Mongolia&quot;) %&gt;% 
+        mutate(source = &quot;Johns Hopkins University&quot;)
+    save(provinces_confirmed_jh, file = destfile)
+} else {
+    load(destfile)
+}
+
+compare_provinces_confirmed &lt;- provinces_confirmed %&gt;% mutate(source = &quot;wikipedia&quot;) %&gt;% 
+    select(c(Date, source, names(provinces_confirmed_jh))) %&gt;% 
+    bind_rows(provinces_confirmed_jh) %&gt;% arrange(Date, desc(source)) %&gt;% 
+    select(Date, source, everything())
+
+compare_provinces_confirmed_long &lt;- compare_provinces_confirmed %&gt;% 
+    filter(Date &lt;= ymd(&quot;2020-02-12&quot;)) %&gt;% pivot_longer(-c(Date, 
+    source), names_to = &quot;province&quot;, values_to = &quot;incident_cases&quot;) %&gt;% 
+    filter(province %in% c(&quot;Hubei&quot;, &quot;Beijing&quot;, &quot;Guangdong&quot;, &quot;Henan&quot;, 
+        &quot;Zhejiang&quot;, &quot;Hunan&quot;, &quot;Anhui&quot;, &quot;Jiangxi&quot;, &quot;Jiangsu&quot;, &quot;Chongqing&quot;, 
+        &quot;Shandong&quot;))
+
+compare_provinces_confirmed_long %&gt;% bind_rows(compare_provinces_confirmed_long %&gt;% 
+    group_by(Date, source) %&gt;% summarise(incident_cases = sum(incident_cases, 
+    na.rm = TRUE)) %&gt;% mutate(province = &quot;Sum all provinces&quot;)) %&gt;% 
+    ggplot(aes(x = Date, y = incident_cases, colour = source)) + 
+    geom_line() + geom_point() + facet_grid(province ~ ., scale = &quot;free_y&quot;) + 
+    labs(y = &quot;Daily incident confirmed cases&quot;, title = &quot;Comparison of wikipedia and Johns Hopkins University\nCOVID-19 daily incidence data up to 12th February, 2020.&quot;, 
+        subtitle = &quot;(Note: not all provinces shown here)&quot;, caption = &quot;Sources: Johns Hopkins CSSE Novel coronavirus COVID-19 (2019-nCoV) data repository\nat https://github.com/CSSEGISandData/COVID-19\nwikipedia: https://en.wikipedia.org/wiki/Timeline_of_the_2019–20_Wuhan_coronavirus_outbreak&quot;) + 
+    theme(legend.position = &quot;top&quot;, legend.title = element_blank())</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/JHU_incidence-1.png" width="624" /></p>
+</div>
+<p>There is clearly a lag of 1 day between the two sources for many, but not all of the provinces. That isn’t a major concern and won’t change any of our analyses very much. Of much greater concern are the large differences for specific days, for the provinces with substantial numbers of cases. The most egregious difference between the JHU and wikipedia incidence data is for Hubei province on 2nd February 2020, for which the JHU data gives 4024 new cases, and the wikipedia data gives 2103 new cases. Note that that was well before the change in case definition for Hubei province, which occured on 12th February. The relevant source document for Hubei province for 2nd February is <a href="http://wjw.hubei.gov.cn/fbjd/dtyw/202002/t20200203_2018272.shtml">here</a>, and using Google Translate on the contents of that page reveals that the wikipedia data are, in fact, correct.</p>
+<p>Let’s check that against another authorative source. Table 2 in the <a href="https://www.who.int/docs/default-source/coronaviruse/situation-reports/20200201-sitrep-12-ncov.pdf?sfvrsn=273c5d35_2">WHO Sitrep (Situational Report) for 1st February 2020</a> gives the cumulative count of confirmed COVID-19 cases in Hubei province as 7153. Table 1 in the <a href="https://www.who.int/docs/default-source/coronaviruse/situation-reports/20200202-sitrep-13-ncov-v3.pdf?sfvrsn=195f4010_6">WHO SitRep for 2nd February 2020</a> gives the cumulative count of confirmed COVID-19 cases in Hubei province as 9074. The difference is 1921, which is much closer to figure given for the same date by the Hubei provincial government web site of 2103 cases than it is to the corresponding JHU data of 4024 cases. The minor difference between the WHO and the Hubei government site may perhaps be due to differing cut-off times for daily tallies of case counts.</p>
+<p>That’s enough checking for the puposes of this analysis, but it underlines the importance of checking the accuracy of web data sources, even apparently reputable ones.</p>
+<h2 id="exploratory-data-analysis">Exploratory data analysis</h2>
+<p>Every analysis should start with a thorough EDA. The code for all this is just standard <code>tidyverse</code> fair, and is available in the GitHib repository for this post, link at foot of page.</p>
+<h3 id="daily-cumulative-incidence">Daily cumulative incidence</h3>
+<p>First, let’s look at the daily cumulative number of incident lab-confirmed cases for Wuhan city, for Hubei province (which contains Wuhan), for all the other provinces combined, and for all of China.</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/cumulative_incidence-1.png" width="960" /></p>
+</div>
+<p>The initial increases for Wuhan and the balance of Hubei, and for all of China look to be approximately exponential, as is expected for epidemic spread. Let’s plot them on a logarithmic <em>y</em> axis. We would expect to see a linear increase on a log scale if the epidemic curve is indeed exponential.</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/log_cumulative_incidence-1.png" width="960" /></p>
+</div>
+<p>One could convince oneself that log-linearity is present.</p>
+<h3 id="daily-incremental-incidence">Daily incremental incidence</h3>
+<p>Let’s also look at the daily incremental incidence. This is more informative, and is known in outbreak epidemiological parlance as the <em>epidemic curve</em>. It is traditionally visualised as a bar chart, which emphasises missing data more than a line chart, even one with points as well. We’ll adhere to epidemiological tradition.</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/daily_incidence-1.png" width="960" /></p>
+</div>
+<p>At the time of writing (17th Feb), it looks like incidence has plateaued and is now beginning to decline in Wuhan, and that daily incremental incidence is very definitely falling everywhere else.</p>
+<h3 id="epidemic-curves-for-all-provinces-plus-wuhan-city">Epidemic curves for all provinces, plus Wuhan city</h3>
+<p>Finally, let’s quickly visualise the epidemic curves for all the provinces (plus Wuhan city).</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/all_provinces_incidence-1.png" width="960" /></p>
+</div>
+<p>And let’s look at the cumulative incidence, with all provinces on the same scale to put things in perspective.</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/all_provinces_cum_incidence-1.png" width="960" /></p>
+</div>
+<p>It is clear that Wuhan is not only the epicentre of the outbreak, but that it continues to be the main location of new infections.</p>
+<h3 id="daily-cumulative-and-incremental-deaths-in-lab-confirmed-cases">Daily cumulative and incremental deaths in lab-confirmed cases</h3>
+<p>Now let’s look the daily (incremental) number of deaths in lab-confirmed cases for Wuhan city, for Hubei province (which contains Wuhan), for all the other provinces combined, and for all of China.</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/cumulative_deaths-1.png" width="960" /></p>
+</div>
+<p>Let’s also look at the daily incremental deaths in lab-confirmed cases.</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/daily_deaths_plot-1.png" width="960" /></p>
+</div>
+<h3 id="incidence-and-deaths">Incidence and deaths</h3>
+<p>Finally, let’s also look at the number of daily incremental lab-confirmed incident cases and the daily incremental deaths in lab-confirmed cases, aligned on date.</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/daily_case_deaths_plot-1.png" width="960" /></p>
+</div>
+<p>Clearly daily counts of deaths are continuing to rise despite the daily count of new cases now falling. This is not surprising, given that it takes some time for cases to either recover or to die, and therefore the trend in deaths will necessarily lag behind any trend in daily incidence.</p>
+<h1 id="fitting-an-sir-model-to-the-hubei-province-data">Fitting an SIR model to the Hubei province data</h1>
+<p>On 4 February 2020, data science blogger <em>Learning Machines</em> posted <a href="https://blog.ephorie.de/epidemiology-how-contagious-is-novel-coronavirus-2019-ncov">this analysis</a> of the COVID-19 outbreak, in which he fitted the classic SIR (Susceptible-Infectious-Recovered) model to the incidence data for all of China. His explanation of how to fit this model using <em>R</em> is so nice, I’ll reproduce it here, with a few tweaks.</p>
+<p>The basic idea behind the SIR model of communicable disease outbreaks is that there are three groups (also called <em>compartments</em>) of people: those who are healthy but susceptible to the disease <span class="math inline">\(S\)</span>, the infectious (and thus, infected) <span class="math inline">\(I\)</span> and people who have recovered <span class="math inline">\(R\)</span>:</p>
+<figure>
+<img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/SIR.PNG" alt="Source: wikipedia" /><figcaption>Source: wikipedia</figcaption>
+</figure>
+<p>To model the dynamics of the outbreak we need three differential equations, to describe the rates of change in each group, parameterised by <span class="math inline">\(\beta\)</span> which controls the transition between <span class="math inline">\(S\)</span> and <span class="math inline">\(I\)</span> and <span class="math inline">\(\gamma\)</span> which controls the transition between <span class="math inline">\(I\)</span> and <span class="math inline">\(R\)</span>:</p>
+<p><span class="math display">\[\frac{dS}{dt} = - \frac{\beta I S}{N}\]</span></p>
+<p><span class="math display">\[\frac{dI}{dt} = \frac{\beta I S}{N}- \gamma I\]</span></p>
+<p><span class="math display">\[\frac{dR}{dt} = \gamma I\]</span></p>
+<p>The first step is to express these differential equations as an <em>R</em> function, which is easier than one might think – the expressions in the code are just direct translations of the differential equations, with respect to time <span class="math inline">\(t\)</span> of course.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+SIR &lt;- function(time, state, parameters) {
+    par &lt;- as.list(c(state, parameters))
+    with(par, {
+        dS &lt;- -beta * I * S/N
+        dI &lt;- beta * I * S/N - gamma * I
+        dR &lt;- gamma * I
+        list(c(dS, dI, dR))
+    })
+}</code></pre>
+</div>
+<p>To fit the model to the data we need two things: a solver for these differential equations and an optimiser to find the optimal values for our two unknown parameters, <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\gamma\)</span>. The function <code>ode()</code> (for <em>ordinary differential equations</em>) from the <code>deSolve</code> package for <code>R</code> makes solving the system of equations easy, and to find the optimal values for the parameters we wish to estimate, we can just use the <code>optim</code> function built into base <em>R</em>. Specifically what we need to do is minimise the sum of the squared differences between the number of people in the infectious compartment <span class="math inline">\(I\)</span> at time <span class="math inline">\(t\)</span> and the corresponding number of cases as predicted by our model <span class="math inline">\(\hat{I}(t)\)</span>. This quantity is known as the <em>residual sum of squares</em> (RSS)<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>.</p>
+<p><span class="math display">\[RSS(\beta, \gamma) = \sum_{t} \left( I(t)-\hat{I}(t) \right)^2\]</span></p>
+<p>Rather than fit a model to the incidence data for all of China, let’s fit a model to the incidence data for Hubei province only, given that Hubei contains Wuhan, the city which is the source of the outbreak. Most cities in Hubei have been isolated from the rest of China since 23rd January, so it makes sense to model Hubei separately. We need a value <span class="math inline">\(N\)</span> for the initial uninfected population. Once again we’ll scrape population data from a suitable wikipedia page. See the repository for the code.</p>
+<div class="layout-chunk" data-layout="l-body">
+
+</div>
+<p>The approximate population of Hubei province in 2017 was 59,020,000 people, according to <a href="https://en.wikipedia.org/wiki/List_of_Chinese_administrative_divisions_by_population">this wikipedia page</a>.</p>
+<p>Next, we need to create a vector with the daily cumulative incidence for Hubei, from 15th January when our daily incidence data starts, through to 30th January. We’ll then compare the predicted incidence from the SIR model fitted to these data with the actual incidence since 30th January. We also need to initialise the values for <span class="math inline">\(S\)</span>, <span class="math inline">\(I\)</span> and <span class="math inline">\(R\)</span>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# put the daily cumulative incidence numbers for Hubei from
+# 15th Jan to 30th Jan into a vector called Infected
+sir_start_date &lt;- &quot;2020-01-15&quot;
+
+Infected &lt;- cumulative_incidence %&gt;% filter(province == &quot;Hubei&quot;, 
+    Date &gt;= ymd(&quot;2020-01-15&quot;), Date &lt;= ymd(&quot;2020-01-30&quot;)) %&gt;% 
+    pull(cumulative_incident_cases)
+
+# Create an incrementing Day vector the same length as our
+# cases vector
+Day &lt;- 1:(length(Infected))
+
+# now specify initial values for S, I and R
+init &lt;- c(S = N - Infected[1], I = Infected[1], R = 0)</code></pre>
+</div>
+<p>Then we need to define a function to calculate the <span class="math inline">\(RSS\)</span>, given a set of values for <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\gamma\)</span>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# define a function to calculate the residual sum of squares
+# (RSS), passing in parameters beta and gamma that are to be
+# optimised for the best fit to the incidence data
+RSS &lt;- function(parameters) {
+    names(parameters) &lt;- c(&quot;beta&quot;, &quot;gamma&quot;)
+    out &lt;- ode(y = init, times = Day, func = SIR, parms = parameters)
+    fit &lt;- out[, 3]
+    sum((Infected - fit)^2)
+}</code></pre>
+</div>
+<p>Finally, we can fit the SIR model to our data by finding the values for <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\gamma\)</span> that minimise the residual sum of squares between the observed cumulative incidence and the predicted cumulative incidence. We also need to check that our model has converged, as indicated by the message shown below:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# now find the values of beta and gamma that give the
+# smallest RSS, which represents the best fit to the data.
+# Start with values of 0.5 for each, and constrain them to
+# the interval 0 to 1.0
+Opt &lt;- optim(c(0.5, 0.5), RSS, method = &quot;L-BFGS-B&quot;, lower = c(0, 
+    0), upper = c(1, 1))
+
+# check for convergence
+Opt$message</code></pre>
+<pre><code>
+[1] &quot;CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH&quot;</code></pre>
+</div>
+<p>Convergence is confirmed. Now we can examine the fitted values for <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\gamma\)</span>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+Opt_par &lt;- setNames(Opt$par, c(&quot;beta&quot;, &quot;gamma&quot;))
+Opt_par</code></pre>
+<pre><code>
+     beta     gamma 
+0.6671291 0.3328710 </code></pre>
+</div>
+<p>Those values don’t mean a lot, <em>per se</em>, but let’s use them to get the fitted numbers of people in each compartment of our SIR model for the dates up to 30th January that were used to fit the model, and compare those fitted values with the observed data.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# time in days for predictions
+t &lt;- 1:as.integer(today() - ymd(sir_start_date))
+# get the fitted values from our SIR model
+fitted_cumulative_incidence &lt;- data.frame(ode(y = init, times = t, 
+    func = SIR, parms = Opt_par))
+# add a Date column and join the observed incidence data
+fitted_cumulative_incidence &lt;- fitted_cumulative_incidence %&gt;% 
+    mutate(Date = ymd(sir_start_date) + days(t - 1), province = &quot;Hubei&quot;) %&gt;% 
+    left_join(cumulative_incidence %&gt;% ungroup() %&gt;% filter(province == 
+        &quot;Hubei&quot;) %&gt;% select(Date, cumulative_incident_cases))
+
+# plot the data
+fitted_cumulative_incidence %&gt;% filter(Date &lt;= ymd(&quot;2020-01-30&quot;)) %&gt;% 
+    ggplot(aes(x = Date)) + geom_line(aes(y = I), colour = &quot;red&quot;) + 
+    geom_point(aes(y = cumulative_incident_cases), colour = &quot;orange&quot;) + 
+    labs(y = &quot;Cumulative incidence&quot;, title = &quot;COVID-19 fitted vs observed cumulative incidence, Hubei province&quot;, 
+        subtitle = &quot;(red=fitted incidence from SIR model, orange=observed incidence)&quot;)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_fitted_data-1.png" width="624" /></p>
+</div>
+<p>That looks like a reasonably good fit to the observed cumulative incidence data, so we can now use our fitted model to calculate the <em>basic reproduction number</em> <span class="math inline">\(R_{0}\)</span> which gives the average number of susceptible people who are infected by each infectious person:</p>
+<p><span class="math display">\[R_{0} = \frac{\beta}{\gamma}\]</span></p>
+<p>That’s very easy to calculate, and we get:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+R0 &lt;- setNames(Opt_par[&quot;beta&quot;]/Opt_par[&quot;gamma&quot;], &quot;R0&quot;)
+R0</code></pre>
+<pre><code>
+      R0 
+2.004167 </code></pre>
+</div>
+<p>An <span class="math inline">\(R_{0}\)</span> of 2.0 is consistent the values calculated by others for COVID-19, and is also consistent with the <span class="math inline">\(R_{0}\)</span> for SARS and MERS, which are similar diseases also cause by <em>coronavirus</em>.</p>
+<h2 id="using-the-sir-model-for-hubei-province-to-make-predictions">Using the SIR model for Hubei province to make predictions</h2>
+<p>An obvious next step is to use our fitted SIR model to make predictions about the future course of the outbreak. However, caution is required, because the SIR model assumes a fixed <em>reproduction number</em>, but if public health interventions have been implemented, such as quarantining of cases, contact tracing and isolation of those contacts, and general restrictions on social mixing, such as closing the city of Wuhan, then the <em>effective reproduction number</em> <span class="math inline">\(R_{e}\)</span> will be dynamic and should fall as those interventions are progressively implemented, to values considerably less than the <em>basic reproduction number</em> <span class="math inline">\(R_{0}\)</span>, which reflects the behaviour of the virus at the beginning of an epidemic before any response has been implemented.</p>
+<p>So let’s use our SIR model, fitted to the first 15 days of data, to extrapolate out to the current date, and compare that against the observed values:</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_extrapolated-1.png" width="624" /></p>
+</div>
+<p>We can see that the actual incidence is much lower than that predicted by our model. The reason is that, due to the swift and decisive public health interventions implemented by the Chinese authorities, the <span class="math inline">\(R_{e}\)</span> of the COVID-19 in Hubei province has already been substantially reduced. When the <span class="math inline">\(R_{e}\)</span> falls below 1.0, the peak of the epidemic (at least in Hubei) will have been reached and the outbreak will eventually die out.</p>
+<h2 id="using-our-model-to-let-the-outbreak-run-its-course-without-intervention">Using our model to let the outbreak “run its course” without intervention</h2>
+<p>It is instructive to use our model fitted to the first 15 days of available data on lab-confirmed cases in Hubei province, so see what would happen if the outbreak were left to run its course, without public health interventions.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# time in days for predictions
+t &lt;- 1:70
+# get the fitted values from our SIR model
+fitted_cumulative_incidence &lt;- data.frame(ode(y = init, times = t, 
+    func = SIR, parms = Opt_par))
+# add a Date column and join the observed incidence data
+fitted_cumulative_incidence &lt;- fitted_cumulative_incidence %&gt;% 
+    mutate(Date = ymd(sir_start_date) + days(t - 1), province = &quot;Hubei&quot;) %&gt;% 
+    left_join(cumulative_incidence %&gt;% ungroup() %&gt;% filter(province == 
+        &quot;Hubei&quot;) %&gt;% select(Date, cumulative_incident_cases))
+
+# plot the data
+fitted_cumulative_incidence %&gt;% ggplot(aes(x = Date)) + geom_line(aes(y = I), 
+    colour = &quot;red&quot;) + geom_line(aes(y = S), colour = &quot;black&quot;) + 
+    geom_line(aes(y = R), colour = &quot;green&quot;) + geom_point(aes(y = cumulative_incident_cases), 
+    colour = &quot;orange&quot;) + scale_y_continuous(labels = scales::comma) + 
+    labs(y = &quot;Persons&quot;, title = &quot;COVID-19 fitted vs observed cumulative incidence, Hubei province&quot;) + 
+    scale_colour_manual(name = &quot;&quot;, values = c(red = &quot;red&quot;, black = &quot;black&quot;, 
+        green = &quot;green&quot;, orange = &quot;orange&quot;), labels = c(&quot;Susceptible&quot;, 
+        &quot;Recovered&quot;, &quot;Observed incidence&quot;, &quot;Infectious&quot;))</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_no_intervention-1.png" width="624" /></p>
+</div>
+<p>It is easier to see what is going on if we use a log scale:</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_no_intervention_log-1.png" width="624" /></p>
+</div>
+<p>Clearly that prediction, should it come to pass, would be an unmitigated disaster. At this point, it is worth remarking on the importance of decisive public health intervention to limit the spread of such epidemics. Without such interventions, tens of millions of people could be infected, as our model predicts, and even with only a one or two per cent mortality rate, hundreds of thousands of people would die. The economic and human cost of the outbreak control steps taken within China are large, but the alternatives are a lot worse!</p>
+<h2 id="ascertainment-rates">Ascertainment rates</h2>
+<p>So far, we have assumed that the counts of lab-confirmed cases represent all the cases that are infectious. This is unlikely to be true – typically only a proportion of actual cases are detected or found or sent for testing. This proportion is known as the <em>ascertainment rate</em>. The ascertainment rate is likely to change during the course of an outbreak, particularly if surveillance and screening efforts are increased, or if case definitions are changed. Such changing ascertainment rates can be easily incorporated into our model by using a set of weights, or a weighting function, for our incidence data, but for the sake of simplicity, let’s see what happens if we assume a fixed ascertainment rate of 20%<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>. If we apply that, thus inflating the number of incident cases by a factor of 5, and refit our model, we get the following results.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre><code>
+[1] &quot;CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH&quot;</code></pre>
+<pre><code>
+     beta     gamma 
+0.6671730 0.3328275 </code></pre>
+<pre><code>
+      R0 
+2.004561 </code></pre>
+</div>
+<p>Note that these fitted parameters are the same as the ones we got above, without an ascertainment rate adjustment. Let’s look at the fitted values.</p>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/SIR_model_plot_no_intervention_ascertainment_adjustment-1.png" width="624" /></p>
+</div>
+<p>Perhaps counter-intuitively, incorporation of a fixed 20% ascertainment rate adjustment into our model makes little difference to the modelled outbreak if it is let run its course, except that it all happens a bit more quickly. But the number of infections remains the same, and the <em>basic reproduction number</em> is unchanged. Note that that is for a fixed ascertainment rate. If the ascertainment rate varies significantly over time, then the parameter estimates will necessarily be biased – but in the early days of an outbreak, it may be reasonable to assume that ascertainment rates don’t change too much.</p>
+<h3 id="more-sophisticated-models">More sophisticated models</h3>
+<p>We can also fit more sophisticated models which may better reflect real-life transmission processes. The SEIR model is widely used. As before, <strong>S</strong> stands for <strong>Susceptible</strong>, but <strong>E</strong> stand for <strong>Exposed/infected but asymptomatic</strong>, <strong>I</strong> stands for <strong>Infected and symptomatic</strong>, and <strong>R</strong> stands for <strong>Recovered</strong>.</p>
+<p>In a closed population (that is, assuming no births or deaths), the SEIR model is:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\frac{dS}{dt} &amp; = -\frac{\beta IS}{N}\\
+\\
+\frac{dE}{dt} &amp; = \frac{\beta IS}{N} - \kappa E\\
+\\
+\frac{dI}{dt} &amp; = \kappa E - \gamma I\\
+\\
+\frac{dR}{dt} &amp; = \gamma I
+\end{aligned}
+\]</span></p>
+<p>Fitting this model to the observed data is left as an exercise for the reader. Note however, that these are <em>continuous-time</em> dynamic models that assume fixed transition rates. There are other, stochastic models that use micro-simulation of individuals and allow for varying transition rates depending on attributes of individuals, social networking and so on. We will explore the utilty of such models in a later post.</p>
+<h1 id="modelling-the-epidemic-trajectory-using-log-linear-models">Modelling the epidemic trajectory using log-linear models</h1>
+<p>As noted above, the initial exponential phase of an outbreak, when shown in a semi-log plot (the y-axis with a logarithmic transform), appears (somewhat) linear. This suggests that we can model epidemic growth, and decay, using a simple log-linear model of the form:</p>
+<p><span class="math display">\[log(y) = rt + b\]</span></p>
+<p>where <span class="math inline">\(y\)</span> is the incidence, <span class="math inline">\(r\)</span> is the growth rate, <span class="math inline">\(t\)</span> is the number of days since a specific point in time (typically the start of the outbreak), and <span class="math inline">\(b\)</span> is the intercept. Separate models are fitted to the growth and the decay parts of the epidemic (incidence data) curve.</p>
+<p>The <code>incidence</code> package for R, part of the excellent <a href="https://www.repidemicsconsortium.org"><strong>R</strong> <strong>E</strong>pidemics <strong>Con</strong>sortium (<strong>RECON</strong>) suite</a> of packages for epidemic modelling and control, makes the fitting of such models very convenient (although it is not difficult using base R capabilities). We’ll use that package to fit such a model. We need to convert daily case counts back into one case per row format first. The <code>uncount()</code> function the the <code>tidyr</code> package is perfect for doing that.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# create a vector of dates, in character form, one for each
+# case in Hubei province on each date using the uncount()
+# function.
+hubei_incidence_function_data &lt;- provinces_confirmed %&gt;% filter(Date &gt;= 
+    ymd(&quot;2020-01-11&quot;)) %&gt;% mutate(HubeiSansWuhan = ifelse(is.na(HubeiSansWuhan), 
+    0, HubeiSansWuhan)) %&gt;% mutate(incident_cases = ifelse(Date &lt; 
+    ymd(&quot;2020-02-15&quot;), Wuhan + HubeiSansWuhan, Hubei)) %&gt;% mutate(Date = format(Date, 
+    &quot;%Y-%m-%d&quot;)) %&gt;% select(Date, incident_cases) %&gt;% uncount(incident_cases)
+
+hubei_incidence_object &lt;- incidence(hubei_incidence_function_data$Date)</code></pre>
+</div>
+<p>We can then find the date of peak incidence and indicate that on a plot of the daily incidence data. The <code>find_peak()</code> function in the <code>incidence</code> library does that for us (but it is also easy to do by eye or with some simple code, and there is also a more sophisticated peak detection function provided in the <code>incidence</code> library, but its use is unnecessary here.).</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+hubei_incidence_peak &lt;- find_peak(hubei_incidence_object)
+
+plot(hubei_incidence_object) + geom_vline(xintercept = hubei_incidence_peak, 
+    col = &quot;red&quot;, lty = 2) + labs(title = &quot;Daily incidence of lab-confirmed cases, Hubei province&quot;, 
+    subtitle = &quot;(red line indicates date of peak incidence)&quot;)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/plot_incidence_object-1.png" width="624" /></p>
+</div>
+<p>Now we can use the <code>fit()</code> function to fit two log-linear models, one to the growth phase before the peak, and one to the decay phase after the peak. We can plot the fitted values from our models (with confidence limits) on top of the actual observed incidence data for Hubei province.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+hubei_incidence_fit &lt;- incidence::fit(hubei_incidence_object, 
+    split = hubei_incidence_peak)
+
+# plot the incidence data and the model fit
+plot(hubei_incidence_object) %&gt;% add_incidence_fit(hubei_incidence_fit) + 
+    labs(title = &quot;Observed and modelled incidence of COVID-19 cases&quot;, 
+        subtitle = &quot;Hubei province, 2020&quot;)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png" width="624" data-distill-preview=1 /></p>
+</div>
+<p>From the model, we can extract various parameters of interest: the <strong>growth rate prior to the peak was 0.26</strong> (95% CI 0.21 - 0.31), and the <strong>decay rate after the peak was -0.095</strong> (95% CI -0.0695 - -0.121).</p>
+<p>These growth and decay rates are equivalent to a <strong>doubling time of 2.7 days</strong> (95% CI 2.2 - 3.3 days), and a <strong>halving time of 7.3 days</strong> (95% CI 5.7 - 10.0 days).</p>
+<p>The doubling and halving time estimates are very handy for informing public health intervention policy, which we will discuss in the conclusion.</p>
+<h2 id="estimating-the-reproduction-number-from-log-linear-models">Estimating the reproduction number from log-linear models</h2>
+<p>We can also use these log-linear models of the epidemic trajectory to estimate the reproduction number in the growth and decay phases of the epidemic. We need to provide a distribution for the <em>serial interval</em> time, which is the time between the onset of a primary case and the time of onset in its secondary cases. We’ll use a mean of 7.5 days and a standard deviation of 3.4 days to parameterise a discrete gamma distribution for the serial interval. See the discussion in next section of <em>serial intervals</em> for justification of these values. The <code>distcrete</code> and <code>epitrix</code> libraries from the <strong>RECON</strong> suite of tools are needed to carry out the calculations. Here is a histogram of our calculated distribution of possible values for <span class="math inline">\(R_{0}\)</span> for the growth phase, based on the log-linear model we fitted to the Hubei incidence data:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+mu &lt;- 7.5  # days
+sigma &lt;- 3.4  # days
+param &lt;- gamma_mucv2shapescale(mu, sigma/mu)
+
+w &lt;- distcrete(&quot;gamma&quot;, interval = 1, shape = param$shape, scale = param$scale, 
+    w = 0)
+
+growth_R0 &lt;- lm2R0_sample(hubei_incidence_fit$before$model, w)
+hist(growth_R0, col = &quot;grey&quot;, border = &quot;white&quot;, main = &quot;Distribution of R0&quot;)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/est_R0_growth-1.png" width="624" /></p>
+<pre class="r"><code>
+summary(growth_R0)</code></pre>
+<pre><code>
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  3.093   3.993   4.389   4.389   4.737   5.382 </code></pre>
+</div>
+<p>Note that the central estimates for <span class="math inline">\(R_{0}\)</span> are considerably higher than those we calculated with a SIR model fitted to the same Hubei province data, and are also higher than <span class="math inline">\(R_{0}\)</span> estimates published elsewhere, but they are consistent with estimates of the instantaneous effective reproduction number <span class="math inline">\(R_{e}\)</span> which we calculate in the next section<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>.</p>
+<p>Here is the estimated <span class="math inline">\(R_{e}\)</span> for the decay phase:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+decay_R0 &lt;- lm2R0_sample(hubei_incidence_fit$after$model, w)
+hist(decay_R0, col = &quot;grey&quot;, border = &quot;white&quot;, main = &quot;Distribution of R0&quot;)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/est_R0_decay-1.png" width="624" /></p>
+<pre class="r"><code>
+summary(decay_R0)</code></pre>
+<pre><code>
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.3496  0.4516  0.4877  0.4876  0.5266  0.6856 </code></pre>
+</div>
+<p>Unsurprisingly, it is well below 1.0 – otherwise the epidemic would not be decaying, as we observe.</p>
+<h1 id="estimating-changes-in-the-effective-reproduction-number">Estimating changes in the <em>effective reproduction number</em></h1>
+<p>Given the above, it would be useful to estimate the current <em>effective reproduction number</em> <span class="math inline">\(R_{e}\)</span> on a day-by-day basis so as to track the effectiveness of public health interventions, and possibly predict at the earliest opportunity when an outbreak will turn the corner. Is that possible?</p>
+<p>In fact, there are several available methods for estimating <span class="math inline">\(R_{e}\)</span> – exploring all of those is beyond the scope of this post. Instead, we will focus on one method, developed in 2013 by Anne Cori and colleagues at Imperial College, London, which permits estimation of the <em>instantaneous effective reproduction number</em>, which is exactly want we want in order to track the effectiveness of containment efforts. Full details are available in the <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3816335/">original paper</a> on the method, with extensions described in a later paper by <a href="https://doi.org/10.1016/j.epidem.2019.100356">Thompson <em>et al.</em></a>. We’ll use the <code>EpiEstim</code> package for <em>R</em>, which implements this method, with recent extensions to permit modelling of imported cases as well as local transmission. “Imported” my be from other species, and/or due to inbound human travel from other geographical regions.</p>
+<p>Once again, we’ll start with the counts of lab-confirmed cases from in Hubei province and Wuhan city from 11th January 2020 onwards. We’ll treat the initial 41 cases as “imported”, possibly from a different species at the Wuhan fish markets. In fact, that assumption makes little difference to the estimates.</p>
+<div class="layout-chunk" data-layout="l-body">
+
+</div>
+<p>A critical parameter for the Cori model is the <em>serial interval</em> (SI). The SI is the time between onset of symptoms of each case of the disease in question, and the onset of symptoms in any secondary cases that result from transmission from the primary cases. In other words, it is the time between cases in the (branching) chain of transmission of the disease. A moment’s reflection reveals that the SI is, in fact, a statistical distribution of serial interval times, rather than a fixed value. That distribution can be simulated, typically using the discrete <em>gamma</em> distribution with a given mean and standard deviation.</p>
+<p>The <code>estimate_R()</code> function in the <code>EpiEstim</code> package allows the SI distribution to be specified parametrically as the mean and SD of of a <em>gamma</em> distribution. It also allows uncertainty to be incorporated into the parameterisation of this distribution, and it even allows the SI distribution to be estimated empirically, using Bayesian methods, from individual line-listings of cases. We’ll examine all of those capabilities.</p>
+<p>At the time of writing, I was able to find only one published estimate of the <em>serial interval</em> distribution, derived from analysis of just 5 primary cases amongst the first 450 cases in Wuhan, published by <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2001316">Li <em>et al.</em></a>. They estimate the serial interval distribution to have a mean of 7.5 days with a standard deviation of 3.4 days. This is almost identical to the <em>serial interval</em> parameters for the MERS virus, which were a mean of 7.6 and a SD of 3.4. This similarity is not surprising given that both pathogens are coronavirii. Let’s use that to estimate the instantaneous <span class="math inline">\(R_{e}\)</span> for Hubei province.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# custom results plotting function to avoid the ugly
+# TableGrob messages returned by the plotting function in the
+# EpiEstim package
+plot_Ri &lt;- function(estimate_R_obj) {
+    p_I &lt;- plot(estimate_R_obj, &quot;incid&quot;, add_imported_cases = TRUE)  # plots the incidence
+    p_SI &lt;- plot(estimate_R_obj, &quot;SI&quot;)  # plots the serial interval distribution
+    p_Ri &lt;- plot(estimate_R_obj, &quot;R&quot;)
+    return(gridExtra::grid.arrange(p_I, p_SI, p_Ri, ncol = 1))
+}
+
+hubei_res_parametric_si &lt;- estimate_R(hubei_confirmed_cases, 
+    method = &quot;parametric_si&quot;, config = make_config(list(mean_si = 7.5, 
+        std_si = 3.4)))
+
+plot_Ri(hubei_res_parametric_si)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_parametric_si_model_fit_hubei-1.png" width="624" /></p>
+</div>
+<p>The first thing to note is that the slope of the <em>effective reproduction number</em> curve is decidedly downwards, which strongly suggests that containment efforts are succeeding in progressively reducing transmission of the disease in Hubei province. That is encouraging.</p>
+<p>The second thing to note is that the 7-day sliding window estimates of <strong>instantaneous</strong> <span class="math inline">\(R_{e}\)</span> are very high, approaching 10 at the peak. This seems unlikely. It is possible that the Cori model or its implementation as an R library is flawed, but it has been developed and implemented by the pre-eminent epidemic modelling team in the world, and has been shown to accurately estimate <span class="math inline">\(R_{e}\)</span> using a wide range of historical outbreak data. There are, however, a number of possible alternative explanations.</p>
+<p>One possible explanation is that COVID-19 is transmissible <strong>before</strong> the onset of symptoms, resulting in much shorter serial intervals than expected, possibly shorter than the incubation period. Alternatively, and very likely, there may be non-symptomatic, sub-clinical spreaders of the disease, who are undetected. again, the effect is as if the serial interval is very short, although it would be desirable to explicitly model that scenario, but the current implementations don’t permit that.</p>
+<p>Either way, if we re-calculate, but using a mean of just 2.3 days for the SI distribution, and an SD of 1.4, we get these estimates:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+hubei_res_parametric_si &lt;- estimate_R(hubei_confirmed_cases, 
+    method = &quot;parametric_si&quot;, config = make_config(list(mean_si = 2.3, 
+        std_si = 1.4)))
+
+plot_Ri(hubei_res_parametric_si)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_parametric_si_model_fit2_hubei-1.png" width="624" /></p>
+</div>
+<p>Those estimated <span class="math inline">\(R_{e}\)</span> values look far more reasonable, and if true, suggest that the epidemic will soon be brought under control, at least in Hubei, which is its epicentre.</p>
+<p>However, arbitrarily making the serial interval very short feels wrong. Another possible explanation is that there may be a great deal of variation in the serial interval distribution between cases, for the reasons noted above, with some cases transmitting the disease very soon after infection, possibly before the onset of symptoms (so-called <em>super-spreaders</em>), some sub-clinical, and thus undetected cases spreading the disease as well, while other cases have a serial interval more consistent with that of MERS or SARS, with a mean around 8 days. Such variability in the serial interval distributions between cases is consistent with the observed variation between individuals in the severity of the disease caused by COVID-19 – most victims develop only mild disease, a small proportion develop serious disease, and only one or two per cent die from the infection.</p>
+<p>Conveniently, the <code>EpiEstim</code> package lets us incorporate this uncertainty around the serial interval distribution by allowing specification of a distribution of distributions of serial intervals. So let’s retain the mean SI estimated by Li <em>et al.</em> of 7.5 days, with an SD of 3.4, but let’s also allow that mean SI to vary between 2.3 and 8.4 using a truncated normal distribution with an SD of 2.0. We’ll also allow the SD or the SD to vary between 0.5 and 4.0.</p>
+<p>Recalculating with those SI distribution parameters and meta-parameters, we get these results:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+hubei_res_uncertain_si &lt;- estimate_R(hubei_confirmed_cases, method = &quot;uncertain_si&quot;, 
+    config = make_config(list(mean_si = 7.5, std_mean_si = 2, 
+        min_mean_si = 1, max_mean_si = 8.4, std_si = 3.4, std_std_si = 1, 
+        min_std_si = 0.5, max_std_si = 4, n1 = 1000, n2 = 1000)))
+
+plot_Ri(hubei_res_uncertain_si)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_uncertain_si_model_fit_hubei-1.png" width="624" /></p>
+</div>
+<p>Ok, that looks more reasonable, and clearly the <span class="math inline">\(R_{e}\)</span> is falling in Hubei, no matter what distribution we use for the serial interval.</p>
+<p>But, leaving no stone unturned, the methods provided in the excellent <em>EpiEstim</em> package also permit <em>empirical</em> estimation of the <em>serial interval</em> based on pair data – that is, unit records of pairs of primary and secondary cases. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2001316">Li <em>et al.</em></a> provides such data for just 5 primary cases from the early stages of the outbreak in Wuhan:</p>
+<figure>
+<img src="assets/Li_et_al_fig3.png" alt="Figure 3 from Li et al." /><figcaption>Figure 3 from Li et al.</figcaption>
+</figure>
+<p>Notice in particular that the secondary cases in cluster 4 have <strong>very short</strong> serial intervals, which supports the meta-distribution we explored above (albeit, that set of short intervals is for only one primary case, but that is the only serial interval currently available, it seems!).</p>
+<p>Let’s use those serial interval data to re-estimate <span class="math inline">\(R_{e}\)</span>. Bayesian methods are used, and the trace output below is from the MCMC (Markov-chain Monte Carlo) resampling methods used.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+SL = c(5, 9, 7, 3, 7, 8, 1, 3, 7, 9, 12)
+
+si_data_wuhan_Li &lt;- data.frame(EL = as.integer(rep(0, 11)), ER = as.integer(rep(1, 
+    11)), SL = as.integer(SL), SR = as.integer(SL + 1))
+
+## fixing the random seeds
+MCMC_seed &lt;- 1
+overall_seed &lt;- 2
+mcmc_control &lt;- make_mcmc_control(seed = MCMC_seed, burnin = 1000)
+dist &lt;- &quot;G&quot;  # fitting a Gamma distribution for the SI
+empirical_si_config &lt;- make_config(list(si_parametric_distr = dist, 
+    mcmc_control = mcmc_control, seed = overall_seed, n1 = 50, 
+    n2 = 50))
+hubei_res_empirical_si &lt;- estimate_R(hubei_confirmed_cases, method = &quot;si_from_data&quot;, 
+    si_data = si_data_wuhan_Li, config = empirical_si_config)</code></pre>
+<pre><code>
+Running 1500 MCMC iterations 
+MCMCmetrop1R iteration 1 of 1500 
+function value =  -30.27974
+theta = 
+   1.40008
+   0.46471
+Metropolis acceptance rate = 0.00000
+
+MCMCmetrop1R iteration 1001 of 1500 
+function value =  -31.54334
+theta = 
+   0.52339
+   1.20517
+Metropolis acceptance rate = 0.55844
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+The Metropolis acceptance rate was 0.56400
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+Estimating the reproduction number for these serial interval estimates...
+ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@</code></pre>
+<pre class="r"><code>
+plot_Ri(hubei_res_empirical_si)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_empirical_si_model_fit_hubei_daily-1.png" width="624" /></p>
+</div>
+<p>That is remarkably similar to our estimates based on an “uncertain” meta-distribution for the <em>serial interval</em>, above, which is encouraging.</p>
+<p>Nonetheless some of the <span class="math inline">\(R_{e}\)</span> values are still rather high. Remember, these are <strong>instantaneous</strong> <em>reproductive numbers</em>, averaged over a sliding 7-day window. Let’s change that to a shorter window to see what the day-to-day changes in <span class="math inline">\(R_{e}\)</span> are, rather than based on an aggregation of the preceding 7-days. We’ll plot the results using a logarithmic scale with a red reference line at 1.0, representing the <em>reproduction number</em> below which the outbreak will start to die out.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+t_start &lt;- seq(5, length(hubei_confirmed_cases$local) - 1)
+t_end &lt;- t_start + 1
+
+empirical_si_config_daily &lt;- make_config(list(si_parametric_distr = dist, 
+    mcmc_control = mcmc_control, seed = overall_seed, n1 = 50, 
+    n2 = 50, t_start = t_start, t_end = t_end))
+
+hubei_res_uncertain_si_daily &lt;- estimate_R(hubei_confirmed_cases, 
+    method = &quot;si_from_data&quot;, si_data = si_data_wuhan_Li, config = empirical_si_config_daily)</code></pre>
+<pre><code>
+Running 1500 MCMC iterations 
+MCMCmetrop1R iteration 1 of 1500 
+function value =  -30.27974
+theta = 
+   1.40008
+   0.46471
+Metropolis acceptance rate = 0.00000
+
+MCMCmetrop1R iteration 1001 of 1500 
+function value =  -31.54334
+theta = 
+   0.52339
+   1.20517
+Metropolis acceptance rate = 0.55844
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+The Metropolis acceptance rate was 0.56400
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+Estimating the reproduction number for these serial interval estimates...
+ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@</code></pre>
+<pre class="r"><code>
+# plot_Ri(hubei_res_uncertain_si_daily)
+plot(hubei_res_uncertain_si_daily, &quot;R&quot;) + scale_y_continuous(trans = &quot;log2&quot;) + 
+    geom_hline(yintercept = 1, linetype = &quot;solid&quot;, colour = &quot;red&quot;, 
+        size = 0.5)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_uncertain_si_model_fit_hubei_daily-1.png" width="624" /></p>
+</div>
+<p>So, it looks like the outbreak has been brought under control in Hubei province, at least based on the published lab-confirmed case numbers and the available serial interval data or estimates.</p>
+<p>It might be remarked that the success of the control measures are also obvious simply by looking at the daily incremental incidence numbers for Hubei:</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+provinces_confirmed &lt;- provinces_confirmed %&gt;% mutate(HubeiSansWuhan = ifelse(is.na(HubeiSansWuhan), 
+    0, HubeiSansWuhan)) %&gt;% mutate(Hubei = Wuhan + HubeiSansWuhan)
+
+provinces_confirmed %&gt;% ggplot(aes(x = Date, y = Hubei)) + geom_point() + 
+    geom_line() + labs(y = &quot;Daily incremental incidence&quot;, title = &quot;Hubei lab-confirmed cases&quot;, 
+    subtitle = &quot;(with adjustment for spike in Wuhan cases on 27th Jan)&quot;)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/hubei_daily_incidence_adj-1.png" width="624" /></p>
+</div>
+<p>However, there is no clue in the data shown above that daily incidence was beginning to fall until data for <strong>5th February</strong> became available. But it is clear, from the <strong>instantaneous</strong> <span class="math inline">\(R_{e}\)</span> plot above that that the <span class="math inline">\(R_{e}\)</span> was already falling steadily by <strong>27th January</strong>, more than a week before the daily incidence plot revealed a peak. Such early indications that their efforts are working are vital for public health authorities and governments, encouraging them to “hold the line” and not abandon such costly and disruptive public health controls prematurely.</p>
+<h2 id="estimating-changes-in-the-effective-reproduction-number-for-wuhan-and-other-provinces">Estimating changes in the <em>effective reproduction number</em> for Wuhan and other provinces</h2>
+<p>Just to make sure our conclusions about falling <em>effective reproduction numbers</em> for Hubei province also hold up for just Wuhan, and for other provinces, let’s repeat the estimations. Unfortunately, Wuhan-only data for confirmed cases is not available after 14th February, only combined lab-confirmed and clinical case counts were published after that date.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+wuhan_confirmed_cases &lt;- provinces_confirmed %&gt;% filter(Date &gt;= 
+    ymd(&quot;2020-01-11&quot;), Date &lt; ymd(&quot;2020-02-15&quot;)) %&gt;% mutate(imported = ifelse(Date == 
+    ymd(&quot;2020-01-11&quot;), Wuhan, 0), local = ifelse(Date == ymd(&quot;2020-01-11&quot;), 
+    0, Wuhan)) %&gt;% select(Date, local, imported) %&gt;% rename(dates = Date)
+
+t_start &lt;- seq(5, length(wuhan_confirmed_cases$local) - 1)
+t_end &lt;- t_start + 1
+
+empirical_si_config_daily &lt;- make_config(list(si_parametric_distr = dist, 
+    mcmc_control = mcmc_control, seed = overall_seed, n1 = 50, 
+    n2 = 50, t_start = t_start, t_end = t_end))
+
+wuhan_res_uncertain_si_daily &lt;- estimate_R(wuhan_confirmed_cases, 
+    method = &quot;si_from_data&quot;, si_data = si_data_wuhan_Li, config = empirical_si_config_daily)</code></pre>
+<pre><code>
+Running 1500 MCMC iterations 
+MCMCmetrop1R iteration 1 of 1500 
+function value =  -30.27974
+theta = 
+   1.40008
+   0.46471
+Metropolis acceptance rate = 0.00000
+
+MCMCmetrop1R iteration 1001 of 1500 
+function value =  -31.54334
+theta = 
+   0.52339
+   1.20517
+Metropolis acceptance rate = 0.55844
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+The Metropolis acceptance rate was 0.56400
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+Estimating the reproduction number for these serial interval estimates...
+ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@</code></pre>
+<pre class="r"><code>
+# plot_Ri(hubei_res_uncertain_si_daily)
+plot(wuhan_res_uncertain_si_daily, &quot;R&quot;) + scale_y_continuous(trans = &quot;log2&quot;) + 
+    geom_hline(yintercept = 1, linetype = &quot;solid&quot;, colour = &quot;red&quot;, 
+        size = 0.5) + labs(title = &quot;Instantaneous effective reproduction numbers, Wuhan&quot;, 
+    subtitle = &quot;(up to 14th Bef 2020 only)&quot;)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_model_get_data_wuhan-1.png" width="624" /></p>
+</div>
+<p>The <span class="math inline">\(R_{e}\)</span> for Wuhan is also trending down, and is, at the time of writing, very likely below 1.0 (if our <em>serial interval</em> distribution estimates are correct). However, note that the downwards trend in Wuhan is not monotonic. This may be an indication that the authorities are still struggling to control spread in Wuhan. This is also apparent in the jagged plateau in the daily incremental incidence figures for Wuhan as we saw above.</p>
+<h2 id="estimating-changes-in-the-effective-reproduction-number-outside-hubei">Estimating changes in the <em>effective reproduction number</em> outside Hubei</h2>
+<p>Finally, let’s estimate the change in <span class="math inline">\(R_{e}\)</span> for all other Chinese provinces except Hubei.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+not_hubei_confirmed_cases &lt;- provinces_confirmed %&gt;% filter(Date &gt;= 
+    ymd(&quot;2020-01-19&quot;)) %&gt;% mutate(imported = ifelse(Date == ymd(&quot;2020-01-19&quot;), 
+    NationalSansHubei, 0), local = ifelse(Date == ymd(&quot;2020-01-19&quot;), 
+    0, NationalSansHubei)) %&gt;% select(Date, local, imported) %&gt;% 
+    rename(dates = Date) %&gt;% filter(dates &lt;= ymd(&quot;2020-02-09&quot;))
+
+t_start &lt;- seq(2, length(not_hubei_confirmed_cases$local) - 1)
+t_end &lt;- t_start + 1
+
+empirical_si_config_daily &lt;- make_config(list(si_parametric_distr = dist, 
+    mcmc_control = mcmc_control, seed = overall_seed, n1 = 50, 
+    n2 = 50, t_start = t_start, t_end = t_end))
+
+not_hubei_res_uncertain_si &lt;- estimate_R(not_hubei_confirmed_cases, 
+    method = &quot;si_from_data&quot;, si_data = si_data_wuhan_Li, config = empirical_si_config_daily)</code></pre>
+<pre><code>
+Running 1500 MCMC iterations 
+MCMCmetrop1R iteration 1 of 1500 
+function value =  -30.27974
+theta = 
+   1.40008
+   0.46471
+Metropolis acceptance rate = 0.00000
+
+MCMCmetrop1R iteration 1001 of 1500 
+function value =  -31.54334
+theta = 
+   0.52339
+   1.20517
+Metropolis acceptance rate = 0.55844
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+The Metropolis acceptance rate was 0.56400
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
+Estimating the reproduction number for these serial interval estimates...
+ @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@</code></pre>
+<pre class="r"><code>
+# plot_Ri(hubei_res_uncertain_si_daily)
+plot(not_hubei_res_uncertain_si, &quot;R&quot;) + scale_y_continuous(trans = &quot;log2&quot;) + 
+    geom_hline(yintercept = 1, linetype = &quot;solid&quot;, colour = &quot;red&quot;, 
+        size = 0.5) + labs(title = &quot;Instantaneous effective reproduction numbers, all provinces except Hubei&quot;)</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/Cori_model_get_data_not_hubei-1.png" width="624" /></p>
+</div>
+<p>It looks like the outbreak is already under control in other provinces, if the empirical distribution for the <em>serial interval</em> we have used is approximately correct.</p>
+<h1 id="projections">Projections</h1>
+<p>We saw above how we can make fairly naïve and highly alarming projections based on a simple SIR model. But more sophisticated projections are also possible.</p>
+<p>Here we’ll examine the use of the <a href="https://www.repidemicsconsortium.org/projections/"><code>projections</code> package</a>, which is also part of the <strong>RECON</strong> suite. From its manual page:</p>
+<blockquote>
+<p><code>projections</code> uses data on daily incidence, the <em>serial interval</em> (time between onsets of infectors and infectees) and the reproduction number to simulate plausible epidemic trajectories and project future incidence. It relies on a branching process where daily incidence follows a Poisson process determined by a daily infectiousness, computed as:</p>
+</blockquote>
+<p><span class="math display">\[\lambda_t = \sum_{s=1}^{t-1} y_s w(t-s)\]</span></p>
+<blockquote>
+<p>where <span class="math inline">\(w()\)</span> is the probability mass function (PMF) of the serial interval, and <span class="math inline">\(y_s\)</span> is the incidence at time <span class="math inline">\(s\)</span>.</p>
+</blockquote>
+<p>We can just re-use the <code>incidence()</code> object for the Hubei incidence data which we created above for the purposes of fitting log-linear models to the epidemic trajectories. We’ll also use the discrete <em>serial interval</em> distribution we created, and the median <em>reproduction number</em> we calculated above for the growth and decay phases of the outbreak in Hubei province, in order to test the projection of those phases of the epidemic in Hubei forwards. We’ll base these projections on only the first parts of the growth and decay phases, so that we can then compare the resulting projections against the observed incidence data for the balance of thoe phases. If the projections match that observed reality reasonably well, we can then have some confidence in any forward projections into the future which we make. Such projections are obviously valuable for planning purposes – for example, during the decay phase of an epidemic, projections of the decay can be used to inform how long public health interventions such as transport lock-downs and mandatory social isolation may have to be kept in place.</p>
+<p>First we’ll project the Hubei province incidence data for the first part of the growth phase of the epidemic. Recall that we found the peak of the epidemic (daily incidence) curve for Hubei to have occured on 04 February 2020. Thus, we’ll base our projection on the Hubei incidence data up to 14 days before that peak, and compare with the observed data. Click on the <code>Code</code> button to see the details.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+set.seed(1)
+pred_fwd_days &lt;- 10
+date_range &lt;- 1:(which(get_dates(hubei_incidence_object) == hubei_incidence_peak) - 
+    pred_fwd_days)
+date_range</code></pre>
+<pre><code>
+ [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15</code></pre>
+<pre class="r"><code>
+test_pred_growth &lt;- project(hubei_incidence_object[date_range], 
+    R = median(growth_R0), si = w, n_days = pred_fwd_days, n_sim = 1000)
+
+# convert the test_pred_growth matrix to a data frame and get
+# the median incidence for all the simulations for each date
+test_pred_growth_median_counts &lt;- test_pred_growth %&gt;% as.data.frame() %&gt;% 
+    pivot_longer(-dates, names_to = &quot;simulation&quot;, values_to = &quot;incidence&quot;) %&gt;% 
+    group_by(dates) %&gt;% summarise(incident_cases = as.integer(median(incidence))) %&gt;% 
+    mutate(data_type = &quot;projection&quot;)
+
+test_pred_growth_median_counts %&gt;% bind_rows(tibble(dates = get_dates(hubei_incidence_object), 
+    incident_cases = get_counts(hubei_incidence_object), data_type = &quot;observed&quot;)) %&gt;% 
+    ggplot(aes(x = dates, y = incident_cases, colour = data_type)) + 
+    geom_point() + geom_line() + labs(x = &quot;&quot;, y = &quot;Daily incident confirmed cases&quot;, 
+    title = &quot;Observed versus growth-phase projection of incident cases\nin Hubei province&quot;, 
+    subtitle = paste(&quot;(projection based on observed case counts up to&quot;, 
+        format(hubei_incidence_peak - days(pred_fwd_days), &quot;%d %B %Y&quot;), 
+        &quot;)&quot;)) + theme(legend.position = &quot;top&quot;, legend.title = element_blank())</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/test_projection_Hubei_growth-1.png" width="624" /></p>
+</div>
+<p>OK, that’s impressive! The projection, based only on observed data up to 25 January 2020, is in remarkably close agreement with the observed data. Let’s do the same for the decay phase, this time holding out 5 days of the observed decay from our prediction.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+set.seed(1)
+pred_fwd_days &lt;- 0  # 5
+
+date_range &lt;- which(get_dates(hubei_incidence_object) == hubei_incidence_peak):(length(get_dates(hubei_incidence_object)) - 
+    pred_fwd_days)
+
+date_range &lt;- which(get_dates(hubei_incidence_object) == hubei_incidence_peak):(length(get_dates(hubei_incidence_object)) - 
+    pred_fwd_days)
+
+test_pred_decay &lt;- project(hubei_incidence_object[date_range], 
+    R = median(decay_R0), si = w, n_days = 60, n_sim = 1000)
+
+# convert the test_pred_decay matrix to a data frame and get
+# the median incidence for all the simulations for each date
+test_pred_decay_median_counts &lt;- test_pred_decay %&gt;% as.data.frame() %&gt;% 
+    pivot_longer(-dates, names_to = &quot;simulation&quot;, values_to = &quot;incidence&quot;) %&gt;% 
+    group_by(dates) %&gt;% summarise(incident_cases = as.integer(median(incidence))) %&gt;% 
+    mutate(data_type = &quot;projection&quot;)
+
+test_pred_decay_median_counts %&gt;% bind_rows(tibble(dates = get_dates(hubei_incidence_object), 
+    incident_cases = get_counts(hubei_incidence_object), data_type = &quot;observed&quot;)) %&gt;% 
+    ggplot(aes(x = dates, y = incident_cases, colour = data_type)) + 
+    geom_point() + geom_line() + labs(x = &quot;&quot;, y = &quot;Daily incident confirmed cases&quot;, 
+    title = &quot;Observed versus decay-phase projection of incident cases\nin Hubei province&quot;, 
+    subtitle = paste(&quot;(projection based on observed case counts in decay phase up to&quot;, 
+        format(get_dates(hubei_incidence_object)[(length(get_dates(hubei_incidence_object)) - 
+            pred_fwd_days)], &quot;%d %B %Y&quot;), &quot;)&quot;)) + theme(legend.position = &quot;top&quot;, 
+    legend.title = element_blank())</code></pre>
+<p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/test_projection_Hubei_decay-1.png" width="624" /></p>
+</div>
+<p>Based on that projection, it will take until the beginning of April for the outbreak in Hubei to be extinguished. But perhaps that is too conservative a prediction? We’ll re-visit these predictions in a later post, in the light of further incidence data.</p>
+<h2 id="conclusions">Conclusions</h2>
+<h3 id="public-health-considerations">Public health considerations</h3>
+<p>It seems likely that China has won the battle, if not the war, against the COVID-19 outbreak, having successfully mitigated the spread of the virus through <strong>very</strong> decisive and prompt public health action, in particular closing Wuhan and other cities in Hubei province, and implementing strict social isolation policies within those cities.</p>
+<p>Just how long these measure will need to remain in place depends is unclear, but could be estimated using methods similar to those described above.</p>
+<p>The real worry now is spread in other countries. Wealthy, developed countries such as Australia should be able to detect and contain any spread. The real worry are less wealthy countries which have considerable interchange of people with mainland China, and which have much poorer public health surveillance and control capabilities. In particular, Indonesia is a particular worry, and the <a href="https://www.smh.com.au/world/asia/why-are-there-are-no-cases-of-coronavirus-in-indonesia-20200213-p540o1.html">absence of any reported cases there currently</a>, as at 14th February, beggars belief. <a href="https://www.medrxiv.org/content/10.1101/2020.02.04.20020495v1.full.pdf">De Salazar <em>et al</em>.</a> at the Harvard Centre for Communicable Disease Dynamics has statistically modelled this beggaring of belief. However, all the other south-east Asian countries, except perhaps Singapore, would also seem to be highly vulnerable, even if they have reported cases, and <a href="https://www.smh.com.au/world/asia/coronavirus-could-infect-two-thirds-of-globe-top-scientist-says-20200214-p540pc.html">some experts are predicting a global pandemic</a> with devastating consequences.</p>
+<p>It would seem that a key question, right now (as at 18th February), is <strong>“How long do we need to wait to know whether there really aren’t any COVID-19 cases in Indonesia?”</strong>. In other words, by what date should spreading COVID-19 infection in Indonesia become evident, even in the absence of comprehensive or effect public health surveillance systems there (or in the presence of possible government censoring, or <a href="https://www.thejakartapost.com/news/2020/02/12/its-insulting-indonesia-criticizes-us-study-concerns-over-no-coronavirus-cases.html">censuring</a>, of information produced by public health surveillance agencies).</p>
+<p>We can make some informed guesses about that. Let’s assume that, in a country with relatively poor public health surveillance capabilities, it requires about 1,000 cases of the disease before tan outbreak becomes evident, given that only a small proportion of those require hospital care and only a few per cent will die. One thousand cases is about 2<sup>10</sup>, so 10 generations, and with a doubling time of about 2.8 days, as we estimated above, that means local outbreaks ought to start showing up after about 4 weeks. If the true doubling time is longer than that, it make take six or eight weeks before local outbreaks become obvious. Given this, we might expect such local outbreaks to start showing up in Indonesia some time over the next few weeks, at least by the end of February 2020. At the time of writing, <a href="https://asia.nikkei.com/Spotlight/Coronavirus/Vietnam-locks-down-Son-Loi-district-near-Hanoi-for-20-days">Vietnamese authorities have already locked down the Son Loi community</a> outside Hanoi due to a local COVID-19 outbreak.</p>
+<h3 id="data-science-considerations">Data science considerations</h3>
+<p>From a data science (and public health) perspective, the main thing to note is that by doing all this data manipulation and model estimation using program code, as we have been doing, rather than using spreadsheets or some other manual process, it is very easy to re-run everything on-demand in just a minute or so, and thus current estimates and projections can readily be automatically updated as new observed data becomes available each day, or even every hour.</p>
+<p>The absence of better <em>serial interval</em> data is unfortunate. These data can be sampled – it isn’t necessary to collect these data for every index or primary case, just a representative sample of them. Only Li <em>et al.</em> have published such vital data, to date, and only for five sets of cases from early in the outbreak. This seems to be a significant omission, given the considerable <a href="https://arstechnica.com/science/2020/02/quarantine-camps-door-to-door-searches-in-wuhan-as-coronavirus-rampages-on/">human</a> and <a href="https://www.bloomberg.com/graphics/2020-global-economic-impact-of-wuhan-novel-coronavirus/">economic</a> impacts of the outbreak and the containment measures implemented in response to it.</p>
+<p>Similarly better line-listing data, even if only for samples of cases, would facilitate modelling of outbreak control and estimation of how long public health controls need to be kept in place in each jurisdiction. One would like to think that government authorities are undertaking mathematical modelling, of the type illustrated in this document, on a daily basis to inform their policy decisions. They may well be in China, but elsewhere, it is likely that it is heuristics, not mathematics, that is informing policy.</p>
+<p>Finally, it would be wonderful if WHO could provide up-to-date, authoritative summary data via a stable API, to facilitate efforts to track and model such outbreaks. National and sub-national jurisdictional health authorities should do the same. There are data scientists who can assist.</p>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I have updated the NSW Health data shown in this post since it was written and originally published. But the data for China still only covers the period up to 15th February.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>From 1st February 2020, Australia banned entry of anyone travelling from or through mainland China, with the exception of returning Australian citizens and permanent residents. Some exceptions were made for a small number of secondary students. At the time of writing, the travel restrictions are still in place.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>The <a href="https://cbdrh.github.io/NovelCoronavirus/on-COVID-19.html">full version of this analysis</a> uses the excellent <code>gt</code> library to display such tables for those who are interested.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p>It is also possible to fit SIR and related models by MLE.<a href="#fnref4" class="footnote-back">↩</a></p></li>
+<li id="fn5"><p>In a very interesting paper, <a href="https://doi.org/10.3390/jcm9020419">Nishiura <em>et al</em>.</a> state: “<em>There were two interesting features of the evacuation process conducted by Japanese authorities. First, all 565 passengers [repatriated to Japan from Wuhan] were screened for symptoms upon arrival. Prior to disembarkation, the quarantine officers used portable thermoscanners to screen the temperature. In the following, all passengers were interviewed regarding whether they have any symptoms suggestive of upper respiratory tract infection, including fever and cough. Of the 565 passengers, 63 were symptomatic. Second, the passengers were tested for presence of 2019‐nCoV using reverse transcription polymerase chain reaction (RT‐PCR), and eight passengers (1.4%) were determined to have the virus. Importantly, most of the individuals positive for the virus were asymptomatic (five passengers), while only the other three had symptoms consistent with 2019‐nCoV infection, indicating that the dataset generated from this process can help investigate the full spectrum of infection including mild and asymptomatic infections.</em>”. Thus, they found about 60% of those infected with the COVID-19 virus were essentially asymptomatic, and thus likely to be undetected and unascertained.<a href="#fnref5" class="footnote-back">↩</a></p></li>
+<li id="fn6"><p>They are also consistent with unpublished estimates of <span class="math inline">\(R_{0}\)</span> for the COVID-19 virus being discussed in various expert WHO fora, I am told by a reliable source who does not wish to be named.<a href="#fnref6" class="footnote-back">↩</a></p></li>
+</ol>
+</section>
+<!--radix_placeholder_article_footer-->
+<!--/radix_placeholder_article_footer-->
+</div>
+
+<div class="d-appendix">
+</div>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+<!--radix_placeholder_site_after_body-->
+<!--/radix_placeholder_site_after_body-->
+<!--radix_placeholder_appendices-->
+<div class="appendix-bottom">
+<h3 id="updates-and-corrections">Corrections</h3>
+<p>If you see mistakes or want to suggest changes, please <a href="https://github.com/timchurches/blog/tree/master/_posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/issues/new">create an issue</a> on the source repository.</p>
+<h3 id="reuse">Reuse</h3>
+<p>Text and figures are licensed under Creative Commons Attribution <a rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Source code is available at <a href="https://github.com/timchurches/blog/tree/master/_posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1">https://github.com/timchurches/blog/tree/master/_posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1</a>, unless otherwise noted. The figures that have been reused from other sources don't fall under this license and can be recognized by a note in their caption: "Figure from ...".</p>
+</div>
+<!--/radix_placeholder_appendices-->
+<!--radix_placeholder_navigation_after_body-->
+<!--/radix_placeholder_navigation_after_body-->
+
+</body>
+
+</html>

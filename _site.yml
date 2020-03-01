@@ -7,7 +7,7 @@ base_url: https://timchurches.github.io/blog/
 collections:
   posts:
     feed_items_max: 50
-    disqus: tim-churches-hds-blog
+    # disqus: tim-churches-health-data-science-blog
     share: [twitter, facebook]
 navbar:
   logo: assets/TimC.jpg

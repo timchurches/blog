@@ -1,6 +1,6 @@
 [
   {
-    "path": "posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/",
+    "path": "posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/",
     "title": "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1",
     "description": "An exploration of COVID-19 incidence data using R tools and packages.",
     "author": [
@@ -9,14 +9,14 @@
         "url": {}
       }
     ],
-    "date": "2020-02-28",
+    "date": "2020-02-18",
     "categories": [
       "R",
       "COVID-19"
     ],
-    "preview": "posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/assets/example_NSW_Health_media_release.png",
-    "last_modified": "2020-02-29T12:40:42+11:00",
-    "preview_width": 1426,
-    "preview_height": 842
+    "preview": "posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png",
+    "last_modified": "2020-03-01T12:20:33+11:00",
+    "preview_width": 1248,
+    "preview_height": 768
   }
 ]
