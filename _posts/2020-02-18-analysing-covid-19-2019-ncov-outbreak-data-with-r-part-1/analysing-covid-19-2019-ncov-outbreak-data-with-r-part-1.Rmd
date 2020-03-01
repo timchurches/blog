@@ -49,9 +49,9 @@ library(projections)
 
 # Pre-amble
 
-This article is the first of several that have been distilled from [a much longer document](https://cbdrh.github.io/NovelCoronavirus/on-COVID-19.html) which started as a typical late-Friday-afternoon, curiosity-driven exploration of COVID-19 data and the R tools and packages that might be used to analyse them. Work on that document rapidly expanded to occupy much of the very wet Sydney weekend of 8th & 9th February 2020, with a view to using it as ateaching resource for both UNSW Medicine undergraduate and postgraduate courses -- in particular the MSc in Health Data Science offered by the [Centre for Big Data Research in Health](https://cbdrh.med.unsw.edu.au).
+This article is the first of several that have been distilled from [a much longer document](https://cbdrh.github.io/NovelCoronavirus/on-COVID-19.html) which started as a late-Friday-afternoon, curiosity-driven exploration of COVID-19 data and the `R` tools and packages that might be used to analyse them. Work on that document rapidly expanded to occupy much of the very wet Sydney weekend of 8th & 9th February 2020, with a view to using it as a teaching resource for both UNSW Medicine undergraduate and postgraduate courses -- in particular the MSc in Health Data Science offered by the [Centre for Big Data Research in Health](https://cbdrh.med.unsw.edu.au).
 
-Please note that neither these posts nor the parent document have been peer-reviewed, and that I claim no particular expertise in modelling communicable disease outbreaks, although I have been involved in outbreak preparedness work a decade ago, including [establishing surveillance systems and developing case-contact tracking systems](https://www.publish.csiro.au/nb/nb09046) for the public health response to the 2009 influenza A/H1N1 "swine flu" pandemic while at the NSW Ministry (previously Department) of Health.
+Please note that neither this post nor the parent document have been peer-reviewed, and that I claim no particular expertise in modelling communicable disease outbreaks, although I have been involved in outbreak preparedness work a decade ago, including [establishing surveillance systems and developing case-contact tracking systems](https://www.publish.csiro.au/nb/nb09046) for the public health response to the 2009 influenza A/H1N1 "swine flu" pandemic while working at the NSW Ministry (previously Department) of Health.
 
 Please also note that this post **only uses data for Chinese cases up to 15th February 2020**, and thus it cannot be considered a **situation report** reflecting the latest available data. The reason for truncating data at 15th February is due to major changes the case definitions used by the authorities in Hubei province from that date forward, which add additional complications to the modelling presented here. 
 
@@ -59,7 +59,7 @@ The full code is available from the GitHub repository linked at the foot of this
 
 # The local situation
 
-Since this post is being written in Sydney, Australia, capital of the state of New South Wales (NSW), we'll start by looking at the work of NSW Health, which is the umbrella name for the various public-sector health services and authorities in NSW. NSW Health has been issuing daily reports on its response to the 2019 novel coronavirus (2019-nCoV, henceforth referred to as COVID-19) outbreak, which look like this:
+Since this post is being written in Sydney, New South Wales (NSW), Australia,  we'll start by looking at the work of NSW Health, which is the umbrella name for the various public-sector health services and authorities in NSW. NSW Health has been issuing daily reports on its response to the 2019 novel coronavirus (2019-nCoV, henceforth referred to as COVID-19) outbreak, which look like this:
 
 
 ```{r, out.width="95%", out.extra='style="background-color: #9ecff7; padding:2px; display: inline-block;"', eval=TRUE, echo=FALSE, fig.cap="[Figure from a COVID-19 daily media release from NSW Health](https://www.health.nsw.gov.au/news/pages/2020-nsw-health.aspx)"}
@@ -67,9 +67,9 @@ Since this post is being written in Sydney, Australia, capital of the state of N
 knitr::include_graphics("assets/example_NSW_Health_media_release.png")
 ```
 
-So let's collect the data from each of these media releases and visualise it as a time-series^[I have updated the NSW Health data shown in this post since it was written and originally published. But the data for China still only covers the period up to 15th February.]. Automated web-scraping was not used for these data because only a few data items need to be abstracted from each report, and the format of the daily reports evolved quite a lot -- sometimes it is easier to just capture the required data manually. 
+So let's collect the data from each of these media releases and visualise it as a time-series.^[I have updated the NSW Health data shown in this post since it was written and originally published. But the data for China still only covers the period up to 15th February.] Automated web-scraping was not used for these data because only a few data items need to be abstracted from each report, and the format of the daily reports evolved quite a lot -- sometimes it is easier to just capture the required data manually. 
 
-We can do a bit of value-adding to the data by calculating daily counts of people screened, tested and cleared from the cumulative totals given in the NSW Health media releases, and of course presentation of the data as time-series reveals information not obvious from the individual daily reports.  
+We can do a bit of value-adding to the data by calculating daily counts of people screened, tested and cleared from the cumulative totals given in the NSW Health media releases, and merely presenting the data as time-series reveals information not obvious from the individual daily reports.  
 
 ```{r nsw_graph, message=FALSE, warning=FALSE, layout="l-body-outset", fig.width=10, fig.height=8}
 nCoV_2019_nsw <- tribble(~dt,~Confirmed,~Investigating,~ClearedCumulative, ~Admitted, ~Discharged, ~ScreenedCumulative, ~TestedCumulative,~ChinaArrivals,~ChinaArrivalsTested,
@@ -172,15 +172,15 @@ The ensemble of time-series charts clearly show that the NSW public health contr
 
 Having been involved in the public health response to 2009 A/H1N1 swine flu pandemic, I know how much round-the-clock work is involved in mounting such a response. NSW Health should be praised for its efforts, which deserve a more informative presentation than the little table in the daily press release as shown above!
 
-This admittedly parochial example is provided to illustrate the potential value of providing even simple visualisations and modest value-adding analyses (such as merely differencing cumulative counts to yield daily counts) -- tasks that that health authorities may not have the capacity to do themselves while dealing with an epidemic.
+This admittedly parochial example is provided to illustrate the potential value of providing even simple visualisations and modest value-added analyses (such as merely differencing cumulative counts to yield daily counts) -- tasks that that health authorities personnel may not have the capacity to do themselves while simultaneously dealing with an epidemic.
 
 # Modelling the COVID-19 epidemic in China
 
-On 4th February [this blog post](https://blog.ephorie.de/epidemiology-how-contagious-is-novel-coronavirus-2019-ncov) by blogger _Learning Machines_ was featured on [R-bloggers](https://www.r-bloggers.com). It very nicely sets out how to use `R` to solve the three simultaneous differential equations which describe the classic SIR (Susceptible-Infectious-Recovered) compartmental model of communicable disease outbreaks (see [this wikipedia page](https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology) for an more thorough treatment of compartmental models), and use one of the optimisers in base `R` to fit that SIR model to the observed COVID-19 incidence data by minimising the residual sum of squares. This lets us estimate the basic reproduction number $R_{0}$ and be able to make (possibly naïve) predictions about the epidemic. The blog post used data for all of China, but given that Wuhan and other cities in Hubei province have effectively been partitioned from the rest of China since about 24th January, it makes sense to model the situation in Hubei only, so we'll repeat the oh-so-elegant model fitting process here.  But first we need some data, and of course we need to do an initial exploratory data analysis before we fit any models!
+On 4th February [this blog post](https://blog.ephorie.de/epidemiology-how-contagious-is-novel-coronavirus-2019-ncov) by blogger _Learning Machines_ was featured on [R-bloggers](https://www.r-bloggers.com). It very nicely sets out how to use `R` to solve the three simultaneous differential equations which describe the classic SIR (Susceptible-Infectious-Recovered) compartmental model of communicable disease outbreaks (see [this wikipedia page](https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology) for an more thorough treatment of compartmental models), and the use one of the optimisers in base `R` to fit that SIR model to the observed COVID-19 incidence data by minimising the residual sum of squares. This lets us estimate the basic reproduction number $R_{0}$ and be able to make (possibly naïve) predictions about the epidemic. The blog post used data for all of China, but given that Wuhan and other cities in Hubei province have effectively been partitioned from the rest of China since about 24th January, it makes sense to model the situation in Hubei only, so we'll repeat the oh-so-elegant model fitting process here.  But first we need some data, and of course we need to do an initial exploratory data analysis before we fit any models!
 
 ## Obtaining data 
 
-Naturally we want our analysis to be reproducible, and that means avoiding all manual abstracting and transcribing of data (um, like the manual abstracting and transcribing of NSW Health data I did above...). Thus we will  programmatically acquire the relevant data from the web to avoid having to manually update the document as more data becomes available -- we want to be able to just re-run the program code and have the document automatically update itself. There are now many potential sources, but when I first started working on this analysis on 8th February, there were very few accessible, detailed and current sources of machine-readable data for COVID-19 incidence in China. [This wikipedia page](https://en.wikipedia.org/wiki/Timeline_of_the_2019–20_Wuhan_coronavirus_outbreak), which is currently being updated very promptly as new data is released, is a detailed and well-referenced source, and, being wikipedia, it is also versioned, and editable (I had to make a few edits to the tables on the wikipedia page we are scraping in order to make table parsing easier and more reliable). So, with (quite) a few lines of code, we can download and scrape the data contained in the relevant tables on that page that gives counts of laboratory-confirmed cases, and deaths in confirmed cases, by day and by province, clean it up and have it ready to use in our analysis. Note that counts of clinically-confirmed cases (by lung CT) that were being reported by Hubei province for a while are not used in this analysis, so we will remove them from the data we acquire.
+Naturally we want our analysis to be reproducible, and that means avoiding all manual abstracting and transcribing of data (um, like the manual abstracting and transcribing of NSW Health data that I just did above...). Thus we will  programmatically acquire the relevant data from the web -- we want to be able to just re-run the program code and have analyses automatically update themselves. There are now many potential sources, but when I first started working on this analysis on 8th February, there were very few accessible, detailed and up-to-date sources of machine-readable data for COVID-19 incidence in China. [This wikipedia page](https://en.wikipedia.org/wiki/Timeline_of_the_2019–20_Wuhan_coronavirus_outbreak), which is currently being updated very promptly as new data is released, is a detailed and well-referenced source, and, being wikipedia, it is also versioned, and editable (indeed, I had to make a few edits to the tables on the wikipedia page we are scraping in order to make table parsing easier and more reliable). So, with (quite) a few lines of code, we can download and scrape the data contained in the relevant tables on that page that give counts of laboratory-confirmed cases, and deaths in confirmed cases, by day and by province, clean it up and have it ready to use in our analysis. Note that counts of clinically-confirmed cases (by lung CT) that were being reported by Hubei province for a while are not used in this analysis, so we will remove them from the data we acquire.
 
 The alternative is laboriously visiting many different web sites and abstracting the data from text such as this:
 
@@ -326,9 +326,9 @@ provinces_deaths <- provinces_deaths %>%
     filter(Date <= ymd("2020-02-12"))
 ```
 
-Yes, that's all a bit fiddly, and the code requires constant maintenance as the format of the source tables are changed by wikepedia editors, often in arbitrary ways. In the next section, we will compare the wikipedia source to a widely-used source provided by Johns Hopkins University in the US. Why doesn't the WHO have a nice API for obtaining all these data, I hear you ask? That's what humankind deserves. Anyway, in the meantime, thank goodness for wikipedia and its tireless contributors and editors, and thanks to the Johns Hopkins University team maintaining their version of the data. But I can't help but feel that there ought to be a well-resourced, canonical source with a nice web API for these data.
+Yes, that's all a bit fiddly, and the code requires constant maintenance as the format of the source tables are changed by wikipedia editors, often in arbitrary ways. In the next section, we will compare the wikipedia source to a widely-used source provided by Johns Hopkins University in the US. Why doesn't the WHO have a nice API for obtaining all these data, I hear you ask? That's what humankind deserves. Anyway, in the meantime, thank goodness for wikipedia and its tireless contributors and editors, and thanks to the Johns Hopkins University team maintaining their version of the data. But I can't help but feel that there ought to be a well-resourced, canonical source for these data, with a nice RESTful API.
 
-In the interests of brevity, we won't display the scraped incidence and deaths data in a table here^[The [full version of this analysis](https://cbdrh.github.io/NovelCoronavirus/on-COVID-19.html) uses the excellent `gt` library to display such tables for those who are interested.], but doing so would be good practice.
+In the interests of brevity, we won't display the scraped incidence and deaths data in a table here, but doing so would be good practice.^[The [full version of this analysis](https://cbdrh.github.io/NovelCoronavirus/on-COVID-19.html) uses the excellent `gt` library to display such tables for those who are interested.]
 
 ```{r china_incidence_table, message=FALSE, warning=FALSE, tidy=TRUE, echo=FALSE, include=FALSE}
 # now present these data as a table
@@ -376,11 +376,11 @@ provinces_deaths %>%
 
 ## Checking the data
 
-Wikipedia is _crowd-sourced_, and anyone can edit the pages at any time, although incorrect information is usually corrected very rapidly by a community of editors and contributors, at least for active pages of interest. That is certainly the case for the wikipedia pages on COVID-19 incidence and deaths data we are using in this document. Nonetheless, it is **always** a good idea to check sources wherever possible. 
+Wikipedia is _crowd-sourced_, and anyone can edit the pages at any time, although incorrect information is usually corrected very rapidly by a community of editors and contributors, at least for active pages of interest. That is certainly the case for the wikipedia pages on COVID-19 incidence and deaths data we are using in this analysis. Nonetheless, it is **always** a good idea to check sources wherever possible. 
 
 In fact, there is [another source of similar, collated COVID-19 data](https://github.com/CSSEGISandData/COVID-19), maintained by Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) and used as the source for [the dashboard](https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) which they provide.
 
-So let's download that data and compare it to the data we are scraping from wikipedia. We are using a cached copy of[this revision](https://github.com/CSSEGISandData/COVID-19/blob/5a0760fcfee8f698cff0251b6e578385153f396e/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv) of the data as it was at 15:18 2002-02-19 AEDT (Australia/Sydney timezone). Note that timezones are taken into account as far as possible: the JHU data is supposed to be the data as at 23:59hrs UTC for each day, whereas the wikipedia data is just described as “Date (CST)“, where CST is presumed to be China Standard Time, which is the same as Beijing time.
+So let's download that data and compare it to the data we are scraping from wikipedia. We are using a cached copy of [this revision](https://github.com/CSSEGISandData/COVID-19/blob/5a0760fcfee8f698cff0251b6e578385153f396e/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv) of the data as it was at 15:18 2002-02-18 AEDT (Australia/Sydney timezone). Note that timezones are taken into account as far as possible: the JHU data is supposed to be the data as at 23:59hrs UTC for each day, whereas the wikipedia data are just described as “Date (CST)“, where CST is presumed to be China Standard Time, which is the same as Beijing time.
 
 ```{r JHU_incidence, message=FALSE, warning=FALSE, tidy=TRUE, fig.height=10, fig.asp=2, echo=TRUE}
 destfile="./assets/provinces_confirmed_jh.rda" 
@@ -449,13 +449,13 @@ That's enough checking for the puposes of this analysis, but it underlines the i
 
 ## Exploratory data analysis
 
-Every analysis should start with a thorough EDA. The code for all this is just standard `tidyverse` fair, and is available in the GitHib repository for this post, link at foot of page.
+Every analysis should start with a thorough EDA. The code for all this is just standard `tidyverse` fair, and is available in the GitHib repository for this post, via the link at foot of this post.
 
 ### Daily cumulative incidence
 
-First, let's look at the daily cumulative number of incident lab-confirmed cases for Wuhan city, for Hubei province (which contains Wuhan), for all the other provinces combined, and for all of China. 
+First, let's look at the daily cumulative number of incident, lab-confirmed cases for Wuhan city, for Hubei province (which contains Wuhan), for all the other provinces combined, and for all of China. 
 
-```{r cumulative_incidence, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=8}
+```{r cumulative_incidence, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=10}
 provinces_confirmed %>%
     pivot_longer(-Date, names_to="province",
                  values_to="incident_cases") %>%
@@ -490,7 +490,7 @@ cumulative_incidence %>%
 
 The initial increases for Wuhan and the balance of Hubei, and for all of China look to be approximately exponential, as is expected for epidemic spread. Let's plot them on a logarithmic _y_ axis. We would expect to see a linear increase on a log scale if the epidemic curve is indeed exponential.
 
-```{r log_cumulative_incidence, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=8}
+```{r log_cumulative_incidence, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=10}
 cumulative_incidence %>%
   ggplot(aes(x=Date, y=cumulative_incident_cases)) + geom_point() + geom_line() +
     scale_y_log10() +
@@ -508,7 +508,7 @@ One could convince oneself that log-linearity is present.
 
 Let's also look at the daily incremental incidence. This is more informative, and is known in outbreak epidemiological parlance as the _epidemic curve_. It is traditionally visualised as a bar chart, which emphasises missing data more than a line chart, even one with points as well. We'll adhere to epidemiological tradition.
 
-```{r daily_incidence, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=8}
+```{r daily_incidence, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=10}
 daily_incidence %>%
   ggplot(aes(x=Date, y=incident_cases))  + # geom_point() + geom_line() +
     geom_bar(stat="identity") + 
@@ -520,7 +520,7 @@ daily_incidence %>%
           strip.text.y = element_text(size=11))
 ```
 
-At the time of writing (17th Feb), it looks like incidence has plateaued and is now beginning to decline in Wuhan,  and that daily incremental incidence is very definitely falling everywhere else.
+At the time of writing (17th February), it looks like incidence has plateaued and is now beginning to decline in Wuhan,  and that daily incremental incidence is very definitely falling everywhere else in mainland China.
 
 ### Epidemic curves for all provinces, plus Wuhan city
 
@@ -573,7 +573,7 @@ It is clear that Wuhan is not only the epicentre of the outbreak, but that it co
 
 Now let's look the daily (incremental) number of deaths in lab-confirmed cases for Wuhan city, for Hubei province (which contains Wuhan), for all the other provinces combined, and for all of China. 
 
-```{r cumulative_deaths, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=8}
+```{r cumulative_deaths, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=10}
 provinces_deaths %>%
     pivot_longer(-Date, names_to="province",
                  values_to="deaths_in_confirmed_cases") %>%
@@ -603,12 +603,12 @@ cumulative_deaths %>%
                                    title="Cumulative deaths in lab-confirmed cases of COVID-19 in China",
                                    caption="Note: varying y-axis scales") +
   theme(legend.position = "none", 
-          strip.text.y = element_text(size=7))
+          strip.text.y = element_text(size=11))
 ```
 
 Let's also look at the daily incremental deaths in lab-confirmed cases.
 
-```{r daily_deaths_plot, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=8}
+```{r daily_deaths_plot, message=FALSE, warning=FALSE, tidy=TRUE, fig.width=10, fig.height=10}
 daily_deaths %>%
   ggplot(aes(x=Date, y=deaths_in_confirmed_cases)) + # geom_point() + geom_line() +
     geom_bar(stat="identity") + 
@@ -621,7 +621,7 @@ daily_deaths %>%
 
 ### Incidence and deaths
 
-Finally, let's also look at the number of daily incremental lab-confirmed incident cases and the daily incremental deaths in lab-confirmed cases, aligned on date.
+Finally, let's also look at the number of daily incremental lab-confirmed incident cases and the daily incremental deaths in lab-confirmed cases, aligned by date.
 
 ```{r daily_case_deaths_plot, message=FALSE, warning=FALSE, tidy=TRUE,fig.width=10, fig.height=8}
 daily_incidence %>%
@@ -644,10 +644,10 @@ a %>%
                                    title="Daily cases and deaths in Hubei province and all of China",
                                    caption="Note: varying y-axis scales")  +
     theme(legend.position = "none", 
-          strip.text.y = element_text(size=11))
+          strip.text = element_text(size=11))
 ```
 
-Clearly daily counts of deaths are continuing to rise despite the daily count of new cases now falling. This is not surprising, given that it takes some time for cases to either recover or to die, and therefore the trend in deaths will necessarily lag behind any trend in daily incidence.
+Clearly daily counts of deaths are continuing to rise despite the fact that the daily count of new cases is now falling. This is not surprising, given that it takes some time for cases to either recover or to die, and therefore the trend in deaths will necessarily lag behind any trend in daily incidence.
 
 # Fitting an SIR model to the Hubei province data
 
@@ -679,7 +679,7 @@ SIR <- function(time, state, parameters) {
 }
 ```
 
-To fit the model to the data we need two things: a solver for these differential equations and an optimiser to find the optimal values for our two unknown parameters, $\beta$ and $\gamma$. The function `ode()` (for _ordinary differential equations_) from the `deSolve` package for `R` makes solving the system of equations easy, and to find the optimal values for the parameters we wish to estimate, we can just use the `optim` function built into base _R_. Specifically what we need to do is minimise the sum of the squared differences between the number of people in the infectious compartment $I$ at time $t$ and the corresponding number of cases as predicted by our model $\hat{I}(t)$. This quantity is known as the _residual sum of squares_ (RSS)^[It is also possible to fit SIR and related models by MLE.].
+To fit the model to the data we need two things: a solver for these differential equations and an optimiser to find the optimal values for our two unknown parameters, $\beta$ and $\gamma$. The function `ode()` (for _ordinary differential equations_) from the `deSolve` package for `R` makes solving the system of equations easy, and to find the optimal values for the parameters we wish to estimate, we can just use the `optim` function built into base _R_. Specifically what we need to do is minimise the sum of the squared differences between $I(t)$, which is the number of people in the infectious compartment $I$ at time $t$, and the corresponding number of cases as predicted by our model $\hat{I}(t)$. This quantity is known as the _residual sum of squares_ (RSS)^[It is also possible to fit SIR and related models by MLE.].
 
 $$RSS(\beta, \gamma) = \sum_{t} \left( I(t)-\hat{I}(t) \right)^2$$
 
@@ -812,7 +812,7 @@ $$R_{0} = \frac{\beta}{\gamma}$$
 
 That's very easy to calculate, and we get:
 
-```{r SIR_model_R0, echo=TRUE, tidy=TRUE}
+```{r SIR_model_R0, echo=FALSE, tidy=TRUE}
 R0 <- setNames(Opt_par["beta"] / Opt_par["gamma"], "R0")
 R0
 ```
@@ -829,6 +829,7 @@ So let's use our SIR model, fitted to the first 15 days of data, to extrapolate 
 fitted_cumulative_incidence %>%
     ggplot(aes(x=Date)) + geom_line(aes(y=I), colour="red") +
               geom_point(aes(y=cumulative_incident_cases), colour="orange") +
+              scale_y_continuous(labels = scales::comma) +
               labs(y="Cumulative incidence", 
                    title="COVID-19 fitted vs observed cumulative incidence, Hubei province",
                    subtitle="(red=fitted incidence from SIR model, orange=observed incidence)")
@@ -838,7 +839,7 @@ We can see that the actual incidence is much lower than that predicted by our mo
 
 ## Using our model to let the outbreak "run its course" without intervention
 
-It is instructive to use our model fitted to the first 15 days of available data on lab-confirmed cases in Hubei province, so see what would happen if the outbreak were left to run its course, without public health interventions.
+It is instructive to use our model fitted to the first 15 days of available data on lab-confirmed cases in Hubei province, to see what would happen if the outbreak were left to run its course, without public health interventions.
 
 ```{r SIR_model_plot_no_intervention, echo=TRUE, tidy=TRUE, message=FALSE, warning=FALSE}
 # time in days for predictions
@@ -1063,7 +1064,7 @@ hist(growth_R0, col = "grey", border = "white", main = "Distribution of R0")
 summary(growth_R0)
 ```
 
-Note that the central estimates for $R_{0}$ are considerably higher than those we calculated with a SIR model fitted to the same Hubei province data, and are also higher than $R_{0}$ estimates published elsewhere, but they are consistent with estimates of the instantaneous effective reproduction number $R_{e}$ which we calculate in the next section^[They are also consistent with unpublished estimates of $R_{0}$ for the COVID-19 virus being discussed in various expert WHO fora, I am told by a reliable source who does not wish to be named.]. 
+Note that the central estimates for $R_{0}$ are considerably higher than those we calculated with a SIR model fitted to the same Hubei province data, and are also higher than $R_{0}$ estimates published elsewhere, but they are consistent with estimates of the instantaneous effective reproduction number $R_{e}$ which we calculate in the next section^[They are also consistent with unpublished estimates of $R_{0}$ for the COVID-19 virus being discussed in various expert WHO fora, or so I am told by a reliable source who does not wish to be named.]. 
 
 Here is the estimated $R_{e}$ for the decay phase:
 
@@ -1095,11 +1096,11 @@ hubei_confirmed_cases <- provinces_confirmed %>%
 
 ```
 
-A critical parameter for the Cori model is the _serial interval_ (SI). The SI is the time between onset of symptoms of each case of the disease in question, and the onset of symptoms in any secondary cases that result from transmission from the primary cases. In other words, it is the time between cases in the (branching) chain of transmission of the disease. A moment's reflection reveals that the SI is, in fact, a statistical distribution of serial interval times, rather than a fixed value. That distribution can be simulated, typically using the discrete _gamma_ distribution with a given mean and standard deviation. 
+A critical parameter for the Cori model is the _serial interval_ (SI). The SI is the time between onset of symptoms of each case of the disease in question, and the onset of symptoms in any secondary cases that result from transmission from the primary cases. In other words, it is the time between cases in the (branching) chain of transmission of the disease. A moment's reflection reveals that the SI is, in fact, a statistical distribution of serial interval times, rather than a fixed value. That distribution can be simulated, typically using a discrete _gamma_ distribution with a given mean and standard deviation. 
 
-The `estimate_R()` function in the `EpiEstim` package allows the SI distribution to be specified parametrically as the mean and SD of of a _gamma_ distribution. It also allows uncertainty to be incorporated into the parameterisation of this distribution, and it even allows the SI distribution to be estimated empirically, using Bayesian methods, from individual line-listings of cases. We'll examine all of those capabilities.
+The `estimate_R()` function in the `EpiEstim` package allows the SI distribution to be specified parametrically. It also allows uncertainty to be incorporated into the parameterisation of this distribution, and it even allows the SI distribution to be estimated empirically, using Bayesian methods, from individual line-listings of cases. We'll examine all of those capabilities.
 
-At the time of writing, I was able to find only one published estimate of the _serial interval_ distribution, derived from analysis of just 5 primary cases amongst the first 450 cases in Wuhan, published by [Li _et al._](https://www.nejm.org/doi/full/10.1056/NEJMoa2001316). They estimate the serial interval distribution to have a mean of 7.5 days with a standard deviation of 3.4 days. This is almost identical to the  _serial interval_ parameters for the MERS virus, which were a mean of 7.6 and a SD of 3.4. This similarity is not surprising given that both pathogens are coronavirii. Let's use that to estimate the instantaneous $R_{e}$ for Hubei province.
+At the time of writing, I was able to find only one published estimate of the _serial interval_ distribution, derived from analysis of just 5 primary cases amongst the first 450 cases in Wuhan, published by [Li _et al._](https://www.nejm.org/doi/full/10.1056/NEJMoa2001316). They estimate the serial interval distribution to have a mean of 7.5 days with a standard deviation of 3.4 days. This is almost identical to the  _serial interval_ parameters for the MERS virus, which were a mean of 7.6 and a SD of 3.4. This similarity is not surprising given that both pathogens are _coronavirii_. Let's use that to estimate the instantaneous $R_{e}$ for Hubei province.
 
 ```{r Cori_parametric_si_model_fit_hubei, echo=TRUE, tidy=TRUE, message=FALSE, warning=FALSE}
 # custom results plotting function to avoid the ugly
@@ -1123,9 +1124,9 @@ plot_Ri(hubei_res_parametric_si)
 
 The first thing to note is that the slope of the _effective reproduction number_ curve is decidedly downwards, which strongly suggests that containment efforts are succeeding in progressively reducing transmission of the disease in Hubei province. That is encouraging.
 
-The second thing to note is that the 7-day sliding window estimates of **instantaneous** $R_{e}$ are very high, approaching 10 at the peak. This seems unlikely. It is possible that the Cori model or its implementation as an R library is flawed, but it has been developed and implemented by the pre-eminent epidemic modelling team in the world, and has been shown to accurately estimate $R_{e}$ using a wide range of historical outbreak data. There are, however, a number of possible alternative explanations. 
+The second thing to note is that the 7-day sliding window estimates of **instantaneous** $R_{e}$ are very high, approaching 10 at the peak. This seems unlikely. It is possible that the Cori model or its implementation as an `R` library is flawed, but it has been developed and implemented by the pre-eminent epidemic modelling team in the world, and has been shown to accurately estimate $R_{e}$ using a wide range of historical outbreak data. There are, however, a number of possible alternative explanations. 
 
-One possible explanation is that COVID-19 is transmissible **before** the onset of symptoms, resulting in much shorter serial intervals than expected, possibly shorter than the incubation period. Alternatively, and very likely, there may be non-symptomatic, sub-clinical spreaders of the disease, who are undetected. again, the effect is as if the serial interval is very short, although it would be desirable to explicitly model that scenario, but the current implementations don't permit that. 
+One possible explanation is that COVID-19 is transmissible **before** the onset of symptoms, resulting in much shorter serial intervals than expected, possibly shorter than the incubation period. Alternatively, and very likely, there may be non-symptomatic, sub-clinical spreaders of the disease, who are undetected. Again, the effect is as if the serial interval is very short, although it would be desirable to explicitly model that scenario, but current methods don't permit that. 
 
 Either way, if we re-calculate, but using a mean of just 2.3 days for the SI distribution, and an SD of 1.4, we get these estimates:
 
@@ -1141,7 +1142,7 @@ plot_Ri(hubei_res_parametric_si)
 
 Those estimated $R_{e}$ values look far more reasonable, and if true, suggest that the epidemic will soon be brought under control, at least in Hubei, which is its epicentre.
 
-However, arbitrarily making the serial interval very short feels wrong. Another possible explanation is that there may be a great deal of variation in the serial interval distribution between cases, for the reasons noted above, with some cases transmitting the disease very soon after infection, possibly before the onset of symptoms (so-called _super-spreaders_), some sub-clinical, and thus undetected cases spreading the disease as well, while other cases have a serial interval more consistent with that of MERS or SARS, with a mean around 8 days. Such variability in the serial interval distributions between cases is consistent with the observed variation between individuals in the severity of the disease caused by COVID-19 -- most victims develop only mild disease, a small proportion develop serious disease, and only one or two per cent die from the infection.
+However, arbitrarily making the serial interval very short feels wrong. Another possible explanation is that there may be a great deal of variation in the serial interval distribution between cases, for the reasons noted above, with some cases transmitting the disease very soon after infection, possibly before the onset of symptoms (so-called _super-spreaders_), and some cases being sub-clinical, and thus undetected, spreading the disease as well, while other cases have a serial interval more consistent with that of MERS or SARS, with a mean around 8 days. Such variability in the serial interval distributions between cases is consistent with the observed variation between individuals in the severity of the disease caused by COVID-19 -- most victims develop only mild disease, a small proportion develop serious disease, and only one or two per cent die from the infection.
 
 Conveniently, the `EpiEstim` package lets us incorporate this uncertainty around the serial interval distribution by allowing specification of a distribution of distributions of serial intervals. So let's retain the mean SI estimated by Li _et al._ of 7.5 days, with an SD of 3.4, but let's also allow that mean SI to vary between 2.3 and 8.4 using a truncated normal distribution with an SD of 2.0. We'll also allow the SD or the SD to vary between 0.5 and 4.0. 
 
@@ -1225,11 +1226,11 @@ plot(hubei_res_uncertain_si_daily, "R") +
   geom_hline(yintercept=1.0, linetype="solid", colour='red', size=0.5)
 ```
 
-So, it looks like the outbreak has been brought under control in Hubei province, at least based on the published lab-confirmed case numbers and the available serial interval data or estimates.
+So, it looks like the outbreak has been brought under control in Hubei province, at least based on the published lab-confirmed case numbers and the available serial interval data or estimates of its distribution.
 
 It might be remarked that the success of the control measures are also obvious simply by looking at the daily incremental incidence numbers for Hubei:
 
-```{r hubei_daily_incidence_adj, echo=TRUE, tidy=TRUE, message=FALSE, warning=FALSE}
+```{r hubei_daily_incidence_adj, echo=FALSE, tidy=TRUE, message=FALSE, warning=FALSE}
 
 provinces_confirmed <- provinces_confirmed %>%
                           mutate(HubeiSansWuhan = ifelse(is.na(HubeiSansWuhan), 0, HubeiSansWuhan)) %>%
@@ -1240,17 +1241,16 @@ provinces_confirmed %>%
     geom_point() +
     geom_line() +
     labs(y="Daily incremental incidence",
-         title="Hubei lab-confirmed cases",
-         subtitle="(with adjustment for spike in Wuhan cases on 27th Jan)")
+         title="Hubei lab-confirmed cases")
 ```
 
 However, there is no clue in the data shown above that daily incidence was beginning to fall until data for **5th February** became available. But it is clear, from the **instantaneous** $R_{e}$ plot above that that the $R_{e}$ was already falling steadily by **27th January**, more than a week before the daily incidence plot revealed a peak. Such early indications that their efforts are working are vital for public health authorities and governments, encouraging them to "hold the line" and not abandon such costly and disruptive public health controls prematurely.
 
-## Estimating changes in the _effective reproduction number_ for Wuhan and other provinces
+## Estimating changes in the _effective reproduction number_ for Wuhan
 
 Just to make sure our conclusions about falling _effective reproduction numbers_ for Hubei province also hold up for just Wuhan, and for other provinces, let's repeat the estimations. Unfortunately, Wuhan-only data for confirmed cases is not available after 14th February, only combined lab-confirmed and clinical case counts were published after that date.
 
-```{r Cori_model_get_data_wuhan, echo=TRUE, tidy=TRUE, message=FALSE, warning=FALSE}
+```{r Cori_model_get_data_wuhan, echo=FALSE, tidy=TRUE, message=FALSE, warning=FALSE}
 wuhan_confirmed_cases <- provinces_confirmed %>%
                           filter(Date >= ymd("2020-01-11"),
                                  Date < ymd("2020-02-15")) %>%
@@ -1280,7 +1280,7 @@ plot(wuhan_res_uncertain_si_daily, "R") +
   scale_y_continuous(trans='log2') +
   geom_hline(yintercept=1.0, linetype="solid", colour='red', size=0.5) +
   labs(title="Instantaneous effective reproduction numbers, Wuhan",
-       subtitle="(up to 14th Bef 2020 only)")
+       subtitle="(up to 14th Feb 2020 only)")
 
 ```
 
@@ -1290,7 +1290,7 @@ The $R_{e}$ for Wuhan is also trending down, and is, at the time of writing, ver
 
 Finally, let's estimate the change in $R_{e}$ for all other Chinese provinces except Hubei.
 
-```{r Cori_model_get_data_not_hubei, echo=TRUE, tidy=TRUE, message=FALSE, eval=TRUE, warning=FALSE}
+```{r Cori_model_get_data_not_hubei, echo=FALSE, tidy=TRUE, message=FALSE, eval=TRUE, warning=FALSE}
 not_hubei_confirmed_cases <- provinces_confirmed %>%
                           filter(Date >= ymd("2020-01-19")) %>%
                           mutate(imported=ifelse(Date == ymd("2020-01-19"), NationalSansHubei, 0),
@@ -1344,7 +1344,7 @@ First we'll project the Hubei province incidence data for the first part of the 
 set.seed(1)
 pred_fwd_days <- 10
 date_range <- 1:(which(get_dates(hubei_incidence_object) == hubei_incidence_peak) - pred_fwd_days)
-date_range
+
 test_pred_growth <- project(hubei_incidence_object[date_range],
                             R = median(growth_R0),
                             si = w,
@@ -1378,7 +1378,7 @@ test_pred_growth_median_counts %>%
 
 OK, that's impressive! The projection, based only on observed data up to `r format(hubei_incidence_peak - days(pred_fwd_days), "%d %B %Y")`, is in remarkably close agreement with the observed data. Let's do the same for the decay phase, this time holding out 5 days of the observed decay from our prediction.
 
-```{r test_projection_Hubei_decay, echo=TRUE, tidy=TRUE, message=FALSE, warning=FALSE}
+```{r test_projection_Hubei_decay, echo=FALSE, tidy=TRUE, message=FALSE, warning=FALSE}
 set.seed(1)
 pred_fwd_days <- 0 # 5
 
@@ -1425,24 +1425,23 @@ Based on that projection, it will take until the beginning of April for the outb
 
 It seems likely that China has won the battle, if not the war, against the COVID-19 outbreak, having successfully mitigated the spread of the virus through **very** decisive and prompt public health action, in particular closing Wuhan and other cities in Hubei province, and implementing strict social isolation policies within those cities. 
 
-Just how long these measure will need to remain in place depends is unclear, but could be estimated using methods similar to those described above. 
+Just how long these measures will need to remain in place depends is unclear, but could be estimated using methods similar to those described above. 
 
-The real worry now is spread in other countries. Wealthy, developed countries such as Australia should be able to detect and contain any spread. The real worry are less wealthy countries which have considerable interchange of people with mainland China, and which have much poorer public health surveillance and control capabilities. In particular, Indonesia is a particular worry, and the [absence of any reported cases there currently](https://www.smh.com.au/world/asia/why-are-there-are-no-cases-of-coronavirus-in-indonesia-20200213-p540o1.html), as at 14th February, beggars belief. [De Salazar _et al_.](https://www.medrxiv.org/content/10.1101/2020.02.04.20020495v1.full.pdf) at the Harvard Centre for Communicable Disease Dynamics has statistically modelled this beggaring of belief. However, all the other south-east Asian countries, except perhaps Singapore, would also seem to be highly vulnerable, even if they have reported cases, and [some experts are predicting a global pandemic](https://www.smh.com.au/world/asia/coronavirus-could-infect-two-thirds-of-globe-top-scientist-says-20200214-p540pc.html) with devastating consequences.
+The real worry now is spread in other countries. Wealthy, developed countries such as Australia should be able to detect and contain, with potentially Herculean effort, any spread, or at least slow it enough to allow their health care systems to cope. The real worry are less wealthy countries which have considerable interchange of people with mainland China, and which have much poorer public health surveillance and control capabilities. Indonesia is a particular worry, and the [absence of any reported cases there currently](https://www.smh.com.au/world/asia/why-are-there-are-no-cases-of-coronavirus-in-indonesia-20200213-p540o1.html), as at 14th February, beggars belief. [De Salazar _et al_.](https://www.medrxiv.org/content/10.1101/2020.02.04.20020495v1.full.pdf) at the Harvard Centre for Communicable Disease Dynamics has statistically modelled this beggaring of belief. However, all the other south-east Asian countries would also seem to be highly vulnerable, even if they have reported cases, and [some experts are predicting a global pandemic](https://www.smh.com.au/world/asia/coronavirus-could-infect-two-thirds-of-globe-top-scientist-says-20200214-p540pc.html) with devastating consequences.
 
 It would seem that a key question, right now (as at 18th February), is **"How long do we need to wait to know whether there really aren't any COVID-19 cases in Indonesia?"**. In other words, by what date should spreading COVID-19 infection in Indonesia become evident, even in the absence of comprehensive or effect public health surveillance systems there (or in the presence of possible government censoring, or [censuring](https://www.thejakartapost.com/news/2020/02/12/its-insulting-indonesia-criticizes-us-study-concerns-over-no-coronavirus-cases.html), of information produced by public health surveillance agencies).
 
-We can make some informed guesses about that. Let's assume that, in a country with relatively poor public health surveillance capabilities, it requires about 1,000 cases of the disease before tan outbreak becomes evident, given that only a small proportion of those require hospital care and only a few per cent will die. One thousand cases is about 2^10^, so 10 generations, and with a doubling time of about 2.8 days, as we estimated above, that means local outbreaks ought to start showing up after about 4 weeks. If the true doubling time is longer than that, it make take six or eight weeks before local outbreaks become obvious. Given this, we might expect such local outbreaks to start showing up in Indonesia some time over the next few weeks, at least by the end of February 2020. At the time of writing, [Vietnamese authorities have already locked down the Son Loi community](https://asia.nikkei.com/Spotlight/Coronavirus/Vietnam-locks-down-Son-Loi-district-near-Hanoi-for-20-days) outside Hanoi due to a local COVID-19 outbreak.
-
+We can make some informed guesses about that. Let's assume that, in a country with relatively poor public health surveillance capabilities, it requires about 1,000 cases of the disease before an outbreak becomes very evident, given that only a small proportion of those cases require hospital care and only a few per cent will die. One thousand cases is about 2^10^, so 10 generations, and with a doubling time of about 2.8 days, as we estimated above, that means local outbreaks ought to start showing up after about 4 weeks. If the true doubling time is longer than that, it make take six or eight weeks before local outbreaks become obvious. Given this, we might expect such local outbreaks to start showing up in Indonesia some time over the next few weeks, at least by the end of February 2020. At the time of writing, [Vietnamese authorities have already locked down the Son Loi community](https://asia.nikkei.com/Spotlight/Coronavirus/Vietnam-locks-down-Son-Loi-district-near-Hanoi-for-20-days) outside Hanoi due to a local COVID-19 outbreak.
 
 ### Data science considerations
 
 From a data science (and public health) perspective, the main thing to note is that by doing all this data manipulation and model estimation using program code, as we have been doing, rather than using spreadsheets or some other manual process, it is very easy to re-run everything on-demand in just a minute or so, and thus current estimates and projections can readily be automatically updated as new observed data becomes available each day, or even every hour.
 
-The absence of better _serial interval_ data is unfortunate. These data can be sampled -- it isn't necessary to collect these data for every index or primary case, just a representative sample of them. Only Li _et al._ have published such vital data, to date, and only for five sets of cases from early in the outbreak. This seems to be a significant omission, given the considerable [human](https://arstechnica.com/science/2020/02/quarantine-camps-door-to-door-searches-in-wuhan-as-coronavirus-rampages-on/) and [economic](https://www.bloomberg.com/graphics/2020-global-economic-impact-of-wuhan-novel-coronavirus/) impacts of the outbreak and the containment measures implemented in response to it.
+The absence of better _serial interval_ data is unfortunate. These data can be sampled -- it isn't necessary to collect these data for everycase, just a representative sample of them. Only Li _et al._ have published such vital data, to date, and only for five sets of cases from early in the outbreak. This seems to be a significant omission, given the considerable [human](https://arstechnica.com/science/2020/02/quarantine-camps-door-to-door-searches-in-wuhan-as-coronavirus-rampages-on/) and [economic](https://www.bloomberg.com/graphics/2020-global-economic-impact-of-wuhan-novel-coronavirus/) impacts of the outbreak and the containment measures implemented in response to it.
 
 Similarly better line-listing data, even if only for samples of cases, would facilitate modelling of outbreak control and estimation of how long public health controls need to be kept in place in each jurisdiction. One would like to think that government authorities are undertaking mathematical modelling, of the type illustrated in this document, on a daily basis to inform their policy decisions. They may well be in China, but elsewhere, it is likely that it is heuristics, not mathematics, that is informing policy.
 
-Finally, it would be wonderful if WHO could provide up-to-date, authoritative summary data via a stable API, to facilitate efforts to track and model such outbreaks. National and sub-national jurisdictional health authorities should do the same. There are data scientists who can assist.
+Finally, it would be wonderful if WHO could provide up-to-date, authoritative summary data via a stable API, to facilitate efforts to track and model such outbreaks. National and sub-national jurisdictional health authorities should do the same. There are data scientists who can assist!
 
 
 
