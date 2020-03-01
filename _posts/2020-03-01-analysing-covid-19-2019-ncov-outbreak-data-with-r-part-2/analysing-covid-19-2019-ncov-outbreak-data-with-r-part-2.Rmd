@@ -1,0 +1,33 @@
+---
+title: "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 2"
+draft: true
+description: "A further exploration of COVID-19 incidence data using R tools and packages."
+categories:
+  - R
+  - "COVID-19"
+author:
+  - name: Tim Churches 
+    affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
+    affiliation_url: https://swscs.med.unsw.edu.au
+creative_commons: CC BY-SA
+date: "2020-03-01"
+base_url: https://timchurches.github.io/blog/
+slug: churches2020covid19rpart2
+twitter:
+  creator: "@timchurches"
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
+    self_contained: false
+repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+Distill is a publication format for scientific and technical writing, native to the web.
+
+Learn more about using Distill at <https://rstudio.github.io/distill>.
+

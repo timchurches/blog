@@ -46,7 +46,7 @@
 &lt;/div&gt;
 &lt;p&gt;So let’s collect the data from each of these media releases and visualise it as a time-series.&lt;a href="#fn1" class="footnote-ref" id="fnref1"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt; Automated web-scraping was not used for these data because only a few data items need to be abstracted from each report, and the format of the daily reports evolved quite a lot – sometimes it is easier to just capture the required data manually.&lt;/p&gt;
 &lt;p&gt;We can do a bit of value-adding to the data by calculating daily counts of people screened, tested and cleared from the cumulative totals given in the NSW Health media releases, and merely presenting the data as time-series reveals information not obvious from the individual daily reports.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/nsw_graph-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/nsw_graph-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;p&gt;The ensemble of time-series charts clearly show that the NSW public health control efforts, including intensive airport screening, voluntary isolation and, of course, travel restrictions&lt;a href="#fn2" class="footnote-ref" id="fnref2"&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;, are working.&lt;/p&gt;
 &lt;p&gt;Having been involved in the public health response to 2009 A/H1N1 swine flu pandemic, I know how much round-the-clock work is involved in mounting such a response. NSW Health should be praised for its efforts, which deserve a more informative presentation than the little table in the daily press release as shown above!&lt;/p&gt;
 &lt;p&gt;This admittedly parochial example is provided to illustrate the potential value of providing even simple visualisations and modest value-added analyses (such as merely differencing cumulative counts to yield daily counts) – tasks that that health authorities personnel may not have the capacity to do themselves while simultaneously dealing with an epidemic.&lt;/p&gt;
@@ -215,7 +215,7 @@ compare_provinces_confirmed_long %&amp;gt;% bind_rows(compare_provinces_confirme
     labs(y = &amp;quot;Daily incident confirmed cases&amp;quot;, title = &amp;quot;Comparison of wikipedia and Johns Hopkins University\nCOVID-19 daily incidence data up to 12th February, 2020.&amp;quot;, 
         subtitle = &amp;quot;(Note: not all provinces shown here)&amp;quot;, caption = &amp;quot;Sources: Johns Hopkins CSSE Novel coronavirus COVID-19 (2019-nCoV) data repository\nat https://github.com/CSSEGISandData/COVID-19\nwikipedia: https://en.wikipedia.org/wiki/Timeline_of_the_2019–20_Wuhan_coronavirus_outbreak&amp;quot;) + 
     theme(legend.position = &amp;quot;top&amp;quot;, legend.title = element_blank())&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/JHU_incidence-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/JHU_incidence-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;There is clearly a lag of 1 day between the two sources for many, but not all of the provinces. That isn’t a major concern and won’t change any of our analyses very much. Of much greater concern are the large differences for specific days, for the provinces with substantial numbers of cases. The most egregious difference between the JHU and wikipedia incidence data is for Hubei province on 2nd February 2020, for which the JHU data gives 4024 new cases, and the wikipedia data gives 2103 new cases. Note that that was well before the change in case definition for Hubei province, which occured on 12th February. The relevant source document for Hubei province for 2nd February is &lt;a href="http://wjw.hubei.gov.cn/fbjd/dtyw/202002/t20200203_2018272.shtml"&gt;here&lt;/a&gt;, and using Google Translate on the contents of that page reveals that the wikipedia data are, in fact, correct.&lt;/p&gt;
 &lt;p&gt;Let’s check that against another authorative source. Table 2 in the &lt;a href="https://www.who.int/docs/default-source/coronaviruse/situation-reports/20200201-sitrep-12-ncov.pdf?sfvrsn=273c5d35_2"&gt;WHO Sitrep (Situational Report) for 1st February 2020&lt;/a&gt; gives the cumulative count of confirmed COVID-19 cases in Hubei province as 7153. Table 1 in the &lt;a href="https://www.who.int/docs/default-source/coronaviruse/situation-reports/20200202-sitrep-13-ncov-v3.pdf?sfvrsn=195f4010_6"&gt;WHO SitRep for 2nd February 2020&lt;/a&gt; gives the cumulative count of confirmed COVID-19 cases in Hubei province as 9074. The difference is 1921, which is much closer to figure given for the same date by the Hubei provincial government web site of 2103 cases than it is to the corresponding JHU data of 4024 cases. The minor difference between the WHO and the Hubei government site may perhaps be due to differing cut-off times for daily tallies of case counts.&lt;/p&gt;
 &lt;p&gt;That’s enough checking for the puposes of this analysis, but it underlines the importance of checking the accuracy of web data sources, even apparently reputable ones.&lt;/p&gt;
@@ -226,36 +226,36 @@ compare_provinces_confirmed_long %&amp;gt;% bind_rows(compare_provinces_confirme
 &lt;div id="daily-cumulative-incidence" class="section level3"&gt;
 &lt;h3&gt;Daily cumulative incidence&lt;/h3&gt;
 &lt;p&gt;First, let’s look at the daily cumulative number of incident, lab-confirmed cases for Wuhan city, for Hubei province (which contains Wuhan), for all the other provinces combined, and for all of China.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/cumulative_incidence-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/cumulative_incidence-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;p&gt;The initial increases for Wuhan and the balance of Hubei, and for all of China look to be approximately exponential, as is expected for epidemic spread. Let’s plot them on a logarithmic &lt;em&gt;y&lt;/em&gt; axis. We would expect to see a linear increase on a log scale if the epidemic curve is indeed exponential.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/log_cumulative_incidence-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/log_cumulative_incidence-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;p&gt;One could convince oneself that log-linearity is present.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id="daily-incremental-incidence" class="section level3"&gt;
 &lt;h3&gt;Daily incremental incidence&lt;/h3&gt;
 &lt;p&gt;Let’s also look at the daily incremental incidence. This is more informative, and is known in outbreak epidemiological parlance as the &lt;em&gt;epidemic curve&lt;/em&gt;. It is traditionally visualised as a bar chart, which emphasises missing data more than a line chart, even one with points as well. We’ll adhere to epidemiological tradition.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/daily_incidence-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/daily_incidence-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;p&gt;At the time of writing (17th February), it looks like incidence has plateaued and is now beginning to decline in Wuhan, and that daily incremental incidence is very definitely falling everywhere else in mainland China.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id="epidemic-curves-for-all-provinces-plus-wuhan-city" class="section level3"&gt;
 &lt;h3&gt;Epidemic curves for all provinces, plus Wuhan city&lt;/h3&gt;
 &lt;p&gt;Finally, let’s quickly visualise the epidemic curves for all the provinces (plus Wuhan city).&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/all_provinces_incidence-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/all_provinces_incidence-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;p&gt;And let’s look at the cumulative incidence, with all provinces on the same scale to put things in perspective.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/all_provinces_cum_incidence-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/all_provinces_cum_incidence-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;p&gt;It is clear that Wuhan is not only the epicentre of the outbreak, but that it continues to be the main location of new infections.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id="daily-cumulative-and-incremental-deaths-in-lab-confirmed-cases" class="section level3"&gt;
 &lt;h3&gt;Daily cumulative and incremental deaths in lab-confirmed cases&lt;/h3&gt;
 &lt;p&gt;Now let’s look the daily (incremental) number of deaths in lab-confirmed cases for Wuhan city, for Hubei province (which contains Wuhan), for all the other provinces combined, and for all of China.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/cumulative_deaths-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/cumulative_deaths-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;p&gt;Let’s also look at the daily incremental deaths in lab-confirmed cases.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/daily_deaths_plot-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/daily_deaths_plot-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id="incidence-and-deaths" class="section level3"&gt;
 &lt;h3&gt;Incidence and deaths&lt;/h3&gt;
 &lt;p&gt;Finally, let’s also look at the number of daily incremental lab-confirmed incident cases and the daily incremental deaths in lab-confirmed cases, aligned by date.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/daily_case_deaths_plot-1.png" width="960" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/daily_case_deaths_plot-1.png" width="960" /&gt;&lt;/p&gt;
 &lt;p&gt;Clearly daily counts of deaths are continuing to rise despite the fact that the daily count of new cases is now falling. This is not surprising, given that it takes some time for cases to either recover or to die, and therefore the trend in deaths will necessarily lag behind any trend in daily incidence.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
@@ -345,7 +345,7 @@ fitted_cumulative_incidence %&amp;gt;% filter(Date &amp;lt;= ymd(&amp;quot;2020-
     geom_point(aes(y = cumulative_incident_cases), colour = &amp;quot;orange&amp;quot;) + 
     labs(y = &amp;quot;Cumulative incidence&amp;quot;, title = &amp;quot;COVID-19 fitted vs observed cumulative incidence, Hubei province&amp;quot;, 
         subtitle = &amp;quot;(red=fitted incidence from SIR model, orange=observed incidence)&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/SIR_model_plot_fitted_data-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/SIR_model_plot_fitted_data-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;That looks like a reasonably good fit to the observed cumulative incidence data, so we can now use our fitted model to calculate the &lt;em&gt;basic reproduction number&lt;/em&gt; &lt;span class="math inline"&gt;\(R_{0}\)&lt;/span&gt; which gives the average number of susceptible people who are infected by each infectious person:&lt;/p&gt;
 &lt;p&gt;&lt;span class="math display"&gt;\[R_{0} = \frac{\beta}{\gamma}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;That’s very easy to calculate, and we get:&lt;/p&gt;
@@ -356,7 +356,7 @@ fitted_cumulative_incidence %&amp;gt;% filter(Date &amp;lt;= ymd(&amp;quot;2020-
 &lt;h2&gt;Using the SIR model for Hubei province to make predictions&lt;/h2&gt;
 &lt;p&gt;An obvious next step is to use our fitted SIR model to make predictions about the future course of the outbreak. However, caution is required, because the SIR model assumes a fixed &lt;em&gt;reproduction number&lt;/em&gt;, but if public health interventions have been implemented, such as quarantining of cases, contact tracing and isolation of those contacts, and general restrictions on social mixing, such as closing the city of Wuhan, then the &lt;em&gt;effective reproduction number&lt;/em&gt; &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; will be dynamic and should fall as those interventions are progressively implemented, to values considerably less than the &lt;em&gt;basic reproduction number&lt;/em&gt; &lt;span class="math inline"&gt;\(R_{0}\)&lt;/span&gt;, which reflects the behaviour of the virus at the beginning of an epidemic before any response has been implemented.&lt;/p&gt;
 &lt;p&gt;So let’s use our SIR model, fitted to the first 15 days of data, to extrapolate out to the current date, and compare that against the observed values:&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/SIR_model_plot_extrapolated-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/SIR_model_plot_extrapolated-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;We can see that the actual incidence is much lower than that predicted by our model. The reason is that, due to the swift and decisive public health interventions implemented by the Chinese authorities, the &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; of the COVID-19 in Hubei province has already been substantially reduced. When the &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; falls below 1.0, the peak of the epidemic (at least in Hubei) will have been reached and the outbreak will eventually die out.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id="using-our-model-to-let-the-outbreak-run-its-course-without-intervention" class="section level2"&gt;
@@ -382,9 +382,9 @@ fitted_cumulative_incidence %&amp;gt;% ggplot(aes(x = Date)) + geom_line(aes(y =
     scale_colour_manual(name = &amp;quot;&amp;quot;, values = c(red = &amp;quot;red&amp;quot;, black = &amp;quot;black&amp;quot;, 
         green = &amp;quot;green&amp;quot;, orange = &amp;quot;orange&amp;quot;), labels = c(&amp;quot;Susceptible&amp;quot;, 
         &amp;quot;Recovered&amp;quot;, &amp;quot;Observed incidence&amp;quot;, &amp;quot;Infectious&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/SIR_model_plot_no_intervention-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/SIR_model_plot_no_intervention-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;It is easier to see what is going on if we use a log scale:&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/SIR_model_plot_no_intervention_log-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/SIR_model_plot_no_intervention_log-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;Clearly that prediction, should it come to pass, would be an unmitigated disaster. At this point, it is worth remarking on the importance of decisive public health intervention to limit the spread of such epidemics. Without such interventions, tens of millions of people could be infected, as our model predicts, and even with only a one or two per cent mortality rate, hundreds of thousands of people would die. The economic and human cost of the outbreak control steps taken within China are large, but the alternatives are a lot worse!&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id="ascertainment-rates" class="section level2"&gt;
@@ -396,7 +396,7 @@ fitted_cumulative_incidence %&amp;gt;% ggplot(aes(x = Date)) + geom_line(aes(y =
 &lt;pre&gt;&lt;code&gt;      R0 
 2.004561 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Note that these fitted parameters are the same as the ones we got above, without an ascertainment rate adjustment. Let’s look at the fitted values.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/SIR_model_plot_no_intervention_ascertainment_adjustment-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/SIR_model_plot_no_intervention_ascertainment_adjustment-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;Perhaps counter-intuitively, incorporation of a fixed 20% ascertainment rate adjustment into our model makes little difference to the modelled outbreak if it is let run its course, except that it all happens a bit more quickly. But the number of infections remains the same, and the &lt;em&gt;basic reproduction number&lt;/em&gt; is unchanged. Note that that is for a fixed ascertainment rate. If the ascertainment rate varies significantly over time, then the parameter estimates will necessarily be biased – but in the early days of an outbreak, it may be reasonable to assume that ascertainment rates don’t change too much.&lt;/p&gt;
 &lt;div id="more-sophisticated-models" class="section level3"&gt;
 &lt;h3&gt;More sophisticated models&lt;/h3&gt;
@@ -439,7 +439,7 @@ hubei_incidence_object &amp;lt;- incidence(hubei_incidence_function_data$Date)&l
 plot(hubei_incidence_object) + geom_vline(xintercept = hubei_incidence_peak, 
     col = &amp;quot;red&amp;quot;, lty = 2) + labs(title = &amp;quot;Daily incidence of lab-confirmed cases, Hubei province&amp;quot;, 
     subtitle = &amp;quot;(red line indicates date of peak incidence)&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/plot_incidence_object-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/plot_incidence_object-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;Now we can use the &lt;code&gt;fit()&lt;/code&gt; function to fit two log-linear models, one to the growth phase before the peak, and one to the decay phase after the peak. We can plot the fitted values from our models (with confidence limits) on top of the actual observed incidence data for Hubei province.&lt;/p&gt;
 &lt;pre class="r"&gt;&lt;code&gt;hubei_incidence_fit &amp;lt;- incidence::fit(hubei_incidence_object, 
     split = hubei_incidence_peak)
@@ -448,7 +448,7 @@ plot(hubei_incidence_object) + geom_vline(xintercept = hubei_incidence_peak,
 plot(hubei_incidence_object) %&amp;gt;% add_incidence_fit(hubei_incidence_fit) + 
     labs(title = &amp;quot;Observed and modelled incidence of COVID-19 cases&amp;quot;, 
         subtitle = &amp;quot;Hubei province, 2020&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/fit_incidence_object-1.png" width="672" data-distill-preview=1 /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/fit_incidence_object-1.png" width="672" data-distill-preview=1 /&gt;&lt;/p&gt;
 &lt;p&gt;From the model, we can extract various parameters of interest: the &lt;strong&gt;growth rate prior to the peak was 0.26&lt;/strong&gt; (95% CI 0.21 - 0.31), and the &lt;strong&gt;decay rate after the peak was -0.095&lt;/strong&gt; (95% CI -0.0695 - -0.121).&lt;/p&gt;
 &lt;p&gt;These growth and decay rates are equivalent to a &lt;strong&gt;doubling time of 2.7 days&lt;/strong&gt; (95% CI 2.2 - 3.3 days), and a &lt;strong&gt;halving time of 7.3 days&lt;/strong&gt; (95% CI 5.7 - 10.0 days).&lt;/p&gt;
 &lt;p&gt;The doubling and halving time estimates are very handy for informing public health intervention policy, which we will discuss in the conclusion.&lt;/p&gt;
@@ -464,18 +464,18 @@ w &amp;lt;- distcrete(&amp;quot;gamma&amp;quot;, interval = 1, shape = param$sha
 
 growth_R0 &amp;lt;- lm2R0_sample(hubei_incidence_fit$before$model, w)
 hist(growth_R0, col = &amp;quot;grey&amp;quot;, border = &amp;quot;white&amp;quot;, main = &amp;quot;Distribution of R0&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/est_R0_growth-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/est_R0_growth-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;pre class="r"&gt;&lt;code&gt;summary(growth_R0)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-  3.319   4.115   4.476   4.512   4.791   8.057 &lt;/code&gt;&lt;/pre&gt;
+  3.468   4.124   4.582   4.515   4.910   5.691 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Note that the central estimates for &lt;span class="math inline"&gt;\(R_{0}\)&lt;/span&gt; are considerably higher than those we calculated with a SIR model fitted to the same Hubei province data, and are also higher than &lt;span class="math inline"&gt;\(R_{0}\)&lt;/span&gt; estimates published elsewhere, but they are consistent with estimates of the instantaneous effective reproduction number &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; which we calculate in the next section&lt;a href="#fn6" class="footnote-ref" id="fnref6"&gt;&lt;sup&gt;6&lt;/sup&gt;&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;Here is the estimated &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; for the decay phase:&lt;/p&gt;
 &lt;pre class="r"&gt;&lt;code&gt;decay_R0 &amp;lt;- lm2R0_sample(hubei_incidence_fit$after$model, w)
 hist(decay_R0, col = &amp;quot;grey&amp;quot;, border = &amp;quot;white&amp;quot;, main = &amp;quot;Distribution of R0&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/est_R0_decay-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/est_R0_decay-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;pre class="r"&gt;&lt;code&gt;summary(decay_R0)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.3555  0.4504  0.4793  0.4808  0.5069  0.5991 &lt;/code&gt;&lt;/pre&gt;
+ 0.3452  0.4401  0.4708  0.4736  0.5095  0.6138 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Unsurprisingly, it is well below 1.0 – otherwise the epidemic would not be decaying, as we observe.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
@@ -502,7 +502,7 @@ hubei_res_parametric_si &amp;lt;- estimate_R(hubei_confirmed_cases,
         std_si = 3.4)))
 
 plot_Ri(hubei_res_parametric_si)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/Cori_parametric_si_model_fit_hubei-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/Cori_parametric_si_model_fit_hubei-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;The first thing to note is that the slope of the &lt;em&gt;effective reproduction number&lt;/em&gt; curve is decidedly downwards, which strongly suggests that containment efforts are succeeding in progressively reducing transmission of the disease in Hubei province. That is encouraging.&lt;/p&gt;
 &lt;p&gt;The second thing to note is that the 7-day sliding window estimates of &lt;strong&gt;instantaneous&lt;/strong&gt; &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; are very high, approaching 10 at the peak. This seems unlikely. It is possible that the Cori model or its implementation as an &lt;code&gt;R&lt;/code&gt; library is flawed, but it has been developed and implemented by the pre-eminent epidemic modelling team in the world, and has been shown to accurately estimate &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; using a wide range of historical outbreak data. There are, however, a number of possible alternative explanations.&lt;/p&gt;
 &lt;p&gt;One possible explanation is that COVID-19 is transmissible &lt;strong&gt;before&lt;/strong&gt; the onset of symptoms, resulting in much shorter serial intervals than expected, possibly shorter than the incubation period. Alternatively, and very likely, there may be non-symptomatic, sub-clinical spreaders of the disease, who are undetected. Again, the effect is as if the serial interval is very short, although it would be desirable to explicitly model that scenario, but current methods don’t permit that.&lt;/p&gt;
@@ -512,7 +512,7 @@ plot_Ri(hubei_res_parametric_si)&lt;/code&gt;&lt;/pre&gt;
         std_si = 1.4)))
 
 plot_Ri(hubei_res_parametric_si)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/Cori_parametric_si_model_fit2_hubei-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/Cori_parametric_si_model_fit2_hubei-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;Those estimated &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; values look far more reasonable, and if true, suggest that the epidemic will soon be brought under control, at least in Hubei, which is its epicentre.&lt;/p&gt;
 &lt;p&gt;However, arbitrarily making the serial interval very short feels wrong. Another possible explanation is that there may be a great deal of variation in the serial interval distribution between cases, for the reasons noted above, with some cases transmitting the disease very soon after infection, possibly before the onset of symptoms (so-called &lt;em&gt;super-spreaders&lt;/em&gt;), and some cases being sub-clinical, and thus undetected, spreading the disease as well, while other cases have a serial interval more consistent with that of MERS or SARS, with a mean around 8 days. Such variability in the serial interval distributions between cases is consistent with the observed variation between individuals in the severity of the disease caused by COVID-19 – most victims develop only mild disease, a small proportion develop serious disease, and only one or two per cent die from the infection.&lt;/p&gt;
 &lt;p&gt;Conveniently, the &lt;code&gt;EpiEstim&lt;/code&gt; package lets us incorporate this uncertainty around the serial interval distribution by allowing specification of a distribution of distributions of serial intervals. So let’s retain the mean SI estimated by Li &lt;em&gt;et al.&lt;/em&gt; of 7.5 days, with an SD of 3.4, but let’s also allow that mean SI to vary between 2.3 and 8.4 using a truncated normal distribution with an SD of 2.0. We’ll also allow the SD or the SD to vary between 0.5 and 4.0.&lt;/p&gt;
@@ -523,7 +523,7 @@ plot_Ri(hubei_res_parametric_si)&lt;/code&gt;&lt;/pre&gt;
         min_std_si = 0.5, max_std_si = 4, n1 = 1000, n2 = 1000)))
 
 plot_Ri(hubei_res_uncertain_si)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/Cori_uncertain_si_model_fit_hubei-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/Cori_uncertain_si_model_fit_hubei-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;Ok, that looks more reasonable, and clearly the &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; is falling in Hubei, no matter what distribution we use for the serial interval.&lt;/p&gt;
 &lt;p&gt;But, leaving no stone unturned, the methods provided in the excellent &lt;em&gt;EpiEstim&lt;/em&gt; package also permit &lt;em&gt;empirical&lt;/em&gt; estimation of the &lt;em&gt;serial interval&lt;/em&gt; based on pair data – that is, unit records of pairs of primary and secondary cases. &lt;a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2001316"&gt;Li &lt;em&gt;et al.&lt;/em&gt;&lt;/a&gt; provides such data for just 5 primary cases from the early stages of the outbreak in Wuhan:&lt;/p&gt;
 &lt;div class="figure"&gt;
@@ -573,7 +573,7 @@ The Metropolis acceptance rate was 0.56400
 Estimating the reproduction number for these serial interval estimates...
  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class="r"&gt;&lt;code&gt;plot_Ri(hubei_res_empirical_si)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/Cori_empirical_si_model_fit_hubei_daily-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/Cori_empirical_si_model_fit_hubei_daily-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;That is remarkably similar to our estimates based on an “uncertain” meta-distribution for the &lt;em&gt;serial interval&lt;/em&gt;, above, which is encouraging.&lt;/p&gt;
 &lt;p&gt;Nonetheless some of the &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; values are still rather high. Remember, these are &lt;strong&gt;instantaneous&lt;/strong&gt; &lt;em&gt;reproductive numbers&lt;/em&gt;, averaged over a sliding 7-day window. Let’s change that to a shorter window to see what the day-to-day changes in &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; are, rather than based on an aggregation of the preceding 7-days. We’ll plot the results using a logarithmic scale with a red reference line at 1.0, representing the &lt;em&gt;reproduction number&lt;/em&gt; below which the outbreak will start to die out.&lt;/p&gt;
 &lt;pre class="r"&gt;&lt;code&gt;t_start &amp;lt;- seq(5, length(hubei_confirmed_cases$local) - 1)
@@ -614,10 +614,10 @@ Estimating the reproduction number for these serial interval estimates...
 plot(hubei_res_uncertain_si_daily, &amp;quot;R&amp;quot;) + scale_y_continuous(trans = &amp;quot;log2&amp;quot;) + 
     geom_hline(yintercept = 1, linetype = &amp;quot;solid&amp;quot;, colour = &amp;quot;red&amp;quot;, 
         size = 0.5)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/Cori_uncertain_si_model_fit_hubei_daily-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/Cori_uncertain_si_model_fit_hubei_daily-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;So, it looks like the outbreak has been brought under control in Hubei province, at least based on the published lab-confirmed case numbers and the available serial interval data or estimates of its distribution.&lt;/p&gt;
 &lt;p&gt;It might be remarked that the success of the control measures are also obvious simply by looking at the daily incremental incidence numbers for Hubei:&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/hubei_daily_incidence_adj-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/hubei_daily_incidence_adj-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;However, there is no clue in the data shown above that daily incidence was beginning to fall until data for &lt;strong&gt;5th February&lt;/strong&gt; became available. But it is clear, from the &lt;strong&gt;instantaneous&lt;/strong&gt; &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; plot above that that the &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; was already falling steadily by &lt;strong&gt;27th January&lt;/strong&gt;, more than a week before the daily incidence plot revealed a peak. Such early indications that their efforts are working are vital for public health authorities and governments, encouraging them to “hold the line” and not abandon such costly and disruptive public health controls prematurely.&lt;/p&gt;
 &lt;div id="estimating-changes-in-the-effective-reproduction-number-for-wuhan" class="section level2"&gt;
 &lt;h2&gt;Estimating changes in the &lt;em&gt;effective reproduction number&lt;/em&gt; for Wuhan&lt;/h2&gt;
@@ -647,7 +647,7 @@ The Metropolis acceptance rate was 0.56400
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
 Estimating the reproduction number for these serial interval estimates...
  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/Cori_model_get_data_wuhan-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/Cori_model_get_data_wuhan-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;The &lt;span class="math inline"&gt;\(R_{e}\)&lt;/span&gt; for Wuhan is also trending down, and is, at the time of writing, very likely below 1.0 (if our &lt;em&gt;serial interval&lt;/em&gt; distribution estimates are correct). However, note that the downwards trend in Wuhan is not monotonic. This may be an indication that the authorities are still struggling to control spread in Wuhan. This is also apparent in the jagged plateau in the daily incremental incidence figures for Wuhan as we saw above.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id="estimating-changes-in-the-effective-reproduction-number-outside-hubei" class="section level2"&gt;
@@ -678,7 +678,7 @@ The Metropolis acceptance rate was 0.56400
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
 Estimating the reproduction number for these serial interval estimates...
  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/Cori_model_get_data_not_hubei-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/Cori_model_get_data_not_hubei-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;It looks like the outbreak is already under control in other provinces, if the empirical distribution for the &lt;em&gt;serial interval&lt;/em&gt; we have used is approximately correct.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
@@ -718,9 +718,9 @@ test_pred_growth_median_counts %&amp;gt;% bind_rows(tibble(dates = get_dates(hub
     subtitle = paste(&amp;quot;(projection based on observed case counts up to&amp;quot;, 
         format(hubei_incidence_peak - days(pred_fwd_days), &amp;quot;%d %B %Y&amp;quot;), 
         &amp;quot;)&amp;quot;)) + theme(legend.position = &amp;quot;top&amp;quot;, legend.title = element_blank())&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/test_projection_Hubei_growth-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/test_projection_Hubei_growth-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;OK, that’s impressive! The projection, based only on observed data up to 25 January 2020, is in remarkably close agreement with the observed data. Let’s do the same for the decay phase, this time holding out 5 days of the observed decay from our prediction.&lt;/p&gt;
-&lt;p&gt;&lt;img src="file2a6e463ab9ee_files/figure-html/test_projection_Hubei_decay-1.png" width="672" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="file2d0a5751fcce_files/figure-html/test_projection_Hubei_decay-1.png" width="672" /&gt;&lt;/p&gt;
 &lt;p&gt;Based on that projection, it will take until the beginning of April for the outbreak in Hubei to be extinguished. But perhaps that is too conservative a prediction? We’ll re-visit these predictions in a later post, in the light of further incidence data.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id="conclusions" class="section level1"&gt;

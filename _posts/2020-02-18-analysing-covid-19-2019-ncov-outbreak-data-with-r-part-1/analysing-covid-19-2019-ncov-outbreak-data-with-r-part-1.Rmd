@@ -19,7 +19,7 @@ output:
     toc: true
     toc_depth: 2
     self_contained: false
-repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-02-28-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1
+repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1
 ---
 
 ```{r setup, include=FALSE}
