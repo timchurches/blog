@@ -10,7 +10,7 @@
     <lastBuildDate>Mon, 17 Feb 2020 00:00:00 +0000</lastBuildDate>
     <item>
       <title>Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1</title>
-      <dc:creator>Tim Churches</dc:creator>
+      <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Tim Churches</dc:creator>
       <link>https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1</link>
       <description>
 
@@ -799,12 +799,12 @@ $(document).ready(function () {
 &lt;/script&gt;
 
 </description>
-      <distill:md5>aab24779f3ddf040beddf039141e6730</distill:md5>
+      <distill:md5 xmlns:distill="https://distill.pub/journal/">aab24779f3ddf040beddf039141e6730</distill:md5>
       <category>R</category>
       <category>COVID-19</category>
       <guid>https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1</guid>
       <pubDate>Mon, 17 Feb 2020 00:00:00 +0000</pubDate>
-      <media:content url="https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png" medium="image" type="image/png" width="1248" height="768"/>
+      <media:content xmlns:media="http://search.yahoo.com/mrss/" url="https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png" medium="image" type="image/png" width="1248" height="768"/>
     </item>
   </channel>
 </rss>
