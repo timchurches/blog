@@ -4,6 +4,8 @@ description: |
   A blog dedicated to noodlings about health data science.
 output_dir: "docs"
 base_url: https://timchurches.github.io/blog/
+rss:
+  full_content: TRUE
 collections:
   posts:
     feed_items_max: 50
