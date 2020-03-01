@@ -1419,9 +1419,9 @@ test_pred_decay_median_counts %>%
 
 Based on that projection, it will take until the beginning of April for the outbreak in Hubei to be extinguished. But perhaps that is too conservative a prediction? We'll re-visit these predictions in a later post, in the light of further incidence data.
 
-## Conclusions
+# Conclusions
 
-### Public health considerations
+## Public health considerations
 
 It seems likely that China has won the battle, if not the war, against the COVID-19 outbreak, having successfully mitigated the spread of the virus through **very** decisive and prompt public health action, in particular closing Wuhan and other cities in Hubei province, and implementing strict social isolation policies within those cities. 
 
@@ -1433,7 +1433,7 @@ It would seem that a key question, right now (as at 18th February), is **"How lo
 
 We can make some informed guesses about that. Let's assume that, in a country with relatively poor public health surveillance capabilities, it requires about 1,000 cases of the disease before an outbreak becomes very evident, given that only a small proportion of those cases require hospital care and only a few per cent will die. One thousand cases is about 2^10^, so 10 generations, and with a doubling time of about 2.8 days, as we estimated above, that means local outbreaks ought to start showing up after about 4 weeks. If the true doubling time is longer than that, it make take six or eight weeks before local outbreaks become obvious. Given this, we might expect such local outbreaks to start showing up in Indonesia some time over the next few weeks, at least by the end of February 2020. At the time of writing, [Vietnamese authorities have already locked down the Son Loi community](https://asia.nikkei.com/Spotlight/Coronavirus/Vietnam-locks-down-Son-Loi-district-near-Hanoi-for-20-days) outside Hanoi due to a local COVID-19 outbreak.
 
-### Data science considerations
+## Data science considerations
 
 From a data science (and public health) perspective, the main thing to note is that by doing all this data manipulation and model estimation using program code, as we have been doing, rather than using spreadsheets or some other manual process, it is very easy to re-run everything on-demand in just a minute or so, and thus current estimates and projections can readily be automatically updated as new observed data becomes available each day, or even every hour.
 

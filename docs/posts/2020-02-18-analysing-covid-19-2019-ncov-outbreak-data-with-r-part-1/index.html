@@ -1360,8 +1360,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <li><a href="#estimating-changes-in-the-effective-reproduction-number-for-wuhan">Estimating changes in the <em>effective reproduction number</em> for Wuhan</a></li>
 <li><a href="#estimating-changes-in-the-effective-reproduction-number-outside-hubei">Estimating changes in the <em>effective reproduction number</em> outside Hubei</a></li>
 </ul></li>
-<li><a href="#projections">Projections</a><ul>
-<li><a href="#conclusions">Conclusions</a></li>
+<li><a href="#projections">Projections</a></li>
+<li><a href="#conclusions">Conclusions</a><ul>
+<li><a href="#public-health-considerations">Public health considerations</a></li>
+<li><a href="#data-science-considerations">Data science considerations</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -1851,7 +1853,7 @@ hist(growth_R0, col = &quot;grey&quot;, border = &quot;white&quot;, main = &quot
 summary(growth_R0)</code></pre>
 <pre><code>
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-  3.186   4.147   4.521   4.529   4.858   6.986 </code></pre>
+  2.560   4.120   4.401   4.418   4.802   6.296 </code></pre>
 </div>
 <p>Note that the central estimates for <span class="math inline">\(R_{0}\)</span> are considerably higher than those we calculated with a SIR model fitted to the same Hubei province data, and are also higher than <span class="math inline">\(R_{0}\)</span> estimates published elsewhere, but they are consistent with estimates of the instantaneous effective reproduction number <span class="math inline">\(R_{e}\)</span> which we calculate in the next section<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>.</p>
 <p>Here is the estimated <span class="math inline">\(R_{e}\)</span> for the decay phase:</p>
@@ -1864,7 +1866,7 @@ hist(decay_R0, col = &quot;grey&quot;, border = &quot;white&quot;, main = &quot;
 summary(decay_R0)</code></pre>
 <pre><code>
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.3832  0.4553  0.4861  0.4864  0.5070  0.6398 </code></pre>
+ 0.2890  0.4548  0.4761  0.4803  0.5115  0.6206 </code></pre>
 </div>
 <p>Unsurprisingly, it is well below 1.0 – otherwise the epidemic would not be decaying, as we observe.</p>
 <h1 id="estimating-changes-in-the-effective-reproduction-number">Estimating changes in the <em>effective reproduction number</em></h1>
@@ -2137,14 +2139,14 @@ test_pred_growth_median_counts %&gt;% bind_rows(tibble(dates = get_dates(hubei_i
 <p><img src="analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/test_projection_Hubei_decay-1.png" width="624" /></p>
 </div>
 <p>Based on that projection, it will take until the beginning of April for the outbreak in Hubei to be extinguished. But perhaps that is too conservative a prediction? We’ll re-visit these predictions in a later post, in the light of further incidence data.</p>
-<h2 id="conclusions">Conclusions</h2>
-<h3 id="public-health-considerations">Public health considerations</h3>
+<h1 id="conclusions">Conclusions</h1>
+<h2 id="public-health-considerations">Public health considerations</h2>
 <p>It seems likely that China has won the battle, if not the war, against the COVID-19 outbreak, having successfully mitigated the spread of the virus through <strong>very</strong> decisive and prompt public health action, in particular closing Wuhan and other cities in Hubei province, and implementing strict social isolation policies within those cities.</p>
 <p>Just how long these measures will need to remain in place depends is unclear, but could be estimated using methods similar to those described above.</p>
 <p>The real worry now is spread in other countries. Wealthy, developed countries such as Australia should be able to detect and contain, with potentially Herculean effort, any spread, or at least slow it enough to allow their health care systems to cope. The real worry are less wealthy countries which have considerable interchange of people with mainland China, and which have much poorer public health surveillance and control capabilities. Indonesia is a particular worry, and the <a href="https://www.smh.com.au/world/asia/why-are-there-are-no-cases-of-coronavirus-in-indonesia-20200213-p540o1.html">absence of any reported cases there currently</a>, as at 14th February, beggars belief. <a href="https://www.medrxiv.org/content/10.1101/2020.02.04.20020495v1.full.pdf">De Salazar <em>et al</em>.</a> at the Harvard Centre for Communicable Disease Dynamics has statistically modelled this beggaring of belief. However, all the other south-east Asian countries would also seem to be highly vulnerable, even if they have reported cases, and <a href="https://www.smh.com.au/world/asia/coronavirus-could-infect-two-thirds-of-globe-top-scientist-says-20200214-p540pc.html">some experts are predicting a global pandemic</a> with devastating consequences.</p>
 <p>It would seem that a key question, right now (as at 18th February), is <strong>“How long do we need to wait to know whether there really aren’t any COVID-19 cases in Indonesia?”</strong>. In other words, by what date should spreading COVID-19 infection in Indonesia become evident, even in the absence of comprehensive or effect public health surveillance systems there (or in the presence of possible government censoring, or <a href="https://www.thejakartapost.com/news/2020/02/12/its-insulting-indonesia-criticizes-us-study-concerns-over-no-coronavirus-cases.html">censuring</a>, of information produced by public health surveillance agencies).</p>
 <p>We can make some informed guesses about that. Let’s assume that, in a country with relatively poor public health surveillance capabilities, it requires about 1,000 cases of the disease before an outbreak becomes very evident, given that only a small proportion of those cases require hospital care and only a few per cent will die. One thousand cases is about 2<sup>10</sup>, so 10 generations, and with a doubling time of about 2.8 days, as we estimated above, that means local outbreaks ought to start showing up after about 4 weeks. If the true doubling time is longer than that, it make take six or eight weeks before local outbreaks become obvious. Given this, we might expect such local outbreaks to start showing up in Indonesia some time over the next few weeks, at least by the end of February 2020. At the time of writing, <a href="https://asia.nikkei.com/Spotlight/Coronavirus/Vietnam-locks-down-Son-Loi-district-near-Hanoi-for-20-days">Vietnamese authorities have already locked down the Son Loi community</a> outside Hanoi due to a local COVID-19 outbreak.</p>
-<h3 id="data-science-considerations">Data science considerations</h3>
+<h2 id="data-science-considerations">Data science considerations</h2>
 <p>From a data science (and public health) perspective, the main thing to note is that by doing all this data manipulation and model estimation using program code, as we have been doing, rather than using spreadsheets or some other manual process, it is very easy to re-run everything on-demand in just a minute or so, and thus current estimates and projections can readily be automatically updated as new observed data becomes available each day, or even every hour.</p>
 <p>The absence of better <em>serial interval</em> data is unfortunate. These data can be sampled – it isn’t necessary to collect these data for everycase, just a representative sample of them. Only Li <em>et al.</em> have published such vital data, to date, and only for five sets of cases from early in the outbreak. This seems to be a significant omission, given the considerable <a href="https://arstechnica.com/science/2020/02/quarantine-camps-door-to-door-searches-in-wuhan-as-coronavirus-rampages-on/">human</a> and <a href="https://www.bloomberg.com/graphics/2020-global-economic-impact-of-wuhan-novel-coronavirus/">economic</a> impacts of the outbreak and the containment measures implemented in response to it.</p>
 <p>Similarly better line-listing data, even if only for samples of cases, would facilitate modelling of outbreak control and estimation of how long public health controls need to be kept in place in each jurisdiction. One would like to think that government authorities are undertaking mathematical modelling, of the type illustrated in this document, on a daily basis to inform their policy decisions. They may well be in China, but elsewhere, it is likely that it is heuristics, not mathematics, that is informing policy.</p>
