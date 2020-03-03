@@ -1,6 +1,6 @@
 ---
 title: "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 2"
-draft: true
+draft: false
 description: "A further exploration of COVID-19 incidence data using R tools and packages."
 categories:
   - R
@@ -18,16 +18,1737 @@ twitter:
 output:
   distill::distill_article:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     self_contained: false
 repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2
 ---
 
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+# if updating version, also update the wikipedia page source 
+# version to get new data
+version <- "1.3"
+version_date <- lubridate::ymd("2020-03-01")
+
+knitr::opts_chunk$set(echo = FALSE, cache=TRUE,
+                      tidy.opts=list(width.cutoff=60),
+                      tidy=TRUE)
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(stringr)
+library(tibble)
+library(broom)
+library(ggplot2)
+library(ggthemes)
+library(hrbrthemes)
+library(rvest)
+library(gt)
+library(deSolve)
+library(EpiEstim)
+library(incidence)
+library(distcrete)
+library(epitrix)
+library(projections)
+library(earlyR)
 ```
 
-Distill is a publication format for scientific and technical writing, native to the web.
 
-Learn more about using Distill at <https://rstudio.github.io/distill>.
+# Pre-amble
+
+This post illustrates the use of R to track the incidence of COVID-19 in relevant countries, and applies various analyses to those data in an attempt to gauge the success of public health containment efforts in reducing the speed and degree of spread.
+
+It is a continuation of a [earlier post](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/) containing a more detailed analysis of COVID-19 data for China, which was created as a teaching tool for [post-graduate health data science students](https://cbdrh.med.unsw.edu.au/postgraduate-coursework) to introduce them to tools and methods that can be used to track and analyse the spread of COVID-19, both in Australia and elsewhere.
+
+The analyses presented here have not been subject to peer-review, and they should not be relied upon for to inform governmental or health care policy.
+
+Please also note that this post only uses data up to the date of publication (1st March 2020), and thus it cannot be considered a situation report reflecting the latest available data. 
+
+The full code is available from the GitHub repository linked at the foot of this post.
+
+# Data sources
+
+Obtaining detailed, accurate, current data for the COVID-19 epidemic is not as straightforward as it might seem. Various national and provincial/governmental web sites in affected countries provide detailed summary data on incident cases, recovered cases and deaths due to the virus, but these data tend to be in the form of counts embedded in (usually non-English) text. 
+
+There are several potential sources of data which has been abstracted and collated from such governmental sites. One convenient set of sources comprises relevant wikipedia pages, such as [this one for China](https://en.wikipedia.org/wiki/Timeline_of_the_2019–20_Wuhan_coronavirus_outbreak). There are equivalent pages for [Japan](https://en.wikipedia.org/wiki/Template:2019–20_coronavirus_outbreak_data/Japan_medical_cases), [South Korea](https://en.wikipedia.org/wiki/Template:2019–20_coronavirus_outbreak_data/South_Korea_medical_cases), [Iran](https://en.wikipedia.org/wiki/Template:2019–20_coronavirus_outbreak_data/Iran_medical_cases) and [Italy](https://en.wikipedia.org/wiki/Template:2019–20_coronavirus_outbreak_data/Italy_medical_cases) (and other countries). Use of these pages through web scraping can be challenging, however, because the format of the tables in which the data appears changes many times per day. 
+
+Another widely-used source is a [dataset](https://github.com/CSSEGISandData/COVID-19) which is being collated by Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) and which is used as the source for [this dashboard](https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6). 
+
+In this document we will nevertheless scrape data from the relevant wikipedia pages, because it tends to be more detailed and better referenced than the equivalent JHU data, and in order to illustrate the joys and the endless **despair** of web-scraping.
+
+## Data limitations
+
+The biggest problem with these analyses is that they are **not** based on data tabulated by **date of onset** (of symptoms), but rather on data tabulated by **date of reporting**, or perhaps date of confirmation by lab test. If lab testing and reporting is swift and the lag is uniform, then the date of reporting or confirmation will lag consistently and only slightly behind the date of onset. But reality is rarely so nice, and typically there are variable delays in lab confirmation and/or reporting, leading to backlogs of cases being reported all at once (known as a "data dump" by outbreak epidemiologists). This is very unfortunate, and it frustrates efforts to properly assess outbreak trajectories and effectiveness of intervention strategies. The solution is for authorities to provide line-listings of all cases, including their date of reporting **and** their date of onset of symptoms, even if only presumptive dates are provided (and missing dates of onset can be imputed, in any case). No details that permit identification of cases or invasion of their privacy need be provided in such line listings.
+
+The effect of the unavoidable (because that's all that is available) use of data tabulated by date of reporting here (and just about everywhere else) means that reproduction numbers and related measures of infectiousness may be inflated, particularly at first. Nonetheless, the methods illustrated here and in [part 1](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/) illustrate the potential utility of epidemic trajectory analysis -- but that utility would be **so much greater** if health authorities published data tabulated by date of onset, or better, line-listings that include date of onset. It would be very easy for them to do that.
+
+The lack of empirical _serial interval_ data is also a problem, discussed further below and in the [earlier analysis](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/#estimating-changes-in-the-effective-reproduction-number).
+
+# Analysis methods
+
+At the time of writing, it seems that a global pandemic of COVID-19 is inevitable, if not already under way. However, a critical issue is whether local transmission can be slowed, ideally to the point where transmission is no longer self-sustaining, and failing that, at least enough to allow hospitals and other medical care facilities to keep up with the flood of patients -- in other words, can local transmission effectively be damped-down enough to allow health care services to cope?
+
+The section on China below shows that local transmission, even on the very large scale that occurred in Hubei province, can indeed be slowed and eventually extinguished by swift and decisive public health action. In the case of mainland China, the action taken by Chinese authorities after the seriousness of the Wuhan outbreak was fully recognised in early January 2020 was massive and completely unprecedented. And it worked! The world owes a debt of gratitude to the people of Wuhan and other cities in Hubei province for the hardships and deprivations they have endured in order to dramatically slow the spread of COVID-19 across China and thence rest of the globe. 谢谢 
+
+Can that success be repeated elsewhere?
+
+To throw some light on that question, the analysis presented here primarily uses R packages developed and published by the [**R Epidemics Consortium**](https://www.repidemicsconsortium.org) (RECON). Details of their use can be gleaned from examination of the code, available via the GitHub link at the foot of this post.
+
+The functions provided by the **RECON**  [`incidence`](https://www.repidemicsconsortium.org/incidence/) package are used to fit log-linear models to the growth and decay phases of the outbreak in Hubei, and the decay phase model is used to very approximately predict when local transmission will be extinguished there. 
+
+The sections on Japan, South Korea, Italy and Iran use the [`earlyR`](https://www.repidemicsconsortium.org/earlyR/) and `EpiEstim` packages, also published by **RECON**. In particular the `get_R()` function in `earlyR` calculates a maximum-likelihood estimate (from a distribution of likelihoods for the reproduction number) as well as calculating $\lambda$, which is a relative measure of the current "force of infection":
+
+$$ \lambda = \sum_{s=1}^{t-1} {y_{s} w (t - s)} $$
+
+
+where $w()$ is the probability mass function (PMF) of the serial interval, and $y_s$ is the incidence at time $s$.
+
+The resulting $\lambda$ "force of infection" plot indicates the daily effective infectiousness (subject to public health controls), with a projection of the diminution of the force of infection if no further cases are observed. The last date of observed data is indicated by the vertical blue dashed line. New cases are shown in a cumulative manner as black dots. It is a sign that the outbreak is being brought under control if $\lambda$, as indicated by the orange bars, is falling prior to or at the date of last observation (as indicated by the vertical blue line). Note that left of the vertical blue line the $\lambda$ values are projections, valid only in **no further cases are observed**. As such, the plot is a bit confusing, but it is nonetheless useful if interpreted with this explanation in mind. The **RECON** packages are all open-source, and easier-to-interpret plots of $\lambda$ could readily be constructed.
+
+The critical parameter for these calculation is the distribution of _serial intervals_ (SI), which is the time between the date of onset of symptoms for a case and the dates of onsets for any secondary cases that case gives rise to. Typically a discrete $\gamma$ distribution for these _serial intervals_ is assumed, parameterised by a mean and standard deviation, although more complex distributions are probably more realistic. See the [previous post](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/#estimating-changes-in-the-effective-reproduction-number) for more detailed discussion of the _serial interval_, and the paramount importance of line-listing data from which it can be empirically estimated.
+
+In this post, we will incorporate this uncertainty around the serial interval distribution by  specifying a distribution of SI distributions for the estimation of the instantaneous effective reproduction number  $R_{e}$. We'll retain the mean SI estimated by [Li _et al._]((https://www.nejm.org/doi/full/10.1056/NEJMoa2001316)) of 7.5 days, with an SD of 3.4, but let's also allow that mean SI to vary between 2.3 and 8.4 using a truncated normal distribution with an SD of 2.0. We'll also allow the SD of the SD to vary between 0.5 and 4.0.
+
+For the estimation of the force of infection $\lambda$, for the _serial interval_ we'll use a discrete $\gamma$ distribution with a mean of 5.0 days and a standard deviation of 3.4.
+
+----
+
+# China
+
+```{r get_china_data, message=FALSE, warning=FALSE, tidy=TRUE}
+# download the wikipedia web page
+# we use a specific version of the template page directly
+# version of the wikipedia page that is used by this version of this document
+chinese_wikipedia_data_url <- paste("https://en.wikipedia.org/wiki/",
+                                    "Template:2019–20_coronavirus_outbreak_data/",
+                                    "China_medical_cases_by_province",
+                                    sep="")
+
+chinese_outbreak_webpage <- read_html(chinese_wikipedia_data_url)
+
+# parse the web page and extract the data from the first table 
+chinese_provinces_confirmed <- chinese_outbreak_webpage %>%
+                        html_nodes("table") %>%
+                        .[[3]] %>%
+                        html_table(fill = TRUE, header=FALSE) %>%
+                        slice(-2) %>%
+                        slice(1:(nrow(.)-3))
+
+colnames(chinese_provinces_confirmed) <- chinese_provinces_confirmed %>%
+                                          slice(nrow(.)) %>%
+                                          unlist()
+
+chinese_provinces_confirmed <- chinese_provinces_confirmed %>%
+                        rename(Date="Date (CST)") %>%
+                        select(-contains("sources", ignore.case = TRUE))
+
+# fix up the column names, get rid of footnotes and other non-data
+# and convert columns to appropriate data types.
+excl_hubei <- chinese_provinces_confirmed %>% select(starts_with("ExcludingHubei")) %>% pull(1)
+hubei_sans_wuhan <- chinese_provinces_confirmed %>% 
+                        select(starts_with("Hubei:outside Wuhan")) %>%
+                        select(-contains("clinical", ignore.case = TRUE)) %>% 
+                        pull(1)
+
+# utility function to remove commas in numbers as character strings
+rm_commas <- function(x) gsub(",", "", x)
+rm_refs <- function(x) stringr::str_split(x, "\\[", simplify=TRUE)[,1]
+
+chinese_provinces_confirmed <- chinese_provinces_confirmed %>%
+                        select(-starts_with("ExcludingHubei")) %>%
+                        select(-starts_with("Hubei:outside Wuhan")) %>%
+                        rename(Wuhan="Wuhan,Hubei",
+                               National="National(confirmed)") %>%
+                        mutate(NationalSansHubei=excl_hubei,
+                               HubeiSansWuhan=hubei_sans_wuhan) %>%
+                        select(-contains("clinical", ignore.case = TRUE)) %>%
+                        select(-contains("inclusive", ignore.case = TRUE)) %>%
+                        mutate(Date=ymd(Date)) %>%
+                        mutate_if(is.character, rm_commas) %>%
+                        mutate_if(is.character, rm_refs) %>%
+                        mutate_if(is.character, as.integer) 
+
+chinese_provinces_confirmed_wp_totals <- chinese_provinces_confirmed %>%
+                                          filter(is.na(Date)) %>%
+                                          pivot_longer(-Date, names_to="province",
+                                                        values_to="wp_total") %>%
+                                          select(-Date)
+
+chinese_provinces_confirmed <- chinese_provinces_confirmed %>%
+                        filter(!is.na(Date))
+
+chinese_provinces_confirmed_calc_totals <- chinese_provinces_confirmed %>% 
+    pivot_longer(-Date, names_to="province",
+                 values_to="incident_cases") %>%
+    group_by(province) %>%
+    summarise(calc_total=sum(incident_cases, na.rm=TRUE)) %>%
+    ungroup()
+    
+chinese_totals_check <- chinese_provinces_confirmed_calc_totals %>%
+                          left_join(chinese_provinces_confirmed_wp_totals, 
+                                    by="province")
+
+# work out the order for the columns from the data, descending order
+chinese_provinces_confirmed %>% 
+    pivot_longer(-Date, names_to="province",
+                 values_to="incident_cases") %>%
+    group_by(province) %>%
+    summarise(total=sum(incident_cases, na.rm=TRUE)) %>%
+    arrange(desc(total)) %>%
+    pull(province) -> chinese_province_order
+
+chinese_province_labels <- chinese_province_order %>%
+                    str_replace("Sans", " without ") %>%
+                    str_replace("InnerMongolia", "Inner Mongolia") %>%
+                    str_replace("National", "Mainland China")
+
+# re-arrange the columns in the dataset and fill in some 
+# missing values, but not all, with zeroes.
+# Also, lab-confirmed and clinical counts for Wuhan are combined on the
+# source Hubei health Commission from 15 Feb so
+# set to NA since we cannot split out the lab-confirmed only
+chinese_provinces_confirmed <- chinese_provinces_confirmed %>%
+    select(c('Date',chinese_province_order)) %>%
+    arrange(Date) %>%
+    mutate(National=ifelse(is.na(National), 0, National),
+           Hubei=ifelse(is.na(Hubei), 0, Hubei),
+           Wuhan=ifelse(is.na(Wuhan), 0, Wuhan))
+
+
+# re#chinese_provinces_confirmed %>%
+#    pivot_longer(-Date, names_to="province",
+#                 values_to="incident_cases")
+```
+
+## Epidemic curves for each Chinese mainland province
+
+Let's visualise the epidemic (daily incremental incidence) curves for all the mainland Chinese provinces.
+
+Note that China began to include incidence data for prison populations starting 20th February. There are clusters in several prisons,  specifically 220 cases in Wuhan Women's Prison and Shayang Hanjin Prison in Hubei (but actually outside of Wuhan city), 200 cases in Rencheng Prison in Shandong province, and 27 cases in Shilifeng Prison in Zhejiang province. These cases are shown separately in this set of _epidemic curves_:
+
+```{r all_provinces_incidence_different_scales_separate_prisons, message=FALSE, warning=FALSE, tidy=TRUE, fig.height=16, fig.width=10, layout="l-body-outset"}
+prison_cases_20_feb <- c(Shandong=200L, Zhejiang=27L, Hubei=220L)
+
+chinese_provinces_confirmed %>%
+    pivot_longer(-Date, names_to="province",
+                 values_to="incident_cases") %>%
+  mutate(province=ordered(province, levels=chinese_province_order, label=chinese_province_labels)) %>%
+  filter(!province == "Mainland China") %>%
+  mutate(Population="General") %>%
+  mutate(incident_cases=case_when(
+    Date == ymd("2020-02-20") & province=="Shandong" ~ incident_cases - prison_cases_20_feb["Shandong"],
+    Date == ymd("2020-02-20") & province=="Zhejiang" ~ incident_cases - prison_cases_20_feb["Zhejiang"],
+    Date == ymd("2020-02-20") & province %in% c("Hubei", "Hubei without Wuhan") ~ incident_cases - prison_cases_20_feb["Hubei"],
+    Date == ymd("2020-02-20") & province=="Mainland China without Hubei" ~ incident_cases - prison_cases_20_feb["Shandong"] - prison_cases_20_feb["Zhejiang"],
+    TRUE ~ incident_cases)) -> chinese_provinces_confirmed_longer_prisons
+              
+chinese_provinces_confirmed_longer_prisons %>%
+  bind_rows(chinese_provinces_confirmed_longer_prisons %>%
+  mutate(Population="Prison") %>%
+  mutate(incident_cases=case_when(
+    Date == ymd("2020-02-20") & province=="Shandong" ~ prison_cases_20_feb["Shandong"],
+    Date == ymd("2020-02-20") & province=="Zhejiang" ~ prison_cases_20_feb["Zhejiang"],
+    Date == ymd("2020-02-20") & province %in% c("Hubei", "Hubei without Wuhan") ~ prison_cases_20_feb["Hubei"],
+    Date == ymd("2020-02-20") & province=="Mainland China without Hubei" ~ prison_cases_20_feb["Shandong"] + prison_cases_20_feb["Zhejiang"],
+    TRUE ~ NA_integer_))  %>%
+  filter(!is.na(incident_cases))) %>%
+  mutate(Population=ordered(Population, 
+                            levels=c("Prison", "General"))
+         ) -> chinese_provinces_confirmed_longer_prisons
+
+chinese_provinces_confirmed_longer_prisons %>%
+  ggplot(aes(x=Date, y=incident_cases, fill=Population)) + 
+  geom_bar(stat="identity") + 
+  facet_wrap(province ~., scales = "free_y", ncol=3) + labs(y="Daily incremental incidence",
+                                   title="Confirmed cases of COVID-19 in mainland China provinces",
+                                   subtitle="Note: differing y-axis scales") +
+  theme(legend.position = "top", 
+          strip.text.y = element_text(size=11)) +
+  scale_fill_manual(values = c("orange", "green"))
+```
+
+Clearly incidence is falling across mainland China, and in all provinces except Hubei will approach close to zero incident cases within the next week if trends continue. 
+
+Hubei, in particular Wuhan, has clearly suppressed the outbreak but may be struggling to completely extinguish it. 
+
+```{r hubei_incidence_separate_prisons, message=FALSE, warning=FALSE, tidy=TRUE, fig.height=12, fig.width=8, layout="l-body-outset"}
+chinese_provinces_confirmed_longer_prisons %>%
+  filter(province %in% c("Wuhan", "Hubei", "Hubei without Wuhan")) %>%
+  ggplot(aes(x=Date, y=incident_cases, fill=Population)) + 
+  geom_bar(stat="identity") + 
+  facet_wrap(province ~., scales = "free_y", ncol=1) + labs(y="Daily incremental incidence",
+                                   title="Confirmed cases of COVID-19 in Wuhan and Hubei",
+                                   subtitle="Note: differing y-axis scales") +
+  theme(legend.position = "top", 
+          strip.text.y = element_text(size=11)) +
+  scale_fill_manual(values = c("orange", "green"))
+```
+
+Or is it? Let's fit some models to investigate further.
+
+## Modelling epidemic trajectory in Hubei province using log-linear models
+
+A key question is how long it will take to extinguish the epidemic in Hubei province.^[The same question will need to be answered in many other regions in many other countries before this is all over.] In [part 1 of this analysis](https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/#modelling-the-epidemic-trajectory-using-log-linear-models), we made some predictions based on a log-linear model fitted to the first part of the decay phase in Hubei. How well did those predictions fair in the light of later observed incidence? Let's see.
+
+Here is the model fitted to just the first part of the decay curve for Hubei, which were all the data we had at the time of writing of the earlier post.
+
+```{r incidence_object,  tidy=TRUE, message=FALSE, warning=FALSE}
+# create a vector of dates, in character form, one for each case in Hubei province on each date
+# using the uncount() function.
+hubei_incidence_function_data <- chinese_provinces_confirmed %>%
+                          filter(Date >= ymd("2020-01-11")) %>%
+                          mutate(incident_cases=Hubei) %>%
+                          mutate(incident_cases = ifelse(Date == ymd("2020-02-20"), incident_cases - prison_cases_20_feb["Hubei"], incident_cases)) %>%
+                          mutate(Date=format(Date, "%Y-%m-%d")) %>%
+                          select(Date, incident_cases) %>%
+                          uncount(incident_cases)
+
+hubei_incidence_object <- incidence(hubei_incidence_function_data$Date)
+
+hubei_incidence_peak <- find_peak(hubei_incidence_object)
+
+hubei_incidence_fit <- incidence::fit(hubei_incidence_object,
+                                      split=hubei_incidence_peak)
+```
+
+
+```{r incidence_object_refit,  tidy=TRUE, message=FALSE, warning=FALSE, layout="l-body-outset"}
+
+pruned_date_indices <- which(get_dates(hubei_incidence_object) <= ymd("2020-02-15"))
+
+pruned_hubei_incidence_fit <- incidence::fit(hubei_incidence_object[pruned_date_indices],
+                                      split=hubei_incidence_peak)
+
+# plot the incidence data and the model fit
+plot(hubei_incidence_object) %>% 
+  add_incidence_fit(pruned_hubei_incidence_fit)
+```
+
+Now let's project that model forward and compare it to subsequent, observed incidence data for Hubei.
+
+
+```{r incidence_object_refit_predict,  tidy=TRUE, message=FALSE, warning=FALSE, layout="l-body-outset"}
+inc_mod <- pruned_hubei_incidence_fit$after$model
+
+# summary(inc_mod)
+
+preds <- exp(predict(inc_mod, newdata=data.frame(dates.x=1:100), type="response"))
+
+pred_decay_incidence <- tibble(dates=hubei_incidence_peak + 0:99,
+                               incident_cases=as.integer(preds),
+                               data_type="predicted")
+
+pred_decay_incidence %>%
+  bind_rows(tibble(dates=get_dates(hubei_incidence_object),
+                   incident_cases=get_counts(hubei_incidence_object),
+                   data_type="observed")) -> obs_pred_hubei_decay
+
+obs_pred_hubei_decay %>%
+  ggplot(aes(x=dates, y=incident_cases, colour=data_type)) +
+    geom_point() +
+    geom_line() +
+    labs(x="", y="Daily incident confirmed cases",
+         title="Observed versus decay-phase projection of incident cases\nin Hubei province",
+         subtitle="(model fitted to observed data up to 15th February only)") +
+     theme(legend.position="top", legend.title = element_blank())
+```
+
+So, it looks like our log-linear model, fitted to the decay phase in Hubei using data only up to 15th February, accurately predicts the current situation as at 1st March. 
+
+Let's re-fit the model using all the data up to the present (1st March). 
+
+```{r incidence_object_all_data_fit,  tidy=TRUE, message=FALSE, warning=FALSE, layout="l-body-outset"}
+
+hubei_incidence_fit <- incidence::fit(hubei_incidence_object,
+                                      split=hubei_incidence_peak)
+
+# plot the incidence data and the model fit
+plot(hubei_incidence_object) %>% 
+  add_incidence_fit(hubei_incidence_fit)
+```
+
+The model for the growth phase looks good, but the decay model may be unduly influenced by the apparent excess of cases reported on 16th, 17th and 18th February. If we omit the data for those dates and re-fit the models, we obtain:
+
+```{r incidence_object_all_data_refit,  tidy=TRUE, message=FALSE, warning=FALSE, layout="l-body-outset"}
+
+pruned_date_indices <- which(get_dates(hubei_incidence_object) < ymd("2020-02-16") |
+                             get_dates(hubei_incidence_object) > ymd("2020-02-18"))
+
+pruned_hubei_incidence_fit <- incidence::fit(hubei_incidence_object[pruned_date_indices],
+                                      split=hubei_incidence_peak)
+
+# plot the incidence data and the model fit
+plot(hubei_incidence_object) %>% 
+  add_incidence_fit(pruned_hubei_incidence_fit)
+```
+
+The fit to the decay phase looks much the same (illustrating the relative insensitivity of the model to apparent outliers), but we'll verify by model fit statistics:
+
+```{r  incidence_object_refit_stats,  tidy=TRUE, message=FALSE, warning=FALSE, layout="l-body-outset"}
+decay_model_fit_stats <- glance(hubei_incidence_fit$after$model) %>%
+                          mutate(Dates="all") %>%
+                          bind_rows(glance(pruned_hubei_incidence_fit$after$model) %>%
+                                      mutate(Dates="omitting 16-18 Feb")) %>%
+                          select(Dates, r.squared, adj.r.squared, deviance)
+
+decay_model_fit_stats %>% 
+  gt(rowname_col = "Date") %>%
+    fmt_number(columns=2:4, decimals = 2) %>%
+    cols_label(
+    r.squared = html("R<sup>2</sup>"),
+    adj.r.squared = html("Adj. R<sup>2</sup>"),
+    deviance = "Deviance"
+  )
+```
+
+On the basis of those statistics, we'll prefer the model fitted to the data that omits the outliers. What does the projection look like now?
+
+```{r incidence_object_all_data_refit_predict,  tidy=TRUE, message=FALSE, warning=FALSE, layout="l-body-outset"}
+inc_mod <- pruned_hubei_incidence_fit$after$model
+
+# summary(inc_mod)
+
+preds <- exp(predict(inc_mod, newdata=data.frame(dates.x=1:100), type="response"))
+
+pred_decay_incidence <- tibble(dates=hubei_incidence_peak + 0:99,
+                               incident_cases=as.integer(preds),
+                               data_type="predicted")
+
+pred_decay_incidence %>%
+  bind_rows(tibble(dates=get_dates(hubei_incidence_object),
+                   incident_cases=get_counts(hubei_incidence_object),
+                   data_type="observed")) -> obs_pred_hubei_decay
+
+obs_pred_hubei_decay %>%
+  ggplot(aes(x=dates, y=incident_cases, colour=data_type)) +
+    geom_point() +
+    geom_line() +
+    labs(x="", y="Daily incident confirmed cases",
+         title="Observed versus decay-phase projection of incident cases\nin Hubei province",
+         subtitle="(model fitted to all observed data to 1st March, except outliers)") +
+     theme(legend.position="top", legend.title = element_blank())
+```
+
+
+The scaling obscures detail, so we will focus on just the tail-end of the decay phase:
+
+```{r incidence_object_all_data_refit_predict_tail,  tidy=TRUE, message=FALSE, warning=FALSE}
+obs_pred_hubei_decay %>%
+  filter(dates >= today()) %>%
+  ggplot(aes(x=dates, y=incident_cases)) +
+    geom_point(colour="green") +
+    geom_line(colour="green") +
+    labs(x="", y="Daily incident confirmed cases",
+         title="Decay-phase projection of incident cases in Hubei province",
+         subtitle="(model fitted to all observed data)") +
+     theme(legend.position="top", legend.title = element_blank())
+```
+
+Based on this projection, it may take until mid-to-late April 2020 for the outbreak in Hubei to be extinguished, a lot longer than one might expect. The exponential behaviour of epidemics, in both their growth and decay phases, tends to be at odds with the human tendency to assume linear behaviour. 
+
+
+----
+
+# Japan
+
+In this and subsequent sections of this post, we'll use the methods provide by the **RECON** packages described above to assess the success or otherwise of public health efforts (or lack thereof) in containing or slowing spread of the COVID-19 virus.^[Yes, I know the official name for the virus is _SARS-CoV-2_, and that _COVID-19_ is the name for the disease it causes. But any mention of _SARS-Cov-2_ tends to confuse all but the most expert of audiences.] 
+
+## All non-cruise ships cases
+
+We'll exclude the all the cases which occurred and were detected on the _Diamond Princess_ cruise ship from these data, for the sake of simplicity. Cases detected in former _Diamond Princess_ passengers and staff after they disembarked the vessel are included, if my reading of the translations of the source web pages is correct.
+
+```{r get_japan_data, message=FALSE, warning=FALSE, tidy=TRUE, layout="l-body-outset"}
+
+last_date_j <- ymd("2020-03-01")
+
+# download the wikipedia web page
+# we use a specific version of the template page directly
+# version of the wikipedia page that is used by this version of this document
+japanese_wikipedia_data_url <- "https://en.wikipedia.org/w/index.php?title=Template:2019–20_coronavirus_outbreak_data/Japan_medical_cases&oldid=943497374"
+
+# unversioned page
+# japanese_wikipedia_data_url <- "https://en.wikipedia.org/wiki/Template:2019–20_coronavirus_outbreak_data/Japan_medical_cases"
+
+japanese_outbreak_webpage <- read_html(japanese_wikipedia_data_url)
+
+# parse the web page and extract the data from the first table 
+japanese_prefectures_confirmed <- japanese_outbreak_webpage %>%
+                        html_nodes("table") %>%
+                        .[[2]] %>%
+                        html_table(header=FALSE, fill = TRUE) %>%
+                        slice(-(1:3)) %>%
+                        slice(1:(nrow(.)-4)) %>%
+                        filter(!str_detect(X1, "Notes")) 
+
+colnames(japanese_prefectures_confirmed) <- japanese_prefectures_confirmed %>%
+                        filter(X1 == "Date") %>%
+                        unlist(use.names = FALSE)
+
+japanese_prefectures_confirmed <- japanese_prefectures_confirmed %>% 
+                        select(-contains("source", ignore.case = TRUE)) %>%
+                        select(-contains("national", ignore.case = TRUE)) %>%
+                        select(-contains("tested", ignore.case = TRUE))
+
+# utility function to remove commas in numbers as character strings
+rm_commas <- function(x) gsub(",", "", x)
+rm_refs <- function(x) stringr::str_split(x, "\\[", simplify=TRUE)[,1]
+rm_parentheses <- function(x) stringr::str_replace_all(x, "[()]","")
+
+japanese_prefectures_confirmed <- japanese_prefectures_confirmed %>%
+                        mutate(Date=ymd(Date)) %>%
+                        filter(!is.na(Date)) %>%
+                        mutate_if(is.character, rm_commas) %>%
+                        mutate_if(is.character, rm_refs) %>%
+                        pivot_longer(-Date, 
+                                     names_to="Prefecture",
+                                     values_to="incident_cases") %>%
+                        mutate(china_travel=stringr::str_starts(incident_cases,"\\(")) %>%
+                        mutate(incident_cases=rm_parentheses(incident_cases)) %>%
+                        mutate(incident_cases=as.integer(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(is.na(incident_cases),0,incident_cases)) %>%
+                        arrange(Prefecture, Date) %>%
+                        group_by(Prefecture) %>%
+                        mutate(cum_cases=cumsum(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(incident_cases == 0 & cumsum(incident_cases) == 0, NA, incident_cases)) %>%
+                        ungroup() %>%
+                        select(-cum_cases) %>%
+                        arrange(Prefecture, desc(Date)) %>%
+                        group_by(Prefecture) %>%
+                        mutate(cum_cases=cumsum(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(incident_cases == 0 & cumsum(incident_cases) == 0, NA, incident_cases)) %>%
+                        ungroup() %>%
+                        select(-cum_cases) %>%
+                        arrange(Prefecture, Date)
+
+japanese_prefectures_confirmed_wider <- japanese_prefectures_confirmed %>%
+                                  pivot_wider(names_from = Prefecture,
+                                              values_from = incident_cases,
+                                              values_fill = list(incident_cases = NA))
+
+japanese_prefectures_confirmed %>%
+  group_by(Date, china_travel) %>%
+  summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+  filter(Date <= last_date_j) %>%
+  ggplot(aes(x=Date, y=incident_cases, fill=china_travel)) +
+  geom_bar(stat="identity") +
+  labs(y="Incident cases", fill="Recent travel to China",
+       title="COVID-19 incident cases in Japan",
+       subtitle="(excludes cases detected on the Diamond Princess)") +
+  theme(legend.position="top")
+```
+
+Let's see the total cases by prefecture.
+
+```{r, , layout="l-body-outset"}
+japanese_prefectures_confirmed %>%
+  filter(Date <= last_date_j,
+         Prefecture != "DiamondPrincessWorkers",
+         Prefecture != "Repatriated") %>%
+  group_by(Prefecture) %>%
+  summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+  ggplot(aes(x=reorder(Prefecture, incident_cases), y=incident_cases)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs(y="Total cases to date",
+       x = "",
+       title="COVID-19 total cases in Japan, by prefecture",
+       subtitle="(excludes cases detected on the Diamond Princess)") +
+  theme(legend.position="top")
+```
+
+And the epidemic curves (daily incident case counts) for the top six prefectures.
+
+```{r, fig.height=8, fig.width=10, layout="l-body-outset"}
+japanese_prefectures_confirmed %>% 
+    filter(Prefecture != "DiamondPrincessWorkers",
+           Prefecture != "Repatriated") %>%
+    group_by(Prefecture) %>%
+    summarise(total=sum(incident_cases, na.rm=TRUE)) %>%
+    arrange(desc(total)) %>%
+    pull(Prefecture) -> japanese_prefectures_order
+
+j <- japanese_prefectures_confirmed %>%
+  filter(Date <= last_date_j,
+         Prefecture %in% japanese_prefectures_order[1:6]) %>%
+  mutate(Prefecture=ordered(Prefecture, levels=japanese_prefectures_order[1:6])) %>%
+  ggplot(aes(x=Date, y=incident_cases)) + 
+  geom_bar(stat="identity", fill="green") + 
+  facet_wrap(Prefecture ~., scales = "free_y", ncol=2) + labs(y="Daily incremental incidence",
+                                   title="Confirmed cases of COVID-19 in top six Japanese prefectures",
+                                   subtitle="Note: differing y-axis scales") +
+  theme(legend.position = "none", 
+          strip.text.y = element_text(size=11))
+print(j)
+```
+
+```{r Cori_model_get_data_j, echo=FALSE, tidy=TRUE, message=FALSE, eval=TRUE}
+# custom results plotting function to avoid the ugly
+# TableGrob messages returned by the plotting function
+# in the EpiEstim package
+plot_Ri <- function(estimate_R_obj) {
+  p_I <- plot(estimate_R_obj, "incid", add_imported_cases=FALSE) # plots the incidence
+  p_SI <- plot(estimate_R_obj, "SI") # plots the serial interval distribution
+  p_Ri <- plot(estimate_R_obj, "R") + labs(title="Instantaneous effective R")
+  return(gridExtra::grid.arrange(p_I, p_SI, p_Ri, ncol = 1))
+}
+
+plot_R_j <- function(pref, pref_start_date) {
+  
+  confirmed_cases_j <- japanese_prefectures_confirmed %>%
+                          filter(Date <= last_date_j) %>% 
+                          filter(Date >= pref_start_date) %>% 
+                          filter(Prefecture == pref) %>%
+                          filter(!is.na(incident_cases)) %>%
+                          select(Date, incident_cases) %>%
+                          rename(dates=Date,
+                                 I=incident_cases)
+
+
+  estimate_R_obj <- estimate_R(confirmed_cases_j,
+                                method="uncertain_si",
+                                config = make_config(list(
+                                  mean_si = 7.5, std_mean_si = 2.0,
+                                  min_mean_si = 1, max_mean_si = 8.4,
+                                  std_si = 3.4, std_std_si = 1.0,
+                                  min_std_si = 0.5, max_std_si = 4.0,
+                                  n1 = 1000, n2 = 1000)))
+                               
+  plot(estimate_R_obj, "R") + labs(title=paste("Instantaneous effective R - ", pref))
+}
+
+```
+
+
+```{r}
+
+epicurve_j <- function(pref) {
+  japanese_prefectures_confirmed %>%
+    filter(Prefecture == pref) %>%
+    group_by(Date, china_travel) %>%
+    summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+    filter(Date <= last_date_j) %>%
+    ggplot(aes(x=Date, y=incident_cases, fill=china_travel)) +
+    geom_bar(stat="identity") +
+    labs(y="Incident cases", fill="Recent travel to China",
+         title=paste("COVID-19 incident cases in", pref),
+         subtitle="(excludes cases detected on the Diamond Princess)") +
+    theme(legend.position="top")
+}
+
+prefectural_earlyR <- function(df, prefecture, last_date, si_mean, si_sd) {
+  df %>%
+  filter(Date <= last_date,
+         !is.na(incident_cases),
+         Prefecture == prefecture,
+         china_travel==FALSE) %>%
+  select(Date, incident_cases) %>%
+  uncount(incident_cases) %>%
+  pull(Date) -> local_case_dates
+
+  local_case_dates %>%
+  incidence(., last_date=last_date) -> local_cases
+  
+  res <- get_R(local_cases, si_mean =si_mean, si_sd = si_sd)
+  res$local_case_dates <- local_case_dates
+  res$prefecture <- prefecture
+  res$last_date <- last_date
+  res$si_mean <- si_mean
+  res$si_sd <- si_sd
+  return(res)
+}
+
+prefecture_plot_R <- function(res) {
+  plot(res, "R", main=paste("COVID-19 estimated R for", 
+                            res$prefecture,
+                            "using data to",
+                            format(res$last_date, "%d %b %Y")),
+                 sub=paste("(assuming serial interval mean =",
+                            res$si_mean, 
+                            ", sd =", 
+                            res$si_sd,")"),
+       bty="n")
+}
+
+prefecture_plot_lambda <- function(res) {
+  plot(res, "lambdas", scale = length(res$local_case_dates) + 1,
+       bty="n")
+  title(sub=paste("\nEstimated", expression(lambda), "for", 
+                            res$prefecture, 
+                            "(assuming serial interval mean =",
+                            res$si_mean, 
+                            ", sd =", 
+                            res$si_sd, ")"))
+  abline(v = res$local_case_dates, lwd = 3, col = "grey")
+  abline(v = res$last_date, col = "blue", lty = 2, lwd = 2)
+  points(res$local_case_dates, seq_along(res$local_case_dates), pch = 20, cex = 3)
+}
+
+lambda_plot_j <- function(pref) {
+  res_obj <- prefectural_earlyR(japanese_prefectures_confirmed, 
+                              pref, 
+                              last_date_j,
+                              si_mean,
+                              si_sd)
+
+  prefecture_plot_lambda(res_obj)
+}
+
+```
+
+```{r}
+si_mean <- 5.0
+si_sd <- 3.4
+alt_si_mean <- 7.5
+alt_si_sd <- 3.4
+```
+
+## By prefecture 
+
+Now let's examine the epidemic curves by prefecture, as well as 7-day sliding window effective reproduction number plots, and force-of-infection $\lambda$ plots. Using these we should be able to make an assessment of how well containment efforts are succeeding (assuming that case detection and reporting doesn't change).
+
+### Hokkaidō
+
+```{r}
+pref <- "Hokkaidō"
+pref_start_date <- ymd("2020-02-11")
+
+epicurve_j(pref)
+```
+
+```{r}
+lambda_plot_j(pref)
+```
+
+```{r}
+plot_R_j(pref, pref_start_date)
+```
+
+**Assessment**: Bringing the outbreak under control, but battle not yet won.
+
+### Tokyo 
+
+```{r}
+pref="Tokyo"
+pref_start_date <- ymd("2020-02-11")
+
+epicurve_j(pref)
+```
+
+```{r, preview=TRUE}
+lambda_plot_j(pref)
+```
+
+```{r}
+plot_R_j(pref, pref_start_date)
+```
+
+**Assessment**: The outbreak appears to be under control, and incident cases should continue to decline, _ceteris paribus_.
+
+### Aichi
+
+```{r}
+pref <- "Aichi"
+pref_start_date <- ymd("2020-02-11")
+
+epicurve_j(pref)
+```
+
+```{r}
+lambda_plot_j(pref)
+```
+
+```{r}
+plot_R_j(pref, pref_start_date)
+```
+
+**Assessment**: Bringing the outbreak under control, but battle not yet won.
+
+### Kanagawa
+
+```{r}
+pref <- "Kanagawa"
+pref_start_date <- ymd("2020-02-11")
+
+epicurve_j(pref)
+```
+
+```{r}
+lambda_plot_j(pref)
+```
+
+```{r}
+plot_R_j(pref, pref_start_date)
+```
+
+**Assessment**: The outbreak appears to be under control, and incident cases should continue to decline, _ceteris paribus_.
+
+### Summary
+
+Overall, it appears that Japan still has a way to go before the current local outbreaks of COVID-19 are brought under control, but it does seem to be winning. Of course, new clusters seeded by international and internal travel are highly likely to arise -- it will be an ongoing battle.
+
+----
+
+# South Korea
+
+We'll repeat the analyses above for South Korea.
+
+```{r get_korea_data, message=FALSE, warning=FALSE, tidy=TRUE}
+
+last_date_k <- ymd("2020-03-01")
+
+# download the wikipedia web page
+# we use a specific version of the template page directly
+# version of the wikipedia page that is used by this version of this document
+korean_wikipedia_data_url <- "https://en.wikipedia.org/w/index.php?title=Template:2019–20_coronavirus_outbreak_data/South_Korea_medical_cases&oldid=943498213"
+
+# korean_wikipedia_data_url <- "https://en.wikipedia.org/wiki/Template:2019–20_coronavirus_outbreak_data/South_Korea_medical_cases"
+
+korean_outbreak_webpage <- read_html(korean_wikipedia_data_url)
+
+# parse the web page and extract the data from the first table 
+korean_cities_confirmed <- korean_outbreak_webpage %>%
+                        html_nodes("table") %>%
+                        .[[2]] %>%
+                        html_table(header=FALSE, fill = TRUE) %>%
+                        slice(-(1:2)) %>%
+                        slice(1:(nrow(.)-3)) %>%
+                        filter(!str_detect(X1, "Total")) 
+
+korean_cities_confirmed_colnames <- korean_cities_confirmed %>%
+                        filter(X1 == "Date") %>%
+                        unlist(use.names = FALSE) 
+
+last_city_pos <- which(korean_cities_confirmed_colnames=="Jeju" & !is.na(korean_cities_confirmed_colnames))
+
+korean_cities_confirmed <- korean_cities_confirmed %>%
+                            select(1:last_city_pos)
+
+colnames(korean_cities_confirmed) <- korean_cities_confirmed_colnames[1:last_city_pos]
+
+# utility function to remove commas in numbers as character strings
+rm_commas <- function(x) gsub(",", "", x)
+rm_refs <- function(x) stringr::str_split(x, "\\[", simplify=TRUE)[,1]
+rm_parens <- function(x) stringr::str_split(x, "\\(", simplify=TRUE)[,1]
+
+korean_cities_confirmed <- korean_cities_confirmed %>%
+                        mutate(Date=ymd(Date)) %>%
+                        filter(!is.na(Date)) %>%
+                        select(-2) %>%
+                        mutate_if(is.character, rm_commas) %>%
+                        mutate_if(is.character, rm_refs) %>%
+                        pivot_longer(-Date, 
+                                     names_to="City",
+                                     values_to="incident_cases") %>%
+                        mutate(incident_cases=rm_parens(incident_cases)) %>%
+                        mutate(incident_cases=rm_refs(incident_cases)) %>%
+                        mutate(incident_cases=as.integer(incident_cases)) %>%
+                        group_by(Date, City) %>%
+                        summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+                        arrange(City, Date) %>%
+                        group_by(City) %>%
+                        mutate(incident_cases=ifelse(is.na(incident_cases), 0, incident_cases)) %>%
+                        mutate(cum_cases=cumsum(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(incident_cases == 0 & cumsum(incident_cases) == 0, NA, incident_cases)) %>%
+                        ungroup() %>%
+                        select(-cum_cases) %>%
+                        arrange(City, desc(Date)) %>%
+                        group_by(City) %>%
+                        mutate(cum_cases=cumsum(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(incident_cases == 0 & cumsum(incident_cases) == 0, NA, incident_cases)) %>%
+                        ungroup() %>%
+                        select(-cum_cases) %>%
+                        arrange(City, Date)
+  
+  
+korean_cities_confirmed_wider <- korean_cities_confirmed %>%
+                                  pivot_wider(names_from = City,
+                                              values_from = incident_cases,
+                                              values_fill = list(incident_cases = NA))
+
+korean_cities_confirmed %>%
+  group_by(Date) %>%
+  summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+  filter(Date <= last_date_k) %>%
+  ggplot(aes(x=Date, y=incident_cases)) +
+  geom_bar(stat="identity") +
+  labs(y="Incident cases", 
+       title="COVID-19 incident cases in South Korea") +
+  theme(legend.position="top")
+
+```
+
+Let's see the total cases by city/province.
+
+```{r}
+korean_cities_confirmed %>%
+  filter(Date <= last_date_j) %>%
+  group_by(City) %>%
+  summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x=reorder(City, incident_cases), y=incident_cases)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs(y="Total cases to date",
+       x = "",
+       title="COVID-19 total cases in South Korea, by city/province") +
+  theme(legend.position="top")
+```
+
+And the epidemic curves (daily incident case counts) for the top six cities/provinces.
+
+```{r, fig.height=8, fig.width=10, message=FALSE, warning=FALSE}
+korean_cities_confirmed %>% 
+    group_by(City) %>%
+    summarise(total=sum(incident_cases, na.rm=TRUE)) %>%
+    arrange(desc(total)) %>%
+    pull(City) -> korean_cities_order
+
+k <- korean_cities_confirmed %>%
+  filter(Date <= last_date_k,
+         City %in%korean_cities_order[1:6]) %>%
+  mutate(City=ordered(City, levels=korean_cities_order[1:6])) %>%
+  ggplot(aes(x=Date, y=incident_cases)) + 
+  geom_bar(stat="identity", fill="green") + 
+  facet_wrap(City ~., scales = "free_y", ncol=3) + labs(y="Daily incremental incidence",
+                                   title="Confirmed cases of COVID-19 in top six South Korean cities/provinces",
+                                   subtitle="Note: differing y-axis scales") +
+  theme(legend.position = "none", 
+          strip.text.y = element_text(size=12))
+print(k)
+```
+
+```{r Cori_model_get_data_k, echo=FALSE, tidy=TRUE, message=FALSE, eval=TRUE}
+plot_R_k <- function(city, city_start_date) {
+  
+  confirmed_cases_k <- korean_cities_confirmed %>%
+                          filter(Date <= last_date_j) %>% 
+                          filter(Date >= city_start_date) %>% 
+                          filter(City == city) %>%
+                          filter(!is.na(incident_cases)) %>%
+                          select(Date, incident_cases) %>%
+                          rename(dates=Date,
+                                 I=incident_cases)
+
+  estimate_R_obj <- estimate_R(confirmed_cases_k,
+                                method="uncertain_si",
+                                config = make_config(list(
+                                  mean_si = 7.5, std_mean_si = 2.0,
+                                  min_mean_si = 1, max_mean_si = 8.4,
+                                  std_si = 3.4, std_std_si = 1.0,
+                                  min_std_si = 0.5, max_std_si = 4.0,
+                                  n1 = 1000, n2 = 1000)))
+                               
+  plot(estimate_R_obj, "R") + labs(title=paste("Instantaneous effective R - ", city))
+}
+
+epicurve_k <- function(city) {
+  korean_cities_confirmed %>%
+    filter(City == city) %>%
+    group_by(Date) %>%
+    summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+    filter(Date <= last_date_k) %>%
+    ggplot(aes(x=Date, y=incident_cases)) +
+    geom_bar(stat="identity") +
+    labs(y="Incident cases", 
+         title=paste("COVID-19 incident cases in", city)) +
+    theme(legend.position="top")
+}
+
+prefectural_earlyR <- function(df, city, last_date, si_mean, si_sd) {
+  df %>%
+  filter(Date <= last_date,
+         !is.na(incident_cases),
+         City == city) %>%
+  select(Date, incident_cases) %>%
+  uncount(incident_cases) %>%
+  pull(Date) -> local_case_dates
+
+  local_case_dates %>%
+  incidence(., last_date=last_date) -> local_cases
+  
+  res <- get_R(local_cases, si_mean =si_mean, si_sd = si_sd)
+  res$local_case_dates <- local_case_dates
+  res$city <- city
+  res$last_date <- last_date
+  res$si_mean <- si_mean
+  res$si_sd <- si_sd
+  return(res)
+}
+
+prefecture_plot_R <- function(res) {
+  plot(res, "R", main=paste("COVID-19 estimated R for", 
+                            res$city,
+                            "using data to",
+                            format(res$last_date, "%d %b %Y")),
+                 sub=paste("(assuming serial interval mean =",
+                            res$si_mean, 
+                            ", sd =", 
+                            res$si_sd,")"),
+       bty="n")
+}
+
+prefecture_plot_lambda <- function(res) {
+  plot(res, "lambdas", scale = length(res$local_case_dates) + 1,
+       bty="n")
+  title(sub=paste("\nEstimated", expression(lambda), "for", 
+                            res$city, 
+                            "(assuming serial interval mean =",
+                            res$si_mean, 
+                            ", sd =", 
+                            res$si_sd, ")"))
+  abline(v = res$local_case_dates, lwd = 3, col = "grey")
+  abline(v = res$last_date, col = "blue", lty = 2, lwd = 2)
+  points(res$local_case_dates, seq_along(res$local_case_dates), pch = 20, cex = 3)
+}
+
+lambda_plot_k <- function(city) {
+  res_obj <- prefectural_earlyR(korean_cities_confirmed, 
+                              city, 
+                              last_date_k,
+                              si_mean,
+                              si_sd)
+
+  prefecture_plot_lambda(res_obj)
+}
+
+```
+
+## By city/province 
+
+### Daegu
+
+```{r}
+city <- "Daegu"
+city_start_date <- ymd("2020-02-16")
+
+epicurve_k(city)
+```
+
+```{r}
+lambda_plot_k(city)
+```
+
+```{r}
+plot_R_k(city, city_start_date)
+```
+
+**Assessment**: The outbreak is not yet under control, but the $R_{e}$ is at least falling.
+
+### Gyeongbuk
+
+```{r}
+city <- "Gyeongbuk"
+city_start_date <- ymd("2020-02-17")
+
+epicurve_k(city)
+```
+
+```{r}
+lambda_plot_k(city)
+```
+
+```{r}
+plot_R_k(city, city_start_date)
+```
+
+**Assessment**: The outbreak is not yet under control, but the $R_{e}$ is at least falling.
+
+
+### Gyeonggi
+
+```{r}
+city <- "Gyeonggi"
+city_start_date <- ymd("2020-02-01")
+
+epicurve_k(city)
+```
+
+```{r}
+lambda_plot_k(city)
+```
+
+```{r}
+plot_R_k(city, city_start_date)
+```
+
+**Assessment**: Typical "second wave" pattern, but not really enough cases to make a reliable assessment, but the $R_{e}$ does now appear to be falling.
+
+
+### Seoul
+
+```{r}
+city <- "Seoul"
+city_start_date <- ymd("2020-02-15")
+
+epicurve_k(city)
+```
+
+```{r}
+lambda_plot_k(city)
+```
+
+```{r}
+plot_R_k(city, city_start_date)
+```
+
+**Assessment**: The outbreak is not yet under control, but the $R_{e}$ is at least falling.
+
+### Busan
+
+```{r}
+city <- "Busan"
+city_start_date <- ymd("2020-02-15")
+
+epicurve_k(city)
+```
+
+```{r}
+lambda_plot_k(city)
+```
+
+```{r}
+plot_R_k(city, city_start_date)
+```
+
+**Assessment**: Not really enough cases to make a reliable assessment, but best not to take a _train to Busan_.
+
+### Summary
+
+There are promising signs that spread may be slowing, but it is clear that South Korean has a big fight on its hands to contain the Daegu outbreak and the other local outbreaks it has seeded. 
+
+----
+
+# Italy 
+
+```{r get_italy_data, message=FALSE, warning=FALSE, tidy=TRUE}
+
+last_date_it <- ymd("2020-03-01")
+
+# download the wikipedia web page
+# we use a specific version of the template page directly
+# version of the wikipedia page that is used by this version of this document
+italian_wikipedia_data_url <- "https://en.wikipedia.org/w/index.php?title=Template:2019–20_coronavirus_outbreak_data/Italy_medical_cases&oldid=943493968"
+
+# italian_wikipedia_data_url <- "https://en.wikipedia.org/wiki/Template:2019–20_coronavirus_outbreak_data/Italy_medical_cases"
+
+italian_outbreak_webpage <- read_html(italian_wikipedia_data_url)
+
+# parse the web page and extract the data from the first table 
+italian_regions_confirmed <- italian_outbreak_webpage %>%
+                        html_nodes("table") %>%
+                        .[[1]] %>%
+                        html_table(header=FALSE, fill = TRUE) %>%
+                        slice(-1) %>%
+                        slice(1:(nrow(.)-2)) %>%
+                        filter(!str_detect(X1, "Notes")) 
+
+italian_colnames <- italian_regions_confirmed %>%
+                        filter(X1 == "Date") %>%
+                        unlist(use.names = FALSE)
+
+
+italian_colnames <- italian_colnames[!italian_colnames %in% c("Centre", "New", "Total", "Sources")]
+
+italian_regions_confirmed <- italian_regions_confirmed[,1:length(italian_colnames)]
+
+colnames(italian_regions_confirmed) <- italian_colnames
+
+# utility function to remove commas in numbers as character strings
+rm_commas <- function(x) gsub(",", "", x)
+rm_refs <- function(x) stringr::str_split(x, "\\[", simplify=TRUE)[,1]
+rm_parens <- function(x) stringr::str_split(x, "\\(", simplify=TRUE)[,1]
+
+italian_regions_confirmed <- italian_regions_confirmed %>%
+                        mutate_if(is.character, rm_commas) %>%
+                        mutate_if(is.character, rm_refs) %>%
+                        mutate(Date=ymd(Date)) %>%
+                        filter(!is.na(Date)) %>%
+                        pivot_longer(-Date, 
+                                     names_to="Region",
+                                     values_to="incident_cases") %>%
+                        mutate(incident_cases=rm_parens(incident_cases)) %>%
+                        mutate(incident_cases=rm_commas(incident_cases)) %>%
+                        mutate(incident_cases=rm_refs(incident_cases)) %>%
+                        mutate(incident_cases=as.integer(incident_cases)) %>%
+                        mutate(Region = case_when(Region == "EMR" ~ "Emilia-Romagna",
+                                                  Region == "LAZ" ~ "Lazio",
+                                                  Region == "LIG" ~ "Liguria",
+                                                  Region == "LOM" ~ "Lombardy",
+                                                  Region == "PIE" ~ "Piedmont",
+                                                  Region == "SIC" ~ "Sicily",
+                                                  Region == "TAA" ~ "Trentino-Alto Adige",
+                                                  Region == "TOS" ~ "Toscana",
+                                                  Region == "VEN" ~ "Veneto",
+                                                  Region == "PUG" ~ "Puglia",
+                                                  Region == "MAR" ~ "Marche",
+                                                  Region == "ABR" ~ "Abruzzo",
+                                                  Region == "UMB" ~ "Umbria",
+                                                  Region == "CAL" ~ "Calabria",
+                                                  Region == "CAM" ~ "Campania",
+                                                  Region == "FVG" ~ "Friuli Venezia Giulia",
+                                                  TRUE ~ Region)) %>%
+                        arrange(Region, Date) %>%
+                        group_by(Region) %>%
+                        mutate(incident_cases=ifelse(is.na(incident_cases), 0, incident_cases)) %>%
+                        mutate(cum_cases=cumsum(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(incident_cases == 0 & cumsum(incident_cases) == 0, NA, incident_cases)) %>%
+                        ungroup() %>%
+                        select(-cum_cases) %>%
+                        arrange(Region, desc(Date)) %>%
+                        group_by(Region) %>%
+                        mutate(cum_cases=cumsum(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(incident_cases == 0 & cumsum(incident_cases) == 0, NA, incident_cases)) %>%
+                        ungroup() %>%
+                        select(-cum_cases) %>%
+                        arrange(Region, Date)
+
+italian_regions_confirmed_wider <- italian_regions_confirmed %>%
+                                    pivot_wider(names_from = Region,
+                                                values_from = incident_cases,
+                                                values_fill = list(incident_cases = NA))
+
+italian_regions_confirmed %>%
+  group_by(Date) %>%
+  summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+  filter(Date <= last_date_it) %>%
+  ggplot(aes(x=Date, y=incident_cases)) +
+  geom_bar(stat="identity") +
+  labs(y="Incident cases", 
+       title="COVID-19 incident cases in Italy") +
+  theme(legend.position="top")
+
+```
+
+Let's see the total cases by region.
+
+```{r}
+italian_regions_confirmed %>%
+  filter(Date <= last_date_it) %>%
+  group_by(Region) %>%
+  summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x=reorder(Region, incident_cases), y=incident_cases)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs(y="Total cases to date",
+       x = "",
+       title="COVID-19 total cases in Italy, by region") +
+  theme(legend.position="top")
+```
+
+And the epidemic curves (daily incident case counts) for the top six regions.
+
+```{r, fig.height=8, fig.width=10, message=FALSE, warning=FALSE}
+italian_regions_confirmed %>% 
+    group_by(Region) %>%
+    summarise(total=sum(incident_cases, na.rm=TRUE)) %>%
+    arrange(desc(total)) %>%
+    pull(Region) -> italian_regions_order
+
+it <- italian_regions_confirmed %>%
+  filter(Date <= last_date_it,
+         Region %in% italian_regions_order[1:6]) %>%
+  mutate(Region=ordered(Region, levels=italian_regions_order[1:6])) %>%
+  ggplot(aes(x=Date, y=incident_cases)) + 
+  geom_bar(stat="identity", fill="green") + 
+  facet_wrap(Region ~., scales = "free_y", ncol=3) + labs(y="Daily incremental incidence",
+                                   title="Confirmed cases of COVID-19 in top six Italian cities/provinces",
+                                   subtitle="Note: differing y-axis scales") +
+  theme(legend.position = "none", 
+          strip.text.y = element_text(size=12))
+print(it)
+```
+
+```{r Cori_model_get_data_it, echo=FALSE, tidy=TRUE, message=FALSE, eval=TRUE}
+plot_R_it <- function(region, region_start_date) {
+  
+  confirmed_cases_it <- italian_regions_confirmed %>%
+                          filter(Date <= last_date_it) %>% 
+                          filter(Date >= region_start_date) %>% 
+                          filter(Region == region) %>%
+                          filter(!is.na(incident_cases)) %>%
+                          select(Date, incident_cases) %>%
+                          rename(dates=Date,
+                                 I=incident_cases)
+
+  estimate_R_obj <- estimate_R(confirmed_cases_it,
+                                method="uncertain_si",
+                                config = make_config(list(
+                                  mean_si = 7.5, std_mean_si = 2.0,
+                                  min_mean_si = 1, max_mean_si = 8.4,
+                                  std_si = 3.4, std_std_si = 1.0,
+                                  min_std_si = 0.5, max_std_si = 4.0,
+                                  n1 = 1000, n2 = 1000)))
+                               
+  plot(estimate_R_obj, "R") + labs(title=paste("Instantaneous effective R - ", region))
+}
+
+epicurve_it <- function(region) {
+  italian_regions_confirmed %>%
+    filter(Region == region) %>%
+    group_by(Date) %>%
+    summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+    filter(Date <= last_date_it) %>%
+    ggplot(aes(x=Date, y=incident_cases)) +
+    geom_bar(stat="identity") +
+    labs(y="Incident cases", 
+         title=paste("COVID-19 incident cases in", region)) +
+    theme(legend.position="top")
+}
+
+prefectural_earlyR <- function(df, region, last_date, si_mean, si_sd) {
+  df %>%
+  filter(Date <= last_date,
+         !is.na(incident_cases),
+         Region == region) %>%
+  select(Date, incident_cases) %>%
+  uncount(incident_cases) %>%
+  pull(Date) -> local_case_dates
+
+  local_case_dates %>%
+  incidence(., last_date=last_date) -> local_cases
+  
+  res <- get_R(local_cases, si_mean =si_mean, si_sd = si_sd)
+  res$local_case_dates <- local_case_dates
+  res$city <- region
+  res$last_date <- last_date
+  res$si_mean <- si_mean
+  res$si_sd <- si_sd
+  return(res)
+}
+
+prefecture_plot_R <- function(res) {
+  plot(res, "R", main=paste("COVID-19 estimated R for", 
+                            res$region,
+                            "using data to",
+                            format(res$last_date, "%d %b %Y")),
+                 sub=paste("(assuming serial interval mean =",
+                            res$si_mean, 
+                            ", sd =", 
+                            res$si_sd,")"),
+       bty="n")
+}
+
+prefecture_plot_lambda <- function(res) {
+  plot(res, "lambdas", scale = length(res$local_case_dates) + 1,
+       bty="n")
+  title(sub=paste("\nEstimated", expression(lambda), "for", 
+                            res$region, 
+                            "(assuming serial interval mean =",
+                            res$si_mean, 
+                            ", sd =", 
+                            res$si_sd, ")"))
+  abline(v = res$local_case_dates, lwd = 3, col = "grey")
+  abline(v = res$last_date, col = "blue", lty = 2, lwd = 2)
+  points(res$local_case_dates, seq_along(res$local_case_dates), pch = 20, cex = 3)
+}
+
+lambda_plot_it <- function(region) {
+  res_obj <- prefectural_earlyR(italian_regions_confirmed, 
+                              region, 
+                              last_date_it,
+                              si_mean,
+                              si_sd)
+
+  prefecture_plot_lambda(res_obj)
+}
+
+```
+
+
+## By region
+
+### Lombardy
+
+```{r}
+region <- "Lombardy"
+region_start_date <- ymd("2020-02-16")
+
+epicurve_it(region)
+```
+
+```{r}
+lambda_plot_it(region)
+```
+
+```{r}
+plot_R_it(region, region_start_date)
+```
+
+**Assessment**: The outbreak is not yet under control, too early to say whether $R_{e}$ is consistently falling.
+
+### Veneto
+
+```{r}
+region <- "Veneto"
+region_start_date <- ymd("2020-02-16")
+
+epicurve_it(region)
+```
+
+```{r}
+lambda_plot_it(region)
+```
+
+```{r}
+plot_R_it(region, region_start_date)
+```
+
+**Assessment**: The outbreak is not yet under control, signs that $R_{e}$ is beginning to fall.
+
+### Emilia-Romagna
+
+```{r}
+region <- "Emilia-Romagna"
+region_start_date <- ymd("2020-02-16")
+
+epicurve_it(region)
+```
+
+```{r}
+lambda_plot_it(region)
+```
+
+```{r}
+plot_R_it(region, region_start_date)
+```
+
+**Assessment**: The outbreak is not yet under control, too early to say whether $R_{e}$ is consistently falling.
+
+### Piedmont
+
+```{r}
+region <- "Piedmont"
+region_start_date <- ymd("2020-02-16")
+
+epicurve_it(region)
+```
+
+```{r}
+lambda_plot_it(region)
+```
+
+```{r}
+plot_R_it(region, region_start_date)
+```
+
+**Assessment**: The outbreak is definitely not under control.
+
+### Summary
+
+Authorities in Lombardy took some bold and decisive steps to try to contain the outbreak there, and were then [criticised for their actions being over-the-top](https://www.smh.com.au/world/europe/italy-s-coronavirus-crisis-response-mired-in-politics-20200228-p545hz.html). Such criticism was clearly not justified. 
+
+----
+
+# Iran 
+
+```{r get_iran_data, message=FALSE, warning=FALSE, tidy=TRUE}
+last_date_ir <- ymd("2020-03-01")
+
+# download the wikipedia web page
+# we use a specific version of the template page directly
+# version of the wikipedia page that is used by this version of this document
+iranian_wikipedia_data_url <- "https://en.wikipedia.org/w/index.php?title=Template:2019–20_coronavirus_outbreak_data/Iran_medical_cases&oldid=943458504"
+
+# iranian_wikipedia_data_url <- "https://en.wikipedia.org/wiki/Template:2019–20_coronavirus_outbreak_data/Iran_medical_cases"
+
+iranian_outbreak_webpage <- read_html(iranian_wikipedia_data_url)
+
+# parse the web page and extract the data from the first table 
+iranian_regions_confirmed <- iranian_outbreak_webpage %>%
+                        html_nodes("table") %>%
+                        .[[2]] %>%
+                        html_table(header=FALSE, fill = TRUE) %>%
+                        slice(-1) %>%
+                        slice(1:(nrow(.)-2)) %>%
+                        filter(!str_detect(X1, "Notes")) 
+
+iranian_colnames <- iranian_regions_confirmed %>%
+                        filter(X1 == "Date") %>%
+                        unlist(use.names = FALSE)
+
+iranian_colnames <- iranian_colnames[!iranian_colnames %in% c("New", "Total", "Sources")]
+
+iranian_regions_confirmed <- iranian_regions_confirmed[,1:length(iranian_colnames)]
+colnames(iranian_regions_confirmed) <- iranian_colnames
+
+# utility function to remove commas in numbers as character strings
+rm_commas <- function(x) gsub(",", "", x)
+rm_refs <- function(x) stringr::str_split(x, "\\[", simplify=TRUE)[,1]
+rm_parens <- function(x) stringr::str_split(x, "\\(", simplify=TRUE)[,1]
+
+iranian_regions_confirmed <- iranian_regions_confirmed %>%
+                        mutate(Date=ymd(Date)) %>%
+                        filter(!is.na(Date)) %>%
+                        # mutate_if(is.character, rm_commas) %>%
+                        # mutate_if(is.character, rm_refs) %>%
+                        pivot_longer(-Date, 
+                                     names_to="Region",
+                                     values_to="incident_cases") %>%
+                        mutate(incident_cases=rm_parens(incident_cases)) %>%
+                        mutate(incident_cases=rm_commas(incident_cases)) %>%
+                        mutate(incident_cases=rm_refs(incident_cases)) %>%
+                        mutate(incident_cases=as.integer(incident_cases)) %>%
+                        mutate(Region = case_when(Region == "Qom" ~ "Qom",
+                                                  Region == "Teh" ~ "Tehran",
+                                                  Region == "Maz" ~ "Mazandaran",
+                                                  Region == "Alb" ~ "Alborz",
+                                                  Region == "Esf" ~ "Esfahan",
+                                                  Region == "Frs" ~ "Fars",
+                                                  Region == "Hor" ~ "Hormuzgan",
+                                                  Region == "Gil" ~ "Gilan",
+                                                  Region == "Mar" ~ "Markazi",
+                                                  Region == "Ham" ~ "Hamedan",
+                                                  Region == "Khr" ~ "Khorasan",
+                                                  Region == "Ard" ~ "Ardabil",
+                                                  Region == "EAz" ~ "East Azerbaijan",
+                                                  Region == "WAz" ~ "West Azerbaijan",
+                                                  Region == "Khz" ~ "Khuzestan",
+                                                  Region == "Koh" ~ "Kohkiluyeh va Boyer Ahmad",
+                                                  Region == "Krs" ~ "Kermanshah",
+                                                  Region == "Kur" ~ "Kurdistan",
+                                                  Region == "Lor" ~ "Lorestan",
+                                                  Region == "Sem" ~ "Semnan",
+                                                  Region == "Yaz" ~ "Yazd",
+                                                  Region == "Ker" ~ "Kerman",
+                                                  Region == "Sis" ~ "Sistan va Baluchistan",
+                                                  TRUE ~ Region)) %>%
+                        arrange(Region, Date) %>%
+                        group_by(Region) %>%
+                        mutate(incident_cases=ifelse(is.na(incident_cases), 0, incident_cases)) %>%
+                        mutate(cum_cases=cumsum(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(incident_cases == 0 & cumsum(incident_cases) == 0, NA, incident_cases)) %>%
+                        ungroup() %>%
+                        select(-cum_cases) %>%
+                        arrange(Region, desc(Date)) %>%
+                        group_by(Region) %>%
+                        mutate(cum_cases=cumsum(incident_cases)) %>%
+                        mutate(incident_cases=ifelse(incident_cases == 0 & cumsum(incident_cases) == 0, NA, incident_cases)) %>%
+                        ungroup() %>%
+                        select(-cum_cases) %>%
+                        arrange(Region, Date) 
+
+iranian_regions_confirmed_wider <- iranian_regions_confirmed %>%
+                                    pivot_wider(names_from = Region,
+                                                values_from = incident_cases,
+                                                values_fill = list(incident_cases = NA))
+
+iranian_regions_confirmed %>%
+  group_by(Date) %>%
+  summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+  filter(Date <= last_date_ir) %>%
+  ggplot(aes(x=Date, y=incident_cases)) +
+  geom_bar(stat="identity") +
+  labs(y="Incident cases", 
+       title="COVID-19 incident cases in Iran") +
+  theme(legend.position="top")
+
+```
+
+Let's see the total cases by region.
+
+```{r}
+iranian_regions_confirmed %>%
+  filter(Date <= last_date_ir) %>%
+  group_by(Region) %>%
+  summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x=reorder(Region, incident_cases), y=incident_cases)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs(y="Total cases to date",
+       x = "",
+       title="COVID-19 total cases in Iran, by province/region") +
+  theme(legend.position="top")
+```
+
+And the epidemic curves (daily incident case counts) for the top six provinces/regions.
+
+```{r, fig.height=8, fig.width=10, message=FALSE, warning=FALSE}
+iranian_regions_confirmed %>% 
+    group_by(Region) %>%
+    summarise(total=sum(incident_cases, na.rm=TRUE)) %>%
+    arrange(desc(total)) %>%
+    pull(Region) -> iranian_regions_order
+
+ir <- iranian_regions_confirmed %>%
+  filter(Date <= last_date_ir,
+         Region %in% iranian_regions_order[1:6]) %>%
+  mutate(Region=ordered(Region, levels=iranian_regions_order[1:6])) %>%
+  ggplot(aes(x=Date, y=incident_cases)) + 
+  geom_bar(stat="identity", fill="green") + 
+  facet_wrap(Region ~., scales = "free_y", ncol=3) + labs(y="Daily incremental incidence",
+                                   title="Confirmed cases of COVID-19 in top six Iranian cities/provinces",
+                                   subtitle="Note: differing y-axis scales") +
+  theme(legend.position = "none", 
+          strip.text.y = element_text(size=12))
+print(ir)
+```
+
+```{r Cori_model_get_data_ir, echo=FALSE, tidy=TRUE, message=FALSE, eval=TRUE}
+plot_R_ir <- function(region, region_start_date) {
+  
+  confirmed_cases_ir <- iranian_regions_confirmed %>%
+                          filter(Date <= last_date_ir) %>% 
+                          filter(Date >= region_start_date) %>% 
+                          filter(Region == region) %>%
+                          filter(!is.na(incident_cases)) %>%
+                          select(Date, incident_cases) %>%
+                          rename(dates=Date,
+                                 I=incident_cases)
+
+  estimate_R_obj <- estimate_R(confirmed_cases_ir,
+                                method="uncertain_si",
+                                config = make_config(list(
+                                  mean_si = 7.5, std_mean_si = 2.0,
+                                  min_mean_si = 1, max_mean_si = 8.4,
+                                  std_si = 3.4, std_std_si = 1.0,
+                                  min_std_si = 0.5, max_std_si = 4.0,
+                                  n1 = 1000, n2 = 1000)))
+                               
+  plot(estimate_R_obj, "R") + labs(title=paste("Instantaneous effective R - ", region))
+}
+
+epicurve_ir <- function(region) {
+  iranian_regions_confirmed %>%
+    filter(Region == region) %>%
+    group_by(Date) %>%
+    summarise(incident_cases=sum(incident_cases, na.rm=TRUE)) %>%
+    filter(Date <= last_date_it) %>%
+    ggplot(aes(x=Date, y=incident_cases)) +
+    geom_bar(stat="identity") +
+    labs(y="Incident cases", 
+         title=paste("COVID-19 incident cases in", region)) +
+    theme(legend.position="top")
+}
+
+prefectural_earlyR <- function(df, region, last_date, si_mean, si_sd) {
+  df %>%
+  filter(Date <= last_date,
+         !is.na(incident_cases),
+         Region == region) %>%
+  select(Date, incident_cases) %>%
+  uncount(incident_cases) %>%
+  pull(Date) -> local_case_dates
+
+  local_case_dates %>%
+  incidence(., last_date=last_date) -> local_cases
+  
+  res <- get_R(local_cases, si_mean =si_mean, si_sd = si_sd)
+  res$local_case_dates <- local_case_dates
+  res$city <- region
+  res$last_date <- last_date
+  res$si_mean <- si_mean
+  res$si_sd <- si_sd
+  return(res)
+}
+
+prefecture_plot_R <- function(res) {
+  plot(res, "R", main=paste("COVID-19 estimated R for", 
+                            res$region,
+                            "using data to",
+                            format(res$last_date, "%d %b %Y")),
+                 sub=paste("(assuming serial interval mean =",
+                            res$si_mean, 
+                            ", sd =", 
+                            res$si_sd,")"),
+       bty="n")
+}
+
+prefecture_plot_lambda <- function(res) {
+  plot(res, "lambdas", scale = length(res$local_case_dates) + 1,
+       bty="n")
+  title(sub=paste("\nEstimated", expression(lambda), "for", 
+                            res$region, 
+                            "(assuming serial interval mean =",
+                            res$si_mean, 
+                            ", sd =", 
+                            res$si_sd, ")"))
+  abline(v = res$local_case_dates, lwd = 3, col = "grey")
+  abline(v = res$last_date, col = "blue", lty = 2, lwd = 2)
+  points(res$local_case_dates, seq_along(res$local_case_dates), pch = 20, cex = 3)
+}
+
+lambda_plot_ir <- function(region) {
+  res_obj <- prefectural_earlyR(iranian_regions_confirmed, 
+                              region, 
+                              last_date_ir,
+                              si_mean,
+                              si_sd)
+
+  prefecture_plot_lambda(res_obj)
+}
+
+```
+
+
+## By city/province 
+
+### Tehran
+
+```{r}
+region <- "Tehran"
+region_start_date <- ymd("2020-02-16")
+
+epicurve_ir(region)
+```
+
+```{r}
+lambda_plot_ir(region)
+```
+
+```{r}
+plot_R_ir(region, region_start_date)
+```
+
+**Assessment**: The outbreak is not under control.
+
+### Qom
+
+```{r}
+region <- "Qom"
+region_start_date <- ymd("2020-02-16")
+
+epicurve_ir(region)
+```
+
+```{r}
+lambda_plot_ir(region)
+```
+
+```{r}
+plot_R_ir(region, region_start_date)
+```
+
+**Assessment**: The outbreak is not yet under control, but the $R_{e}$ is at least falling.
+
+
+### Gilan
+
+```{r}
+region <- "Gilan"
+region_start_date <- ymd("2020-02-16")
+
+epicurve_ir(region)
+```
+
+```{r}
+lambda_plot_ir(region)
+```
+
+```{r}
+plot_R_ir(region, region_start_date)
+```
+
+**Assessment**: The outbreak is not yet under control, but the $R_{e}$ may be beginning to fall.
+
+### Summary
+
+Under-ascertainment and/or under-reporting of cases is likely to be a problem in Iran. But even based on the reported incidence figure, local spread has not been contained sufficiently in most of the worst effected Iranian provinces. At the time of writing, we are now seeing asymptomatic or incubation-period travellers from Iran seeding cases around the world.  
+
+----
+
+# Conclusion
+
+The simple visualisations and more sophisticated analyses in this post illustrate how the tools and capabilities of base `R`, the `tidyverse` and the excellent **RECON** packages can be used to assess the progress of the COVID-19 pandemic at national, regional or provincial levels, in a way that is more informative than the cumulative incidence plots which are now everywhere. Data scientists can and should start building such capabilities, right now, to assist international, national and local efforts to contain and slow the spread of the COVID-19 virus. Slowing the spread will save lives by reducing the load on health care facilities, which will be rapidly overwhelmed if transmission of the virus is allowed to proceed unchecked.
 

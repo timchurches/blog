@@ -1,5 +1,26 @@
 [
   {
+    "path": "posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2/",
+    "title": "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 2",
+    "description": "A further exploration of COVID-19 incidence data using R tools and packages.",
+    "author": [
+      {
+        "name": "Tim Churches",
+        "url": {}
+      }
+    ],
+    "date": "2020-03-01",
+    "categories": [
+      "R",
+      "COVID-19"
+    ],
+    "preview": "posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2_files/figure-html5/unnamed-chunk-9-1.png",
+    "last_modified": "2020-03-03T16:20:53+11:00",
+    "input_file": {},
+    "preview_width": 1248,
+    "preview_height": 768
+  },
+  {
     "path": "posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/",
     "title": "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1",
     "description": "An exploration of COVID-19 incidence data using R tools and packages.",
@@ -15,8 +36,8 @@
       "COVID-19"
     ],
     "preview": "posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png",
-    "last_modified": "2020-03-01T23:30:23+11:00",
-    "input_file": "analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1.utf8.md",
+    "last_modified": "2020-03-01T23:31:54+11:00",
+    "input_file": {},
     "preview_width": 1248,
     "preview_height": 768
   }
