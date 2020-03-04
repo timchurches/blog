@@ -5,7 +5,7 @@ description: |
 output_dir: "docs"
 base_url: https://timchurches.github.io/blog/
 rss:
-  full_content: TRUE
+  full_content: false
   categories:
     - R
 collections:
