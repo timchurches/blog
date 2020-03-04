@@ -13,6 +13,7 @@ collections:
     feed_items_max: 50
     # disqus: tim-churches-health-data-science-blog
     share: [twitter, facebook]
+    subscribe: _subscribe.html
 navbar:
   logo: assets/TimC.jpg
   right:

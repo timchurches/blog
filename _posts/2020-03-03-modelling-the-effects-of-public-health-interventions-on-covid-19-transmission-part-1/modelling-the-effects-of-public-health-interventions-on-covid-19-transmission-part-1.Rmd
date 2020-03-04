@@ -1,0 +1,49 @@
+---
+title: "Modelling the effects of public health interventions on COVID-19 transmission - part 1"
+description: |
+  A short description of the post.
+categories:
+  - R
+  - "COVID-19"
+author:
+  - name: Tim Churches 
+    affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
+    affiliation_url: https://swscs.med.unsw.edu.au
+creative_commons: CC BY-SA
+date: 03-03-2020
+base_url: https://timchurches.github.io/blog/
+slug: churches2020covid19rpart2
+twitter:
+  creator: "@timchurches"
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 3
+    self_contained: false
+draft: true
+repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-03-03-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1
+---
+
+```{r setup, include=FALSE}
+version_date <- lubridate::ymd("2020-03-03")
+
+knitr::opts_chunk$set(echo = FALSE, cache=TRUE,
+                      tidy.opts=list(width.cutoff=60),
+                      tidy=TRUE)
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(stringr)
+library(tibble)
+library(broom)
+library(ggplot2)
+library(ggthemes)
+library(gt)
+library(EpiModel)
+```
+
+
+
+
+# Pre-amble
+
