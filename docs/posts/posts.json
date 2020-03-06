@@ -1,5 +1,24 @@
 [
   {
+    "path": "posts/2020-03-06-covid-19-call-to-arms/",
+    "title": "COVID-19 call-to-arms",
+    "description": "A new blog post has been published which is a call-to-arms for epidemiologists and data scientists in the fight against COVID-19.",
+    "author": [
+      {
+        "name": "Tim Churches",
+        "url": {}
+      }
+    ],
+    "date": "2020-03-06",
+    "categories": [
+      "R",
+      "COVID-19"
+    ],
+    "preview": "posts/2020-03-06-covid-19-call-to-arms/assets/Delacroix.jpg",
+    "last_modified": "2020-03-06T16:13:55+11:00",
+    "input_file": {}
+  },
+  {
     "path": "posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2/",
     "title": "Analysing COVID-19 (2019-nCoV) outbreak data with R - part 2",
     "description": "A further exploration of COVID-19 incidence data using R tools and packages.",

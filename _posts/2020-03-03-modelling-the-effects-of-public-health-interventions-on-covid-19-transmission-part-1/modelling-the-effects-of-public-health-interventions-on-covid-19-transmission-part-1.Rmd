@@ -39,11 +39,134 @@ library(broom)
 library(ggplot2)
 library(ggthemes)
 library(gt)
-library(EpiModel)
+library(knitr)
+
+##
+## SEIR Model: Adding an Exposed State to an SIR
+## EpiModel Gallery (https://github.com/statnet/EpiModel-Gallery)
+##
+## Authors: Samuel M. Jenness, Venkata R. Duvvuri
+## Date: August 2018
+##
+
+## Load EpiModel
+suppressMessages(library(EpiModel))
+
+nsims <- 3
+ncores <- 6
+nsteps <- 1440
+```
+
+# Network model estimation 
+
+
+```{r}
+# Initialize the network
+nw <- network.initialize(1000, directed = FALSE)
+
+# Define the formation model: edges + isolates (number with degree of 0)
+formation = ~edges + isolates + concurrent
+
+# Input the appropriate target statistics for each term
+target.stats <- c(750, 200, 500)
+
+# Parameterize the dissolution model
+coef.diss <- dissolution_coefs(dissolution = ~offset(edges), duration = 2)
+coef.diss
+
+# Fit the model
+est <- netest(nw, formation, target.stats, coef.diss)
+```
+
+## Model diagnostics
+
+```{r}
+dx <- netdx(est, nsims = nsims, ncores = ncores, nsteps = nsteps, 
+            dynamic=TRUE, keep.tedgelist = TRUE,
+            nwstats.formula = ~edges + isolates + degree(0:10))
+```
+
+```{r}
+print(dx)
+```
+
+```{r}
+plot(dx, plots.joined = FALSE, qnts.alpha = 0.8)
+```
+
+# Epidemic model simulation 
+
+```{r}
+# Model parameters
+param <- param.net(inf.prob = 0.02, act.rate = 2,
+                   ei.rate = 0.012, ir.rate = 0.002777)
+
+# Initial conditions
+init <- init.net(i.num = 10)
+
+source("_posts/2020-03-03-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/module-fx.R")
+
+# Control settings
+control <- control.net(nsteps = nsteps,
+                       nsims = nsims,
+                       ncores = ncores,
+                       infection.FUN = infect,
+                       progress.FUN = progress,
+                       recovery.FUN = NULL)
+```
+
+## Run the network model simulation with netsim
+
+```{r}
+sim <- netsim(est, param, init, control)
+print(sim)
+```
+
+## Plot outcomes
+
+```{r}
+par(mar = c(3,3,1,1), mgp = c(2,1,0))
+plot(sim, y = c("i.num", "e.num", "r.num"),
+     mean.col = 1:4, mean.lwd = 1, mean.smooth = FALSE,
+     qnts = 1, qnts.col = 1:4, qnts.alpha = 0.25, qnts.smooth = FALSE,
+     legend = TRUE)
+```
+
+```{r}
+plot(sim, y = c("se.flow", "ei.flow", "ir.flow"),
+     mean.col = 1:4, mean.lwd = 1, mean.smooth = TRUE,
+     qnts.col = 1:4, qnts.alpha = 0.25, qnts.smooth = TRUE,
+     ylim = c(0, 3), legend = TRUE)
+```
+
+```{r}
+# Average across simulations at beginning, middle, end
+df <- as.data.frame(sim)
+kable(df[c(2, 100, 500), ])
 ```
 
 
-
-
 # Pre-amble
+
+
+```{r, eval=FALSE}
+param <- param.icm(inf.prob = 0.02, act.rate = 0.5, rec.rate = 1/500)
+init <- init.icm(s.num = 5000, i.num = 1, r.num = 0)
+control <- control.icm(type = "SIR", nsteps = 5000, nsims = 10)
+mod2 <- icm(param, init, control)
+mod2
+plot(mod2)
+
+## Example 2: ICM SIR model with 3 simulations
+param <- param.icm(inf.prob = 0.2, act.rate = 3, rec.rate = 1/50,
+                   a.rate = 1/100, ds.rate = 1/100,
+                   di.rate = 1/90, dr.rate = 1/100)
+init <- init.icm(s.num = 500, i.num = 1, r.num = 0)
+control <- control.icm(type = "SIR", nsteps = 25,
+                       nsims = 3, verbose = FALSE)
+mod2 <- icm(param, init, control)
+comp_plot(mod2, at = 25, digits = 1)
+
+summary(mod2,10)
+```
 

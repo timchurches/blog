@@ -7,7 +7,18 @@
     <description>A blog dedicated to noodlings about health data science.
 </description>
     <generator>Distill</generator>
-    <lastBuildDate>Sun, 01 Mar 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 06 Mar 2020 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>COVID-19 call-to-arms</title>
+      <dc:creator>Tim Churches</dc:creator>
+      <link>https://timchurches.github.io/blog/posts/2020-03-06-covid-19-call-to-arms</link>
+      <description>A new blog post has been published which is a call-to-arms for epidemiologists and data scientists in the fight against COVID-19.</description>
+      <category>R</category>
+      <category>COVID-19</category>
+      <guid>https://timchurches.github.io/blog/posts/2020-03-06-covid-19-call-to-arms</guid>
+      <pubDate>Fri, 06 Mar 2020 00:00:00 +0000</pubDate>
+      <media:content url="https://timchurches.github.io/blog/posts/2020-03-06-covid-19-call-to-arms/assets/Delacroix.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>Analysing COVID-19 (2019-nCoV) outbreak data with R - part 2</title>
       <dc:creator>Tim Churches</dc:creator>
