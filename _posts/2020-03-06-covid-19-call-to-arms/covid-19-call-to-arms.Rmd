@@ -40,5 +40,6 @@ It also serves as a _call-to-arms_ for epidemiologies, biostatisticians and data
 
 > But you need to start right away: epidemic behaviour is exponential.
 
+The full post is [here](https://rviews.rstudio.com/2020/03/05/covid-19-epidemiology-with-r/).
 
 
