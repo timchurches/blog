@@ -1,5 +1,26 @@
 [
   {
+    "path": "posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/",
+    "title": "Modelling the effects of public health interventions on COVID-19 transmission using R - part 1",
+    "description": "This is the first post of several that examines the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic compartmental models implemented by the `EpiModel` library for R.",
+    "author": [
+      {
+        "name": "Tim Churches",
+        "url": {}
+      }
+    ],
+    "date": "2020-03-10",
+    "categories": [
+      "R",
+      "COVID-19"
+    ],
+    "preview": "posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-13-1.png",
+    "last_modified": "2020-03-11T10:41:28+11:00",
+    "input_file": "modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1.utf8.md",
+    "preview_width": 1920,
+    "preview_height": 1152
+  },
+  {
     "path": "posts/2020-03-06-covid-19-call-to-arms/",
     "title": "COVID-19 call-to-arms",
     "description": "A new blog post has been published which is a call-to-arms for epidemiologists and data scientists in the fight against COVID-19.",

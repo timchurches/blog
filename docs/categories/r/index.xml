@@ -9,17 +9,6 @@
     <generator>Distill</generator>
     <lastBuildDate>Mon, 09 Mar 2020 00:00:00 +0000</lastBuildDate>
     <item>
-      <title>Modelling the effects of public health interventions on COVID-19 transmission using R - part 1</title>
-      <dc:creator>Tim Churches</dc:creator>
-      <link>https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1</link>
-      <description>This is the first post of several that examines the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic compartmental models implemented by the `EpiModel` library for R.</description>
-      <category>R</category>
-      <category>COVID-19</category>
-      <guid>https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1</guid>
-      <pubDate>Mon, 09 Mar 2020 00:00:00 +0000</pubDate>
-      <media:content url="https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-13-1.png" medium="image" type="image/png" width="1920" height="1152"/>
-    </item>
-    <item>
       <title>COVID-19 call-to-arms</title>
       <dc:creator>Tim Churches</dc:creator>
       <link>https://timchurches.github.io/blog/posts/2020-03-06-covid-19-call-to-arms</link>
@@ -42,6 +31,50 @@
       <media:content url="https://timchurches.github.io/blog/posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2_files/figure-html5/unnamed-chunk-9-1.png" medium="image" type="image/png" width="1248" height="768"/>
     </item>
     <item>
+      <title>Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1</title>
+      <dc:creator>Tim Churches</dc:creator>
+      <link>https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1</link>
+      <description>An exploration of COVID-19 incidence data using R tools and packages.</description>
+      <category>R</category>
+      <category>COVID-19</category>
+      <guid>https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1</guid>
+      <pubDate>Tue, 18 Feb 2020 00:00:00 +0000</pubDate>
+      <media:content url="https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1_files/figure-html5/fit_incidence_object-1.png" medium="image" type="image/png" width="1248" height="768"/>
+    </item>
+    <item>
+      <title>Modelling the effects of public health interventions on COVID-19 transmission using R - part 1</title>
+      <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Tim Churches</dc:creator>
+      <link>https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1</link>
+      <description>This is the first post of several that examines the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic compartmental models implemented by the `EpiModel` library for R.</description>
+      <category>R</category>
+      <category>COVID-19</category>
+      <guid>https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1</guid>
+      <pubDate>Mon, 09 Mar 2020 00:00:00 +0000</pubDate>
+      <media:content xmlns:media="http://search.yahoo.com/mrss/" url="https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-13-1.png" medium="image" type="image/png" width="1920" height="1152"/>
+    </item>
+    <item xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/">
+      <title>COVID-19 call-to-arms</title>
+      <dc:creator>Tim Churches</dc:creator>
+      <link>https://timchurches.github.io/blog/posts/2020-03-06-covid-19-call-to-arms</link>
+      <description>A new blog post has been published which is a call-to-arms for epidemiologists and data scientists in the fight against COVID-19.</description>
+      <category>R</category>
+      <category>COVID-19</category>
+      <guid>https://timchurches.github.io/blog/posts/2020-03-06-covid-19-call-to-arms</guid>
+      <pubDate>Fri, 06 Mar 2020 00:00:00 +0000</pubDate>
+      <media:content url="https://timchurches.github.io/blog/posts/2020-03-06-covid-19-call-to-arms/assets/Delacroix.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/">
+      <title>Analysing COVID-19 (2019-nCoV) outbreak data with R - part 2</title>
+      <dc:creator>Tim Churches</dc:creator>
+      <link>https://timchurches.github.io/blog/posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2</link>
+      <description>A further exploration of COVID-19 incidence data using R tools and packages.</description>
+      <category>R</category>
+      <category>COVID-19</category>
+      <guid>https://timchurches.github.io/blog/posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2</guid>
+      <pubDate>Sun, 01 Mar 2020 00:00:00 +0000</pubDate>
+      <media:content url="https://timchurches.github.io/blog/posts/2020-03-01-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2/analysing-covid-19-2019-ncov-outbreak-data-with-r-part-2_files/figure-html5/unnamed-chunk-9-1.png" medium="image" type="image/png" width="1248" height="768"/>
+    </item>
+    <item xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/">
       <title>Analysing COVID-19 (2019-nCoV) outbreak data with R - part 1</title>
       <dc:creator>Tim Churches</dc:creator>
       <link>https://timchurches.github.io/blog/posts/2020-02-18-analysing-covid-19-2019-ncov-outbreak-data-with-r-part-1</link>
