@@ -433,7 +433,7 @@ sims_incidence_rates %>%
 
 ## Does simulation size matter?
 
-So far we have only simulated an outbreak in a population of 1,000 people. What happens if we scale that up? Are the results scale-independent? Let's find out by re-running the simulations, but with a population size of 100,000 people, so two orders of magnitude larger. all other parameters will be teh same, include the use of three infected people at the start.
+So far we have only simulated an outbreak in a population of 1,000 people. What happens if we scale that up? Are the results scale-independent? Let's find out by re-running the simulations, but with a population size of 100,000 people, two orders of magnitude larger. All other parameters will be the same, including the use of three infected people at the start.
 
 ```{r big_sim, echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
 # set up an empty data frame to which to append 
