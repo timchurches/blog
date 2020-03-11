@@ -26,9 +26,9 @@ bibliography: churches2020modellingcovid19rpart1_references.bib
 ---
 
 ```{r setup, include=FALSE, eval=TRUE}
-version_date <- lubridate::ymd("2020-03-03")
+version_date <- lubridate::ymd("2020-03-10")
 
-knitr::opts_chunk$set(echo = FALSE, cache=FALSE, eval=TRUE,
+knitr::opts_chunk$set(echo = FALSE, cache=TRUE, eval=TRUE,
                       tidy.opts=list(width.cutoff=60),
                       tidy=TRUE)
 library(tidyverse)
@@ -209,10 +209,10 @@ The other main set of public health measures involve adoption of hygiene measure
 
 * wearing surgical masks if you are ill or coughing or sneezing^[Surgical masks only help in keeping virus-laden droplets in, not keeping viral particles out. Properly-fitted N95 masks are partially effective in keeping viral particles out. Positive-pressure hoods with filtered air supplies are very effective in keeping viral particles out, but are usually only used in high-risk health care settings.]
 * frequent hand-washing and use of alcohol-based hand sanitisers
-* not touching your face, moth, nose or eyes, to avoid transferring virus to your nasopharynx and thence to your respiratory tract
+* not touching your face, mouth, nose or eyes, to avoid transferring virus to your nasopharynx and thence to your respiratory tract
 * frequent cleaning or disinfection of [_fomites_](https://en.wikipedia.org/wiki/Fomite)
 
-We can simulate such hygiene measures in our model by adjusting the probability of infection (at each occasion of exposure). In later posts we will make these behavioural adjustments more nuanced, but for now, we will assume that they apply, on average, to everyone in the population.
+We can simulate such hygiene measures in our model by adjusting the probability of infection (at each occasion of exposure). We'll explore simulations using probabilities of infection at each exposure of 0.05, 0.025 and 0.01 -- that is 5%, 2.5% and 1%. In later posts we will make these behavioural adjustments more nuanced, but for now, we will assume that they apply, on average, to everyone in the population.
 
 ### Exploring the intervention space (the _interventionome_?)
 
@@ -248,7 +248,7 @@ run_sir_sim <- function(inf_prob, act_rate, pop_size=1000, i_num=3,
 
   # use the data frame of results to create an incidence() object
   incidence_rates %>%
-    filter(time <= 150,
+    filter(time <= 300,
            act.rate == act_rate,
            inf.prob == inf_prob) %>%
     select(time, si.flow) %>%
@@ -305,7 +305,7 @@ sims_incidence_rates <- tibble(time=integer(0),
 
 # the parameters to step through
 act.rates <- c(10, 5, 2)
-inf.probs <- c(0.05, 0.035, 0.02)
+inf.probs <- c(0.05, 0.025, 0.01)
 
 # loop through the parameter space
 for (act.rate in act.rates) {
@@ -413,16 +413,15 @@ sims_incidence_rates <- sims_incidence_rates %>%
                                           "exp/day,",
                                           inf_prob*100,
                                           "% inf risk/exp")) %>%
-  # arrange(desc(act_rate), desc(inf_prob), time) %>%
   arrange(max_prev, time) %>%
   mutate_at(vars(intervention_level_label), funs(factor(., levels=unique(.), ordered=TRUE)))
 
 sims_incidence_rates %>%
-  filter(time <= 200) %>%
+  filter(time <= 365) %>%
   ggplot(aes(x=time, y=intervention_level_label, height=i.num, fill=intervention_level_label)) +
   geom_density_ridges(stat="identity", show.legend=FALSE) +
   labs(x="Days since start of epidemic", y="Prevalent (current number of active) cases",
-       title="Modelling of prevalence of COVID-19 cases",
+       title="Modelling of COVID-19 transmission in 1,000 simulated people",
        subtitle=paste("with varying levels of social mixing (exposures per day)",
                       "and risk of infection at each exposure,\n",
                       "ordered by descending maximum number of prevalent cases per day")) +
@@ -431,6 +430,65 @@ sims_incidence_rates %>%
           strip.text = element_text(size=12)) +
   scale_fill_brewer(type="seq", palette="Oranges")
 ```
+
+## Does simulation size matter?
+
+So far we have only simulated an outbreak in a population of 1,000 people. What happens if we scale that up? Are the results scale-independent? Let's find out by re-running the simulations, but with a population size of 100,000 people, so two orders of magnitude larger. all other parameters will be teh same, include the use of three infected people at the start.
+
+```{r big_sim, echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE}
+# set up an empty data frame to which to append 
+# results from each simulation 
+big_sims_incidence_rates <- tibble(time=integer(0),
+                          si.flow=numeric(0),
+                          i.num=numeric(0),
+                          act_rate=numeric(0),
+                          inf_prob=numeric(0),
+                          total_cases=numeric(0),
+                          max_prev=numeric(0),
+                          mle_R0=numeric(0))
+
+# the parameters to step through
+act.rates <- c(10, 5, 2)
+inf.probs <- c(0.05, 0.035, 0.02)
+
+# loop through the parameter space
+for (act.rate in act.rates) {
+  for (inf.prob in inf.probs) {
+    big_sims_incidence_rates <- big_sims_incidence_rates %>%
+                        bind_rows(run_sir_sim(inf.prob, act.rate,
+                                              pop_size=100000))
+  }
+}
+```
+
+```{r, fig.width=10, fig.height=6, eval=TRUE}
+# create one column for both intervention parameters
+big_sims_incidence_rates <- big_sims_incidence_rates %>%
+  mutate(intervention_level_label = paste(act_rate,
+                                          "exp/day,",
+                                          inf_prob*100,
+                                          "% inf risk/exp")) %>%
+  arrange(max_prev, time) %>%
+  mutate_at(vars(intervention_level_label), funs(factor(., levels=unique(.), ordered=TRUE)))
+
+big_sims_incidence_rates %>%
+  filter(time <= 365) %>%
+  ggplot(aes(x=time, y=intervention_level_label, height=i.num, fill=intervention_level_label)) +
+  geom_density_ridges(stat="identity", show.legend=FALSE) +
+  labs(x="Days since start of epidemic", y="Prevalent (current number of active) cases",
+       title="Modelling of COVID-19 transmission in 100,000 simulated people",
+       subtitle=paste("with varying levels of social mixing (exposures per day)",
+                      "and risk of infection at each exposure,\n",
+                      "ordered by descending maximum number of prevalent cases per day")) +
+  theme_minimal() +
+  theme(legend.position = "top", 
+          strip.text = element_text(size=12)) +
+  scale_fill_brewer(type="seq", palette="Oranges")
+```
+
+Comparing the two simulations, we can see that the effects of the varying levels of the interventions have broadly similar effects in both small (1k) and larger (100k) populations, although the spread not unexpectedly takes longer in the larger population, particularly at the higher levels of social distancing (fewer exposures per day) and at the higher hygiene levels (lower probabilities of infection if exposed). 
+
+How large should our simulated population be, given that our model implements random mixing between everyone in the population? In reality, you may live in a city of several million people, but you are unlikely to ever come in contact with all of them. Over the course of a year, contact (including passing, casual contact in crowds etc) with perhaps a few thousand or tens of thousands of people seems likely, and thus using models with populations of 10,000 or 20,000 would appear to be a reasonable approximation to reality.
 
 # Conclusion
 

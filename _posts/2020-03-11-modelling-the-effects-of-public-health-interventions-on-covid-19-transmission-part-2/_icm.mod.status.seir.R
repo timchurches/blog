@@ -1,4 +1,4 @@
-infection.icm <- function(dat, at) {
+infection.seir.icm <- function(dat, at) {
 
   ## Expected acts
   if (dat$param$groups == 1) {
@@ -14,7 +14,6 @@ infection.icm <- function(dat, at) {
                       (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
     }
   }
-
 
   ## Edgelist
   if (dat$param$groups == 1) {
@@ -37,8 +36,7 @@ infection.icm <- function(dat, at) {
       }
     }
 
-
-    ## Discordant edgelist
+    ## Discordant edgelist (del)
     del$p1.stat <- dat$attr$status[del$p1]
     del$p2.stat <- dat$attr$status[del$p2]
     serodis <- (del$p1.stat == "s" & del$p2.stat == "i") |
@@ -62,39 +60,39 @@ infection.icm <- function(dat, at) {
       if (nrow(del) > 0) {
         if (dat$param$groups == 1) {
           newIds <- unique(ifelse(del$p1.stat == "s", del$p1, del$p2))
-          nInf <- length(newIds)
+          nExp <- length(newIds)
         }
         if (dat$param$groups == 2) {
           newIdsg1 <- unique(del$p1[del$p1.stat == "s"])
           newIdsg2 <- unique(del$p2[del$p2.stat == "s"])
-          nInf <- length(newIdsg1)
-          nInfg2 <- length(newIdsg2)
+          nExp <- length(newIdsg1)
+          nExpg2 <- length(newIdsg2)
           newIds <- c(newIdsg1, newIdsg2)
         }
         dat$attr$status[newIds] <- "e"
-        dat$attr$infTime[newIds] <- at
+        dat$attr$expTime[newIds] <- at
       } else {
-        nInf <- nInfg2 <- 0
+        nExp <- nExpg2 <- 0
       }
     } else {
-      nInf <- nInfg2 <- 0
+      nExp <- nExpg2 <- 0
     }
   } else {
-    nInf <- nInfg2 <- 0
+    nExp <- nExpg2 <- 0
   }
 
 
   ## Output
   if (at == 2) {
-    dat$epi$se.flow <- c(0, nInf)
+    dat$epi$se.flow <- c(0, nExp)
   } else {
-    dat$epi$se.flow[at] <- nInf
+    dat$epi$se.flow[at] <- nExp
   }
   if (dat$param$groups == 2) {
     if (at == 2) {
-      dat$epi$se.flow.g2 <- c(0, nInfg2)
+      dat$epi$se.flow.g2 <- c(0, nExpg2)
     } else {
-      dat$epi$se.flow.g2[at] <- nInfg2
+      dat$epi$se.flow.g2[at] <- nExpg2
     }
   }
 
@@ -103,8 +101,12 @@ infection.icm <- function(dat, at) {
 }
 
 
-progress.icm <- function(dat, at) {
+progress.seir.icm <- function(dat, at) {
 
+  #print(at)
+  #print(dat$control$type)
+  #print("-------")
+  
   # Conditions --------------------------------------------------------------
   if (!(dat$control$type %in% c("SIR", "SIS", "SEIR"))) {
     return(dat)
@@ -155,7 +157,8 @@ progress.icm <- function(dat, at) {
     }
   }
   dat$attr$status <- status
-  
+  # dat$attr$infTime[idsProg] <- at
+ 
   # ----- recover ------- 
   rec.rand <- dat$control$rec.rand
   rec.rate <- dat$param$rec.rate
@@ -230,72 +233,3 @@ progress.icm <- function(dat, at) {
 
 ###############
 
-init_status.icm <- function(dat) {
-
-  # Variables ---------------------------------------------------------------
-  type <- dat$control$type
-  group <- dat$attr$group
-  nGroups <- dat$param$groups
-
-  nG1 <- sum(group == 1)
-  nG2 <- sum(group == 2)
-
-  e.num <- dat$init$e.num
-  i.num <- dat$init$i.num
-  r.num <- dat$init$r.num
-  e.num.g2 <- dat$init$e.num.g2
-  i.num.g2 <- dat$init$i.num.g2
-  r.num.g2 <- dat$init$r.num.g2
-
-
-  # Status ------------------------------------------------------------------
-  status <- rep("s", nG1 + nG2)
-  if (type == "SEIR") {
-    status[sample(which(group == 1 & status == "s"), size = e.num)] <- "e"
-    if (nGroups == 2) {
-      status[sample(which(group == 2 & status == "s"), size = e.num.g2)] <- "e"
-    }
-  }
-  status[sample(which(group == 1), size = i.num)] <- "i"
-  if (nGroups == 2) {
-    status[sample(which(group == 2), size = i.num.g2)] <- "i"
-  }
-  if (type %in% c("SIR", "SEIR")) {
-    status[sample(which(group == 1 & status == "s"), size = r.num)] <- "r"
-    if (nGroups == 2) {
-      status[sample(which(group == 2 & status == "s"), size = r.num.g2)] <- "r"
-    }
-  }
-  dat$attr$status <- status
-
-  # Infection Time ----------------------------------------------------------
-  idsInf <- which(status == "i")
-  infTime <- rep(NA, length(status))
-
-  # If vital=TRUE, infTime is a uniform draw over the duration of infection
-  if (dat$param$vital == TRUE && dat$param$di.rate > 0) {
-    infTime[idsInf] <- -rgeom(n = length(idsInf), prob = dat$param$di.rate) + 2
-  } else {
-    if (dat$control$type == "SI" || dat$param$rec.rate == 0) {
-      # infTime a uniform draw over the number of sim time steps
-      infTime[idsInf] <- ssample(1:(-dat$control$nsteps + 2),
-                                 length(idsInf), replace = TRUE)
-    } else {
-      if (nGroups == 1) {
-        infTime[idsInf] <- ssample(1:(-round(1 / dat$param$rec.rate) + 2),
-                                   length(idsInf), replace = TRUE)
-      }
-      if (nGroups == 2) {
-        infG1 <- which(status == "i" & group == 1)
-        infTime[infG1] <- ssample(1:(-round(1 / dat$param$rec.rate) + 2),
-                                  length(infG1), replace = TRUE)
-        infG2 <- which(status == "i" & group == 2)
-        infTime[infG2] <- ssample(1:(-round(1 / dat$param$rec.rate.g2) + 2),
-                                  length(infG2), replace = TRUE)
-      }
-    }
-  }
-  dat$attr$infTime <- infTime
-
-  return(dat)
-}

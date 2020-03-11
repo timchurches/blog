@@ -1356,6 +1356,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <li><a href="#hygiene-measures-to-reduce-the-transmission-of-viral-particles">Hygiene measures to reduce the transmission of viral particles</a></li>
 <li><a href="#exploring-the-intervention-space-the-interventionome">Exploring the intervention space (the <em>interventionome</em>?)</a></li>
 </ul></li>
+<li><a href="#does-simulation-size-matter">Does simulation size matter?</a></li>
 </ul></li>
 <li><a href="#conclusion">Conclusion</a></li>
 </ul>
@@ -1468,7 +1469,7 @@ plot(sim, y = &quot;si.flow&quot;, mean.col = &quot;red&quot;, qnts.col = &quot;
 <div class="layout-chunk" data-layout="l-body">
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-7-1.png" width="624" /></p>
 </div>
-<p>A MLE estimate of <span class="math inline">\(R_{0}\)</span> of 2.7 is consistent with current WHO estimates of the COVID-19 basic reproduction number, so our initial set of parameters are consistent with reality. On that basis, and despite the simplifications inherent in our model, we can start to use it to explore the effects of various public health interventions.</p>
+<p>A MLE estimate of <span class="math inline">\(R_{0}\)</span> of 2.6 is consistent with current WHO estimates of the COVID-19 basic reproduction number, so our initial set of parameters are consistent with reality. On that basis, and despite the simplifications inherent in our model, we can start to use it to explore the effects of various public health interventions.</p>
 <h2 id="exploring-public-health-interventions-using-our-icm-sir-model">Exploring public health interventions using our ICM SIR model</h2>
 <h3 id="avoiding-opportunities-for-exposure-through-social-distancing">Avoiding opportunities for exposure through <em>social distancing</em></h3>
 <p>One of key public health measures is <em>social distancing</em>. As <a href="https://en.wikipedia.org/wiki/Social_distancing">wikipedia says</a>:</p>
@@ -1481,10 +1482,10 @@ plot(sim, y = &quot;si.flow&quot;, mean.col = &quot;red&quot;, qnts.col = &quot;
 <ul>
 <li>wearing surgical masks if you are ill or coughing or sneezing<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></li>
 <li>frequent hand-washing and use of alcohol-based hand sanitisers</li>
-<li>not touching your face, moth, nose or eyes, to avoid transferring virus to your nasopharynx and thence to your respiratory tract</li>
+<li>not touching your face, mouth, nose or eyes, to avoid transferring virus to your nasopharynx and thence to your respiratory tract</li>
 <li>frequent cleaning or disinfection of <a href="https://en.wikipedia.org/wiki/Fomite"><em>fomites</em></a></li>
 </ul>
-<p>We can simulate such hygiene measures in our model by adjusting the probability of infection (at each occasion of exposure). In later posts we will make these behavioural adjustments more nuanced, but for now, we will assume that they apply, on average, to everyone in the population.</p>
+<p>We can simulate such hygiene measures in our model by adjusting the probability of infection (at each occasion of exposure). We’ll explore simulations using probabilities of infection at each exposure of 0.05, 0.025 and 0.01 – that is 5%, 2.5% and 1%. In later posts we will make these behavioural adjustments more nuanced, but for now, we will assume that they apply, on average, to everyone in the population.</p>
 <h3 id="exploring-the-intervention-space-the-interventionome">Exploring the intervention space (the <em>interventionome</em>?)</h3>
 <p>Let’s wrap all this up into a function that will run our SIR simulation while stepping through three levels of values for each of our two “intervention levers”, the mean number of exposures per day, <code>act.rate</code>, and the probability of infection at each exposure, <code>inf.prob</code>. We’ll collect the results of interest in a tidy dataframe to facilitate visualisation and other reporting.</p>
 <div class="layout-chunk" data-layout="l-body">
@@ -1510,7 +1511,7 @@ run_sir_sim &lt;- function(inf_prob, act_rate, pop_size = 1000,
     
     # use the data frame of results to create an incidence()
     # object
-    local_case_dates &lt;- incidence_rates %&gt;% filter(time &lt;= 150, 
+    local_case_dates &lt;- incidence_rates %&gt;% filter(time &lt;= 300, 
         act.rate == act_rate, inf.prob == inf_prob) %&gt;% select(time, 
         si.flow) %&gt;% uncount(si.flow) %&gt;% pull(time)
     
@@ -1555,7 +1556,7 @@ sims_incidence_rates &lt;- tibble(time = integer(0), si.flow = numeric(0),
 
 # the parameters to step through
 act.rates &lt;- c(10, 5, 2)
-inf.probs &lt;- c(0.05, 0.035, 0.02)
+inf.probs &lt;- c(0.05, 0.025, 0.01)
 
 # loop through the parameter space
 for (act.rate in act.rates) {
@@ -1614,11 +1615,11 @@ library(ggridges)
 
 # create one column for both intervention parameters
 sims_incidence_rates &lt;- sims_incidence_rates %&gt;% mutate(intervention_level_label = paste(act_rate, 
-    &quot;exp/day,&quot;, inf_prob * 100, &quot;% inf risk/exp&quot;)) %&gt;% # arrange(desc(act_rate), desc(inf_prob), time) %&gt;%
-arrange(max_prev, time) %&gt;% mutate_at(vars(intervention_level_label), 
-    funs(factor(., levels = unique(.), ordered = TRUE)))
+    &quot;exp/day,&quot;, inf_prob * 100, &quot;% inf risk/exp&quot;)) %&gt;% arrange(max_prev, 
+    time) %&gt;% mutate_at(vars(intervention_level_label), funs(factor(., 
+    levels = unique(.), ordered = TRUE)))
 
-sims_incidence_rates %&gt;% filter(time &lt;= 200) %&gt;% ggplot(aes(x = time, 
+sims_incidence_rates %&gt;% filter(time &lt;= 365) %&gt;% ggplot(aes(x = time, 
     y = intervention_level_label, height = i.num, fill = intervention_level_label)) + 
     geom_density_ridges(stat = &quot;identity&quot;, show.legend = FALSE) + 
     labs(x = &quot;Days since start of epidemic&quot;, y = &quot;Prevalent (current number of active) cases&quot;, 
@@ -1628,6 +1629,30 @@ sims_incidence_rates %&gt;% filter(time &lt;= 200) %&gt;% ggplot(aes(x = time,
     theme_minimal() + theme(legend.position = &quot;top&quot;, strip.text = element_text(size = 12)) + 
     scale_fill_brewer(type = &quot;seq&quot;, palette = &quot;Oranges&quot;)</code></pre>
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-13-1.png" width="960" data-distill-preview=1 /></p>
+</div>
+<h2 id="does-simulation-size-matter">Does simulation size matter?</h2>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# set up an empty data frame to which to append results from
+# each simulation
+big_sims_incidence_rates &lt;- tibble(time = integer(0), si.flow = numeric(0), 
+    i.num = numeric(0), act_rate = numeric(0), inf_prob = numeric(0), 
+    total_cases = numeric(0), max_prev = numeric(0), mle_R0 = numeric(0))
+
+# the parameters to step through
+act.rates &lt;- c(10, 5, 2)
+inf.probs &lt;- c(0.05, 0.035, 0.02)
+
+# loop through the parameter space
+for (act.rate in act.rates) {
+    for (inf.prob in inf.probs) {
+        big_sims_incidence_rates &lt;- big_sims_incidence_rates %&gt;% 
+            bind_rows(run_sir_sim(inf.prob, act.rate, pop_size = 1e+05))
+    }
+}</code></pre>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-14-1.png" width="960" /></p>
 </div>
 <h1 id="conclusion">Conclusion</h1>
 <p>So far, we have seen how to simulate an outbreak using a stochastic, discrete-time, individual contact model (ICM) with three (SIR) compartments, and how we can very approximately simulate the effects of different levels of the two main classes of public health interventions for such an outbreak.</p>

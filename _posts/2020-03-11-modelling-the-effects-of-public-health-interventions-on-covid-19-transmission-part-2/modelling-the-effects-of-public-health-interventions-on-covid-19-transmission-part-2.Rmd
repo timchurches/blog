@@ -1,0 +1,104 @@
+---
+title: "Modelling the effects of public health interventions on COVID-19 transmission using R - part 2"
+description: |
+  This is the secondof several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic compartmental models implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude.
+categories:
+  - R
+  - "COVID-19"
+author:
+  - name: Tim Churches 
+    affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
+    affiliation_url: https://swscs.med.unsw.edu.au
+creative_commons: CC BY-SA
+date: 03-11-2020
+base_url: https://timchurches.github.io/blog/
+slug: churches2020modellingcovid19rpart2
+twitter:
+  creator: "@timchurches"
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 3
+    self_contained: false
+draft: true
+repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-03-11-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2
+bibliography: churches2020modellingcovid19rpart2_references.bib
+---
+
+
+```{r setup, include=FALSE, eval=TRUE}
+version_date <- lubridate::ymd("2020-03-11")
+
+knitr::opts_chunk$set(echo = FALSE, cache=FALSE, eval=TRUE,
+                      tidy.opts=list(width.cutoff=60),
+                      tidy=TRUE)
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(stringr)
+library(tibble)
+library(broom)
+library(ggplot2)
+library(ggthemes)
+library(gt)
+library(knitr)
+
+```
+
+# Introduction
+
+# Existing model
+
+```{r, echo=TRUE, eval=TRUE}
+# Load EpiModel
+suppressMessages(library(EpiModel))
+
+src_path <- "./_posts/2020-03-11-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"
+  
+source(paste(src_path, "_icm.mod.init.seir.R", sep=""))
+source(paste(src_path, "_icm.mod.status.seir.R", sep=""))
+source(paste(src_path, "_icm.mod.vital.seir.R", sep=""))
+source(paste(src_path, "_icm.control.seir.R", sep=""))
+source(paste(src_path, "_icm.utils.seir.R", sep=""))
+
+control <- control.icm(type = "SIR", nsteps = 100, nsims = 10)
+init <- init.icm(s.num = 997, i.num = 3, r.num = 0)
+param <-  param.icm(inf.prob = 0.05, 
+                    act.rate = 10,
+                    rec.rate = 1/20,
+                    a.rate = (10.5/365)/1000, 
+                    ds.rate = (7/365)/1000, 
+                    di.rate = (3.5/365)/1000,
+                    dr.rate = (7/365)/1000)
+sim <- icm(param, init, control)
+
+plot(sim)
+```
+
+# SEIR model
+
+```{r, echo=TRUE, eval=TRUE}
+
+control <- control.icm(type = "SEIR", 
+                       nsteps = 100, 
+                       nsims = 10,
+                       prog.rand = TRUE,
+                       infection.FUN = infection.seir.icm,
+                       recovery.FUN = progress.seir.icm)
+
+init <- init.icm(s.num = 997, i.num = 3, e.num=0, r.num = 0)
+param <-  param.icm(inf.prob = 0.05, 
+                    act.rate = 10,
+                    prog.rate = 1/20,
+                    rec.rate = 1/20,
+                    a.rate = (10.5/365)/1000, 
+                    ds.rate = (7/365)/1000, 
+                    de.rate = (7/365)/1000, 
+                    di.rate = (3.5/365)/1000,
+                    dr.rate = (7/365)/1000)
+sim <- icm(param, init, control)
+
+plot(sim)
+```
+
+
