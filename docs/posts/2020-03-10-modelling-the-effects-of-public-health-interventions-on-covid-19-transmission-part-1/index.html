@@ -1469,7 +1469,7 @@ plot(sim, y = &quot;si.flow&quot;, mean.col = &quot;red&quot;, qnts.col = &quot;
 <div class="layout-chunk" data-layout="l-body">
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-7-1.png" width="624" /></p>
 </div>
-<p>A MLE estimate of <span class="math inline">\(R_{0}\)</span> of 2.6 is consistent with current WHO estimates of the COVID-19 basic reproduction number, so our initial set of parameters are consistent with reality. On that basis, and despite the simplifications inherent in our model, we can start to use it to explore the effects of various public health interventions.</p>
+<p>A MLE estimate of <span class="math inline">\(R_{0}\)</span> of 2.4 is consistent with current WHO estimates of the COVID-19 basic reproduction number, so our initial set of parameters are consistent with reality. On that basis, and despite the simplifications inherent in our model, we can start to use it to explore the effects of various public health interventions.</p>
 <h2 id="exploring-public-health-interventions-using-our-icm-sir-model">Exploring public health interventions using our ICM SIR model</h2>
 <h3 id="avoiding-opportunities-for-exposure-through-social-distancing">Avoiding opportunities for exposure through <em>social distancing</em></h3>
 <p>One of key public health measures is <em>social distancing</em>. As <a href="https://en.wikipedia.org/wiki/Social_distancing">wikipedia says</a>:</p>
@@ -1623,7 +1623,7 @@ sims_incidence_rates %&gt;% filter(time &lt;= 365) %&gt;% ggplot(aes(x = time,
     y = intervention_level_label, height = i.num, fill = intervention_level_label)) + 
     geom_density_ridges(stat = &quot;identity&quot;, show.legend = FALSE) + 
     labs(x = &quot;Days since start of epidemic&quot;, y = &quot;Prevalent (current number of active) cases&quot;, 
-        title = &quot;Modelling of prevalence of COVID-19 cases&quot;, 
+        title = &quot;Modelling of COVID-19 transmission in 1,000 simulated people&quot;, 
         subtitle = paste(&quot;with varying levels of social mixing (exposures per day)&quot;, 
             &quot;and risk of infection at each exposure,\n&quot;, &quot;ordered by descending maximum number of prevalent cases per day&quot;)) + 
     theme_minimal() + theme(legend.position = &quot;top&quot;, strip.text = element_text(size = 12)) + 
@@ -1631,29 +1631,15 @@ sims_incidence_rates %&gt;% filter(time &lt;= 365) %&gt;% ggplot(aes(x = time,
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-13-1.png" width="960" data-distill-preview=1 /></p>
 </div>
 <h2 id="does-simulation-size-matter">Does simulation size matter?</h2>
+<p>So far we have only simulated an outbreak in a population of 1,000 people. What happens if we scale that up? Are the results scale-independent? Let’s find out by re-running the simulations, but with a population size of 100,000 people, so two orders of magnitude larger. all other parameters will be teh same, include the use of three infected people at the start.</p>
 <div class="layout-chunk" data-layout="l-body">
-<pre class="r"><code>
-# set up an empty data frame to which to append results from
-# each simulation
-big_sims_incidence_rates &lt;- tibble(time = integer(0), si.flow = numeric(0), 
-    i.num = numeric(0), act_rate = numeric(0), inf_prob = numeric(0), 
-    total_cases = numeric(0), max_prev = numeric(0), mle_R0 = numeric(0))
 
-# the parameters to step through
-act.rates &lt;- c(10, 5, 2)
-inf.probs &lt;- c(0.05, 0.035, 0.02)
-
-# loop through the parameter space
-for (act.rate in act.rates) {
-    for (inf.prob in inf.probs) {
-        big_sims_incidence_rates &lt;- big_sims_incidence_rates %&gt;% 
-            bind_rows(run_sir_sim(inf.prob, act.rate, pop_size = 1e+05))
-    }
-}</code></pre>
 </div>
 <div class="layout-chunk" data-layout="l-body">
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-14-1.png" width="960" /></p>
 </div>
+<p>Comparing the two simulations, we can see that the effects of the varying levels of the interventions have broadly similar effects in both small (1k) and larger (100k) populations, although the spread not unexpectedly takes longer in the larger population, particularly at the higher levels of social distancing (fewer exposures per day) and at the higher hygiene levels (lower probabilities of infection if exposed).</p>
+<p>How large should our simulated population be, given that our model implements random mixing between everyone in the population? In reality, you may live in a city of several million people, but you are unlikely to ever come in contact with all of them. Over the course of a year, contact (including passing, casual contact in crowds etc) with perhaps a few thousand or tens of thousands of people seems likely, and thus using models with populations of 10,000 or 20,000 would appear to be a reasonable approximation to reality.</p>
 <h1 id="conclusion">Conclusion</h1>
 <p>So far, we have seen how to simulate an outbreak using a stochastic, discrete-time, individual contact model (ICM) with three (SIR) compartments, and how we can very approximately simulate the effects of different levels of the two main classes of public health interventions for such an outbreak.</p>
 <p>Based on our simple SIR model, we have determined that reducing either the exposure rate by social distancing (including self-isolation and/or formal quarantine), or the probability of infection via simple hygiene methods can have a dramatic impact on the rate at which new infections occur, and the total number of infections. And that both measures used together are even more effective.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> Most importantly, the public health measures spread out the epidemic, thus lowering the peak of the epidemic curve, allowing hospital and other health care services to cope with the influx of patients.</p>
