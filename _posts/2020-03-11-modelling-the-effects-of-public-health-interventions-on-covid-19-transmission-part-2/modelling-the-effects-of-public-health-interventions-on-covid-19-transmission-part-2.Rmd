@@ -61,7 +61,7 @@ source(paste(src_path, "_icm.mod.vital.seir.R", sep=""))
 source(paste(src_path, "_icm.control.seir.R", sep=""))
 source(paste(src_path, "_icm.utils.seir.R", sep=""))
 
-control <- control.icm(type = "SIR", nsteps = 100, nsims = 10)
+control <- control.icm(type = "SIR", nsteps = 365, nsims = 10)
 init <- init.icm(s.num = 997, i.num = 3, r.num = 0)
 param <-  param.icm(inf.prob = 0.05, 
                     act.rate = 10,
@@ -70,9 +70,9 @@ param <-  param.icm(inf.prob = 0.05,
                     ds.rate = (7/365)/1000, 
                     di.rate = (3.5/365)/1000,
                     dr.rate = (7/365)/1000)
-sim <- icm(param, init, control)
+sir_sim <- icm(param, init, control)
 
-plot(sim)
+sir_sim_df <- as.data.frame(sir_sim, out="mean")
 ```
 
 # SEIR model
@@ -80,7 +80,7 @@ plot(sim)
 ```{r, echo=TRUE, eval=TRUE}
 
 control <- control.icm(type = "SEIR", 
-                       nsteps = 100, 
+                       nsteps = 365, 
                        nsims = 10,
                        prog.rand = TRUE,
                        infection.FUN = infection.seir.icm,
@@ -89,16 +89,49 @@ control <- control.icm(type = "SEIR",
 init <- init.icm(s.num = 997, i.num = 3, e.num=0, r.num = 0)
 param <-  param.icm(inf.prob = 0.05, 
                     act.rate = 10,
-                    prog.rate = 1/20,
+                    prog.rate = 1/10,
                     rec.rate = 1/20,
                     a.rate = (10.5/365)/1000, 
                     ds.rate = (7/365)/1000, 
                     de.rate = (7/365)/1000, 
                     di.rate = (3.5/365)/1000,
                     dr.rate = (7/365)/1000)
-sim <- icm(param, init, control)
+seir_sim <- icm(param, init, control)
 
-plot(sim)
+seir_sim_df <- as.data.frame(seir_sim, out="mean")
+
+```
+
+```{r, echo=TRUE, eval=TRUE}
+seir_sim_df %>%
+  select(time, s.num, e.num, i.num, r.num) %>%
+  mutate(model = "SEIR") %>%
+  bind_rows(sir_sim_df %>%
+              select(time, s.num, i.num, r.num) %>%
+              mutate(model = "SIR")) %>%
+  filter(time <= 200) %>%
+  pivot_longer(-c(time, model),
+               names_to="compartment",
+               values_to="count") %>%
+  ggplot(aes(x=time, y=count, colour=compartment)) +
+    geom_line() +
+    facet_grid(model ~ .)
+```
+
+```{r, echo=TRUE, eval=TRUE}
+seir_sim_df %>%
+  select(time, se.flow, ei.flow, ir.flow) %>%
+  mutate(model = "SEIR") %>%
+  bind_rows(sir_sim_df %>%
+              select(time, si.flow, ir.flow) %>%
+              mutate(model = "SIR")) %>%
+  filter(time <= 200) %>%
+  pivot_longer(-c(time, model),
+               names_to="compartment",
+               values_to="count") %>%
+  ggplot(aes(x=time, y=count, colour=compartment)) +
+    geom_line() +
+    facet_grid(model ~ .)
 ```
 
 
