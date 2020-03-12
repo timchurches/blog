@@ -118,7 +118,7 @@ seir_sim_df %>%
     facet_grid(model ~ .)
 ```
 
-```{r, echo=TRUE, eval=TRUE}
+```{r, echo=TRUE, eval=FALSE}
 seir_sim_df %>%
   select(time, se.flow, ei.flow, ir.flow) %>%
   mutate(model = "SEIR") %>%
@@ -134,4 +134,148 @@ seir_sim_df %>%
     facet_grid(model ~ .)
 ```
 
+## SEIR model with gamma progress probs
 
+```{r, echo=TRUE, eval=TRUE}
+source(paste(src_path, "_icm.mod.init.seiqhr.R", sep=""))
+source(paste(src_path, "_icm.mod.status.seiqhr.R", sep=""))
+source(paste(src_path, "_icm.mod.vital.seiqhr.R", sep=""))
+source(paste(src_path, "_icm.control.seiqhr.R", sep=""))
+source(paste(src_path, "_icm.utils.seiqhr.R", sep=""))
+```
+
+```{r, echo=TRUE, eval=TRUE}
+
+control <- control.icm(type = "SEIR", 
+                       nsteps = 365, 
+                       nsims = 10,
+                       prog.rand = FALSE,
+                       infection.FUN = infection.seiqhr.icm,
+                       recovery.FUN = progress.seiqhr.icm,
+                       departures.FUN = departures.seiqhr.icm,
+                       get_prev.FUN = get_prev.seiqhr.icm)
+
+init <- init.icm(s.num = 997, i.num = 3, e.num=0, r.num = 0)
+param <-  param.icm(inf.prob.i = 0.05, 
+                    act.rate.i = 10,
+                    prog.rate = 1/10,
+                    prog.dist.mu = 5,
+                    prog.dist.sigma = 2.4,
+                    rec.rate = 1/20,
+                    a.rate = (10.5/365)/1000, 
+                    ds.rate = (7/365)/1000, 
+                    de.rate = (7/365)/1000, 
+                    di.rate = (3.5/365)/1000,
+                    dr.rate = (7/365)/1000)
+gamma_seir_sim <- icm(param, init, control)
+
+gamma_seir_sim_df <- as.data.frame(gamma_seir_sim, out="mean")
+```
+
+```{r, echo=TRUE, eval=TRUE}
+seir_sim_df %>%
+  select(time, s.num, e.num, i.num, r.num) %>%
+  mutate(model = "SEIR") %>%
+  bind_rows(sir_sim_df %>%
+              select(time, s.num, i.num, r.num) %>%
+              mutate(model = "SIR")) %>%
+  bind_rows(gamma_seir_sim_df %>%
+              select(time, s.num, e.num, i.num, r.num) %>%
+              mutate(model = "gamma SEIR")) %>%
+  filter(time <= 100) %>%
+  pivot_longer(-c(time, model),
+               names_to="compartment",
+               values_to="count") %>%
+  ggplot(aes(x=time, y=count, colour=compartment)) +
+    geom_line() +
+    facet_grid(model ~ .)
+```
+
+## SEIQHR model with gamma progress probs
+
+```{r, echo=TRUE, eval=TRUE}
+
+control <- control.icm(type = "SEIQHR", 
+                       nsteps = 365, 
+                       nsims = 10,
+                       prog.rand = FALSE,
+                       infection.FUN = infection.seiqhr.icm,
+                       recovery.FUN = progress.seiqhr.icm,
+                       departures.FUN = departures.seiqhr.icm,
+                       get_prev.FUN = get_prev.seiqhr.icm)
+
+init <- init.icm(s.num = 997, i.num = 3, e.num=0, q.num=0, h.num=0, r.num = 0)
+param <-  param.icm(inf.prob.i = 0.05, 
+                    act.rate.i = 10,
+                    inf.prob.q = 0.05, 
+                    act.rate.q = 5,                    
+                    quar.rate = 1/10,
+                    hosp.rate = 1/50,
+                    prog.rate = 1/10,
+                    prog.dist.mu = 5,
+                    prog.dist.sigma = 2.4,
+                    rec.rate = 1/20,
+                    a.rate = (10.5/365)/1000, 
+                    ds.rate = (7/365)/1000, 
+                    de.rate = (7/365)/1000, 
+                    di.rate = (7/365)/1000,
+                    dq.rate = (7/365)/1000,
+                    dh.rate = (50/365)/1000,
+                    dr.rate = (7/365)/1000)
+seiqhr_sim <- icm(param, init, control)
+
+seiqhr_sim_df <- as.data.frame(seiqhr_sim, out="mean")
+```
+
+```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=10}
+seir_sim_df %>%
+  select(time, s.num, e.num, i.num, r.num) %>%
+  mutate(model = "SEIR") %>%
+  bind_rows(sir_sim_df %>%
+              select(time, s.num, i.num, r.num) %>%
+              mutate(model = "SIR")) %>%
+  bind_rows(gamma_seir_sim_df %>%
+              select(time, s.num, e.num, i.num, r.num) %>%
+              mutate(model = "gamma SEIR")) %>%
+  bind_rows(seiqhr_sim_df %>%
+              select(time, s.num, e.num, i.num, q.num, 
+                     h.num, r.num, dh.flow) %>%
+              mutate(model = "SEIQHR")) %>%
+  filter(time <= 100) %>%
+  pivot_longer(-c(time, model),
+               names_to="compartment",
+               values_to="count") %>%
+  ggplot(aes(x=time, y=count, colour=compartment)) +
+    geom_line(size=2, alpha=0.4) +
+    facet_grid(model ~ .) +
+    scale_colour_brewer(type="div") +
+    theme_minimal()
+```
+
+```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=10}
+seir_sim_df %>%
+  select(time, s.num, e.num, i.num, r.num) %>%
+  mutate(model = "SEIR") %>%
+  bind_rows(sir_sim_df %>%
+              select(time, s.num, i.num, r.num) %>%
+              mutate(model = "SIR")) %>%
+  bind_rows(gamma_seir_sim_df %>%
+              select(time, s.num, e.num, i.num, r.num) %>%
+              mutate(model = "gamma SEIR")) %>%
+  bind_rows(seiqhr_sim_df %>%
+              select(time, s.num, e.num, i.num, q.num,
+                     h.num, r.num, dh.flow) %>%
+              mutate(model = "SEIQHR")) %>%
+  filter(time <= 100) %>%
+  pivot_longer(-c(time, model),
+               names_to="compartment",
+               values_to="count") %>%
+  filter(compartment %in% c("e.num","i.num",
+                            "q.num","h.num",
+                            "dh.flow")) %>%
+  ggplot(aes(x=time, y=count, colour=compartment)) +
+    geom_line(size=2, alpha=0.4) +
+    facet_grid(model ~ ., scales="free_y") +
+    scale_colour_brewer(type="div") +
+    theme_minimal()
+```
