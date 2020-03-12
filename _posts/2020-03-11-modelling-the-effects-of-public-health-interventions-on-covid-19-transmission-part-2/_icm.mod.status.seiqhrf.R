@@ -221,7 +221,7 @@ progress.seiqhrf.icm <- function(dat, at) {
   group <- dat$attr$group
 
   type <- dat$control$type
-  recovState <- ifelse(type %in% c("SIR", "SEIR", "SEIQHR"), "r", "s")
+  recovState <- ifelse(type %in% c("SIR", "SEIR", "SEIQHR", "SEIQHRF"), "r", "s")
   progState <- "i"
   quarState <- "q"
   hospState <- "h"
@@ -388,7 +388,7 @@ progress.seiqhrf.icm <- function(dat, at) {
   }
   dat$attr$status <- status
 
-  fatEnable <- FALSE
+  fatEnable <- TRUE
   if (fatEnable & type %in% c("SEIQHRF")) {  
     # ----- case fatality ------- 
     fat.rand <- dat$control$fat.rand
