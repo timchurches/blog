@@ -106,7 +106,20 @@ init_status.icm <- function(dat) {
   infTime <- rep(NA, length(status))
   dat$attr$infTime <- infTime
  
-  # If vital=TRUE, infTime is a uniform draw over the duration of infection
+# Infection Time ----------------------------------------------------------
+  idsRecov <- which(status == "r")
+  recovTime <- rep(NA, length(status))
+  dat$attr$recovTime <- recovTime
+ 
+ # Hospitalisation Time ----------------------------------------------------------
+  idsHosp <- which(status == "h")
+  hospTime <- rep(NA, length(status))
+  dat$attr$hospTime <- hospTime
+    
+ # Hospital discharge  Time ----------------------------------------------------------
+  dischTime <- rep(NA, length(status))
+  dat$attr$dischTime <- dischTime
+   # If vital=TRUE, infTime is a uniform draw over the duration of infection
   # note the initial infections may have negative infTime!
   if (dat$param$vital == TRUE && dat$param$di.rate > 0) {
     infTime[idsInf] <- -rgeom(n = length(idsInf), prob = dat$param$di.rate) + 2

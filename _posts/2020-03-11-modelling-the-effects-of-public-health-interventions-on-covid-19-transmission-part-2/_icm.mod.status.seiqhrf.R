@@ -1,19 +1,75 @@
 infection.seiqhrf.icm <- function(dat, at) {
   type <- dat$control$type
+  
+  # the following checks need to be moved to control.icm in due course
+  nsteps <- dat$control$nsteps
+  act.rate.i <- dat$param$act.rate.i
+  if (!(length(act.rate.i) == 1 || length(act.rate.i == nsteps))) {
+    stop("Length of act.rate.i must be 1 or the value of nsteps")
+  }
+  act.rate.i.g2 <- dat$param$act.rate.i.g2
+  if (!is.null(act.rate.i.g2) && 
+      !(length(act.rate.i.g2) == 1 || length(act.rate.i.g2 == nsteps))) {
+    stop("Length of act.rate.i.g2 must be 1 or the value of nsteps")
+  }
+  inf.prob.i <- dat$param$inf.prob.i
+  if (!(length(inf.prob.i) == 1 || length(inf.prob.i == nsteps))) {
+    stop("Length of inf.prob.i must be 1 or the value of nsteps")
+  }
+  inf.prob.i.g2 <- dat$param$inf.prob.i.g2
+  if (!is.null(inf.prob.i.g2) &&
+      !(length(inf.prob.i.g2) == 1 || length(inf.prob.i.g2 == nsteps))) {
+    stop("Length of inf.prob.i.g2 must be 1 or the value of nsteps")
+  }
+
+  if (type %in% c("SEIQHR", "SEIQHRF")) {  
+    act.rate.q <- dat$param$act.rate.q
+    if (!(length(act.rate.q) == 1 || length(act.rate.q == nsteps))) {
+      stop("Length of act.rate.q must be 1 or the value of nsteps")
+    }
+    act.rate.q.g2 <- dat$param$act.rate.q.g2
+    if (!is.null(act.rate.q.g2) &&
+        !(length(act.rate.q.g2) == 1 || length(act.rate.q.g2 == nsteps))) {
+      stop("Length of act.rate.q.g2 must be 1 or the value of nsteps")
+    }
+    inf.prob.q <- dat$param$inf.prob.q
+    if (!(length(inf.prob.q) == 1 || length(inf.prob.q == nsteps))) {
+      stop("Length of inf.prob.q must be 1 or the value of nsteps")
+    }
+    inf.prob.q.g2 <- dat$param$inf.prob.q.g2
+    if (!is.null(inf.prob.q.g2) &&
+        !(length(inf.prob.q.g2) == 1 || length(inf.prob.q.g2 == nsteps))) {
+      stop("Length of inf.prob.q.g2 must be 1 or the value of nsteps")
+    }
+  }
 
 # Transmission from infected  
   ## Expected acts
   if (dat$param$groups == 1) {
-    acts <- round(dat$param$act.rate.i * dat$epi$num[at - 1] / 2)
+    if (length(act.rate.i) > 1) {
+      acts <- round(act.rate.i[at - 1] * dat$epi$num[at - 1] / 2)
+    } else {
+      acts <- round(act.rate.i * dat$epi$num[at - 1] / 2)
+    }
   }
   if (dat$param$groups == 2) {
     if (dat$param$balance == "g1") {
-      acts <- round(dat$param$act.rate.i *
+      if (length(act.rate.i) > 1) {
+        acts <- round(act.rate.i[at - 1] *
                       (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+      } else {
+        acts <- round(act.rate.i *
+                      (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+      }
     }
     if (dat$param$balance == "g2") {
-      acts <- round(dat$param$act.rate.i.g2 *
+      if (length(act.rate.i.g2) > 1) {
+        acts <- round(act.rate.i.g2[at - 1] *
                       (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+      } else {
+        acts <- round(act.rate.i.g2 *
+                      (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+      }
     }
   }
 
@@ -48,10 +104,19 @@ infection.seiqhrf.icm <- function(dat, at) {
     ## Transmission on edgelist
     if (nrow(del) > 0) {
       if (dat$param$groups == 1) {
-        del$tprob <- dat$param$inf.prob.i
+        if (length(inf.prob.i) > 1) {
+          del$tprob <- inf.prob.i[at]
+        } else {
+          del$tprob <- inf.prob.i
+        }
       } else {
-        del$tprob <- ifelse(del$p1.stat == "s", dat$param$inf.prob.i,
-                                                dat$param$inf.prob.i.g2)
+        if (length(inf.prob.i) > 1) {
+          del$tprob <- ifelse(del$p1.stat == "s", inf.prob.i[at],
+                                                  inf.prob.i.g2[at])
+        } else {
+          del$tprob <- ifelse(del$p1.stat == "s", inf.prob.i,
+                                                  inf.prob.i.g2)
+        }
       }
       if (!is.null(dat$param$inter.eff.i) && at >= dat$param$inter.start.i &&
           at <= dat$param$inter.stop.i) {
@@ -83,20 +148,34 @@ infection.seiqhrf.icm <- function(dat, at) {
     nExp.i <- nExpg2.i <- 0
   }
 
-  if (type == "SEIQHR") {  
+  if (type %in% c("SEIQHR", "SEIQHRF")) {  
   # Transmission from quarantined  
     ## Expected acts
     if (dat$param$groups == 1) {
-      acts <- round(dat$param$act.rate.q * dat$epi$num[at - 1] / 2)
+      if (length(act.rate.q) > 1) {
+        acts <- round(act.rate.q[at - 1] * dat$epi$num[at - 1] / 2)
+      } else {
+        acts <- round(act.rate.q * dat$epi$num[at - 1] / 2)
+      }
     }
     if (dat$param$groups == 2) {
       if (dat$param$balance == "g1") {
-        acts <- round(dat$param$act.rate.q *
+        if (length(act.rate.q.g2) > 1) {
+          acts <- round(act.rate.q.g2[at - 1] *
                         (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+        } else {
+          acts <- round(act.rate.q.g2 *
+                        (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+        }
       }
       if (dat$param$balance == "g2") {
-        acts <- round(dat$param$act.rate.q.g2 *
+        if (length(act.rate.q.g2) > 1) {
+          acts <- round(act.rate.q.g2[at - 1] *
                         (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+        } else {
+          acts <- round(act.rate.q.g2 *
+                        (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+        }
       }
     }
   
@@ -132,10 +211,19 @@ infection.seiqhrf.icm <- function(dat, at) {
       ## Transmission on edgelist
       if (nrow(del) > 0) {
         if (dat$param$groups == 1) {
-          del$tprob <- dat$param$inf.prob.q
+          if (length(inf.prob.q) > 1) {
+            del$tprob <- inf.prob.q[at]
+          } else {
+            del$tprob <- inf.prob.q
+          }
         } else {
-          del$tprob <- ifelse(del$p1.stat == "s", dat$param$inf.prob.q,
-                                                  dat$param$inf.prob.q.g2)
+          if (length(inf.prob.q) > 1) {
+            del$tprob <- ifelse(del$p1.stat == "s", inf.prob.q[at],
+                                                    inf.prob.q.g2[at])
+          } else {
+            del$tprob <- ifelse(del$p1.stat == "s", inf.prob.q,
+                                                    inf.prob.q.g2)
+          }
         }
         if (!is.null(dat$param$inter.eff.q) && at >= dat$param$inter.start.q &&
             at <= dat$param$inter.stop.q) {
@@ -169,7 +257,7 @@ infection.seiqhrf.icm <- function(dat, at) {
   }
 
   ## Output
-  if (type == "SEIQHR") {  
+  if (type %in% c("SEIQHR", "SEIQHRF")) {  
     if (at == 2) {
       dat$epi$se.flow <- c(0, nExp.i + nExp.q)
     } else {
@@ -200,6 +288,24 @@ infection.seiqhrf.icm <- function(dat, at) {
 
 }
 
+cum_discr_si <- function(vecTimeSinceExp, prog.dist.mu, prog.dist.sigma) {
+  vlen <- length(vecTimeSinceExp)
+  if (vlen > 0) {
+    probVec <- numeric(vlen)
+    for (p in 1:vlen) {
+      cumprobs <- numeric(vecTimeSinceExp[p]+1)
+      for (t in 0:vecTimeSinceExp[p]) {
+        cumprobs[t+1] <- EpiEstim::discr_si(t, 
+                                          prog.dist.mu, 
+                                          prog.dist.sigma)
+      }
+      probVec[p] <- sum(cumprobs, na.rm=TRUE)
+    }
+  } else {
+      probVec <- 0    
+  }
+  return(probVec)
+}
 
 progress.seiqhrf.icm <- function(dat, at) {
 
@@ -253,36 +359,50 @@ progress.seiqhrf.icm <- function(dat, at) {
         nProg <- sum(group[idsProg] == 1)
         nProgG2 <- sum(group[idsProg] == 2)
         status[idsProg] <- progState
+        dat$attr$infTime[idsProg] <- at
       }
     } else {
       vecTimeSinceExp <- at - dat$attr$expTime[idsElig]
-      gammaRatesElig <- EpiEstim::discr_si(vecTimeSinceExp, prog.dist.mu, prog.dist.sigma) 
-      nProg <- sum(gammaRatesElig[gElig == 1] > 0.0)
+      gammaRatesElig <- cum_discr_si(vecTimeSinceExp, prog.dist.mu, prog.dist.sigma) 
+      nProg <- round(sum(gammaRatesElig[gElig == 1], na.rm=TRUE))
       if (nProg > 0) {
+        ids2bProg <- ssample(idsElig[gElig == 1], 
+                      nProg, prob = gammaRatesElig[gElig == 1])
+        status[ids2bProg] <- progState
+        dat$attr$infTime[ids2bProg] <- at
+        # debug
         if (FALSE & at <= 30) {
+          print(paste("at:", at))
+          print("idsElig:")
           print(idsElig[gElig == 1])
+          print("vecTimeSinceExp:")
           print(vecTimeSinceExp[gElig == 1])
-          print(nProg)
-          print(round(sum(gammaRatesElig[gElig == 1])))
-          print(sum(gElig == 1))
-          print(ssample(idsElig[gElig == 1], 
-                     nProg, prob = gammaRatesElig[gElig == 1]))
+          print("gammaRatesElig:")
+          print(gammaRatesElig)
+          print(paste("nProg:",nProg))
+          print(paste("sum of elig rates:", round(sum(gammaRatesElig[gElig == 1]))))
+          print(paste("sum(gElig == 1):", sum(gElig == 1)))
+          print("ids progressed:")
+          print(ids2bProg)
+          print("probs of ids to be progressed:")
+          print(gammaRatesElig[which(idsElig %in% ids2bProg)]) 
+          print("days since exposed of ids to be progressed:")
+          print(vecTimeSinceExp[which(idsElig %in% ids2bProg)]) 
           print("------")
         }  
-        status[ssample(idsElig[gElig == 1], 
-                     nProg, prob = gammaRatesElig[gElig == 1])] <- progState
       }
       if (groups == 2) {
-        nProgG2 <- min(round(sum(ratesElig[gElig == 2])), sum(gElig == 2))
+        nProgG2 <- round(sum(gammaRatesElig[gElig == 2], na.rm=TRUE))
         if (nProgG2 > 0) {
-            status[ssample(idsElig[gElig == 2], 
-                       nProgG2, prob = gammaRatesElig[gElig == 2])] <- progState
+          ids2bProgG2 <- ssample(idsElig[gElig == 2], 
+                        nProgG2, prob = gammaRatesElig[gElig == 2])
+          status[ids2bProgG2] <- progState
+          dat$attr$infTime[ids2bProgG2] <- at
         }
       }
     }
   }
   dat$attr$status <- status
-  # dat$attr$infTime[idsProg] <- at
 
   if (type %in% c("SEIQHR", "SEIQHRF")) {  
     # ----- quarantine ------- 
@@ -327,7 +447,8 @@ progress.seiqhrf.icm <- function(dat, at) {
     nHosp <- nHospG2 <- 0
     idsElig <- which(active == 1 & (status == "i" | status == "q"))
     nElig <- length(idsElig)
-  
+    idsHosp <- numeric(0)
+    
     if (nElig > 0) {
   
       gElig <- group[idsElig]
@@ -344,25 +465,73 @@ progress.seiqhrf.icm <- function(dat, at) {
         }
       } else {
         nHosp <- min(round(sum(ratesElig[gElig == 1])), sum(gElig == 1))
-        status[ssample(idsElig[gElig == 1], nHosp)] <- hospState
+        idsHosp <- ssample(idsElig[gElig == 1], nHosp)
+        status[idsHosp] <- hospState
         if (groups == 2) {
           nHospG2 <- min(round(sum(ratesElig[gElig == 2])), sum(gElig == 2))
-          status[ssample(idsElig[gElig == 2], nHospG2)] <- hospState
+          idsHospG2 <- ssample(idsElig[gElig == 2], nHospG2)
+          status[idsHospG2] <- hospState
+          idsHosp <- c(idsHosp, idsHospG2)
         }
       }
     }
     dat$attr$status <- status
+    dat$attr$hospTime[idsHosp] <- at
+
+    # ----- discharge from hospital ------- 
+    disch.rand <- dat$control$disch.rand
+    disch.rate <- dat$param$disch.rate
+    disch.rate.g2 <- dat$param$disch.rate.g2
+  
+    nDisch <- nDischG2 <- 0
+    idsElig <- which(active == 1 & status == "h")
+    nElig <- length(idsElig)
+    idsDisch <- numeric(0)
+  
+    if (nElig > 0) {
+  
+      gElig <- group[idsElig]
+      rates <- c(disch.rate, disch.rate.g2)
+      ratesElig <- rates[gElig]
+  
+      if (disch.rand == TRUE) {
+        vecDisch <- which(rbinom(nElig, 1, ratesElig) == 1)
+        if (length(vecDisch) > 0) {
+          idsDisch <- idsElig[vecDisch]
+          nDisch <- sum(group[idsDisch] == 1)
+          nDischG2 <- sum(group[idsDisch] == 2)
+          status[idsDisch] <- quarState
+        }
+      } else {
+        nDisch <- min(round(sum(ratesElig[gElig == 1])), sum(gElig == 1))
+        idsDisch <- ssample(idsElig[gElig == 1], nDisch)
+        status[idsDisch] <- quarState
+        if (groups == 2) {
+          nDischG2 <- min(round(sum(ratesElig[gElig == 2])), sum(gElig == 2))
+          idsDischG2 <- ssample(idsElig[gElig == 2], nDischG2)
+          status[idsDischG2] <- quarState
+          idsDisch <- c(idsDisch, idsDischG2)
+        }
+      }
+    }
+    dat$attr$status <- status
+    dat$attr$dischTime[idsDisch] <- at
   }
   
   # ----- recover ------- 
   rec.rand <- dat$control$rec.rand
   rec.rate <- dat$param$rec.rate
   rec.rate.g2 <- dat$param$rec.rate.g2
+  rec.dist.mu <- dat$param$rec.dist.mu
+  rec.dist.sigma <- dat$param$rec.dist.sigma
+  rec.dist.mu.g2 <- dat$param$rec.dist.mu.g2
+  rec.dist.sigma.g2 <- dat$param$rec.dist.sigma.g2
 
   nRecov <- nRecovG2 <- 0
   idsElig <- which(active == 1 & (status == "i" | status == "q" | status == "h"))
   nElig <- length(idsElig)
-
+  idsRecov <- numeric(0)
+  
   if (nElig > 0) {
 
     gElig <- group[idsElig]
@@ -378,31 +547,48 @@ progress.seiqhrf.icm <- function(dat, at) {
         status[idsRecov] <- recovState
       }
     } else {
-      nRecov <- min(round(sum(ratesElig[gElig == 1])), sum(gElig == 1))
-      status[ssample(idsElig[gElig == 1], nRecov)] <- recovState
+      vecTimeSinceExp <- at - dat$attr$expTime[idsElig]
+      gammaRatesElig <- cum_discr_si(vecTimeSinceExp, rec.dist.mu, rec.dist.sigma) 
+      nRecov <- round(sum(gammaRatesElig[gElig == 1], na.rm=TRUE))
+      if (nRecov > 0) {
+        idsRecov <- ssample(idsElig[gElig == 1], 
+                      nRecov, prob = gammaRatesElig[gElig == 1])
+        status[idsRecov] <- recovState
+      }
       if (groups == 2) {
-        nRecovG2 <- min(round(sum(ratesElig[gElig == 2])), sum(gElig == 2))
-        status[ssample(idsElig[gElig == 2], nRecovG2)] <- recovState
+        nRecovG2 <- round(sum(gammaRatesElig[gElig == 2], na.rm=TRUE))
+        if (nRecovG2 > 0) {
+          idsRecovG2 <- ssample(idsElig[gElig == 2], 
+                        nRecovG2, prob = gammaRatesElig[gElig == 2])
+          status[idsRecovG2] <- recovState
+          idsRecov <- c(idsRecov, idsRecovG2)
+        }
       }
     }
   }
   dat$attr$status <- status
-
+  dat$attr$recovTime[idsRecov] <- at
+  
   fatEnable <- TRUE
   if (fatEnable & type %in% c("SEIQHRF")) {  
     # ----- case fatality ------- 
     fat.rand <- dat$control$fat.rand
     fat.rate <- dat$param$fat.rate
     fat.rate.g2 <- dat$param$fat.rate.g2
-  
+    hosp.cap <- dat$param$hosp.cap
+    
     nFat <- nFatG2 <- 0
     idsElig <- which(active == 1 & status == "h")
     nElig <- length(idsElig)
   
     if (nElig > 0) {
-  
       gElig <- group[idsElig]
       rates <- c(fat.rate, fat.rate.g2)
+      if (!is.null(dat$epi$h.num[at - 1])) {
+        if (dat$epi$h.num[at - 1] > hosp.cap) {
+          rates <- c(fat.rate*2, fat.rate.g2)
+        }  
+      } 
       ratesElig <- rates[gElig]
   
       if (fat.rand == TRUE) {

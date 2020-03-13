@@ -1,4 +1,5 @@
-control.icm <- function(type, nsteps, nsims = 1, rec.rand = TRUE, quar.rand = TRUE, hosp.rand = TRUE,
+control.icm <- function(type, nsteps, nsims = 1, 
+                        rec.rand = TRUE, quar.rand = TRUE, hosp.rand = TRUE, disch.rand = TRUE,
                         fat.rand = TRUE, a.rand = TRUE, d.rand = TRUE, initialize.FUN = initialize.icm,
                         infection.FUN = infection.icm, recovery.FUN = recovery.icm,
                         departures.FUN = departures.icm, arrivals.FUN = arrivals.icm,

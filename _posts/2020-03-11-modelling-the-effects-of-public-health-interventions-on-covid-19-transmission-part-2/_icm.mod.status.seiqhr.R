@@ -281,7 +281,7 @@ progress.seiqhr.icm <- function(dat, at) {
     }
   }
   dat$attr$status <- status
-  # dat$attr$infTime[idsProg] <- at
+  dat$attr$infTime[idsProg] <- at
 
   if (type == "SEIQHR") {  
     # ----- quarantine ------- 
