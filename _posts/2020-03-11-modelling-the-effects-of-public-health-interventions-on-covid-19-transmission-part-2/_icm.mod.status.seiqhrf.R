@@ -548,6 +548,7 @@ progress.seiqhrf.icm <- function(dat, at) {
       }
     } else {
       vecTimeSinceExp <- at - dat$attr$expTime[idsElig]
+      vecTimeSinceExp[is.na(vecTimeSinceExp)] <- 0
       gammaRatesElig <- cum_discr_si(vecTimeSinceExp, rec.dist.mu, rec.dist.sigma) 
       nRecov <- round(sum(gammaRatesElig[gElig == 1], na.rm=TRUE))
       if (nRecov > 0) {
@@ -573,8 +574,14 @@ progress.seiqhrf.icm <- function(dat, at) {
   if (fatEnable & type %in% c("SEIQHRF")) {  
     # ----- case fatality ------- 
     fat.rand <- dat$control$fat.rand
-    fat.rate <- dat$param$fat.rate
-    fat.rate.g2 <- dat$param$fat.rate.g2
+    fat.rate.base <- dat$param$fat.rate.base
+    fat.rate.base.g2 <- dat$param$fat.rate.base.g2
+    fat.rate.base.g2 <- ifelse(is.null(fat.rate.base.g2), 
+                               0, fat.rate.base.g2)
+    fat.rate.overcap <- dat$param$fat.rate.overcap
+    fat.rate.overcap.g2 <- dat$param$fat.rate.overcap.g2
+    fat.rate.overcap.g2 <- ifelse(is.null(fat.rate.overcap.g2), 
+                                  0, fat.rate.overcap.g2)
     hosp.cap <- dat$param$hosp.cap
     
     nFat <- nFatG2 <- 0
@@ -583,14 +590,25 @@ progress.seiqhrf.icm <- function(dat, at) {
   
     if (nElig > 0) {
       gElig <- group[idsElig]
-      rates <- c(fat.rate, fat.rate.g2)
+      rates <- c(fat.rate.base, fat.rate.base.g2)
+      # print(rates)
+      h.num.yesterday <- 0
       if (!is.null(dat$epi$h.num[at - 1])) {
-        if (dat$epi$h.num[at - 1] > hosp.cap) {
-          rates <- c(fat.rate*2, fat.rate.g2)
+        h.num.yesterday <- dat$epi$h.num[at - 1]
+        # print(h.num.yesterday)
+        # print(hosp.cap)
+        if (h.num.yesterday > hosp.cap) {
+          blended.rate <- ((hosp.cap * fat.rate.base) + 
+                ((h.num.yesterday - hosp.cap) * fat.rate.overcap)) / 
+                  h.num.yesterday
+          blended.rate.g2 <- ((hosp.cap * fat.rate.base.g2) + 
+                ((h.num.yesterday - hosp.cap) * fat.rate.overcap.g2)) / 
+                  h.num.yesterday
+          rates <- c(blended.rate, blended.rate.g2)
         }  
       } 
       ratesElig <- rates[gElig]
-  
+
       if (fat.rand == TRUE) {
         vecFat <- which(rbinom(nElig, 1, ratesElig) == 1)
         if (length(vecFat) > 0) {
