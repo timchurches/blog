@@ -236,14 +236,5 @@ get_prev.seiqhrf.icm <- function(dat, at) {
     }
   }
 
-  if (at == 365) {
-    # also write the exposure and infection times to dat$times from last sim
-    times = list()
-    times$expTime <- dat$attr$expTime
-    times$infTime <- dat$attr$infTime
-    save(times, file="times.Rda")
-    # print("file written")
-  }   
-  
   return(dat)
 }

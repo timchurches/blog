@@ -301,6 +301,8 @@ source(paste(src_path, "_icm.mod.status.seiqhrf.R", sep=""))
 source(paste(src_path, "_icm.mod.vital.seiqhrf.R", sep=""))
 source(paste(src_path, "_icm.control.seiqhrf.R", sep=""))
 source(paste(src_path, "_icm.utils.seiqhrf.R", sep=""))
+source(paste(src_path, "_icm.saveout.seiqhrf.R", sep=""))
+source(paste(src_path, "_icm.icm.seiqhrf.R", sep=""))
 ```
 
 ```{r, echo=TRUE, eval=TRUE}
@@ -310,7 +312,11 @@ simulate <- function(# control.icm params
                      nsteps = 365, 
                      nsims = 10,
                      prog.rand = FALSE,
-                     rec.rand = TRUE,
+                     rec.rand = FALSE,
+                     fat.rand = TRUE,
+                     quar.rand = TRUE,
+                     hosp.rand = FALSE,
+                     disch.rand = TRUE,
                      infection.FUN = infection.seiqhrf.icm,
                      recovery.FUN = progress.seiqhrf.icm,
                      departures.FUN = departures.seiqhrf.icm,
@@ -327,16 +333,16 @@ simulate <- function(# control.icm params
                      inf.prob.i = 0.05, 
                      act.rate.i = 10,
                      inf.prob.q = 0.05, 
-                     act.rate.q = 5,                    
-                     quar.rate = 1/10,
+                     act.rate.q = 8,                    
+                     quar.rate = 1/3,
                      hosp.rate = 1/50,
-                     disch.rate = 1/8,
+                     disch.rate = 1/12,
                      prog.rate = 1/10,
-                     prog.dist.mu = 5.0,
-                     prog.dist.sigma = 2.4,
+                     prog.dist.mu = 8.0,
+                     prog.dist.sigma = 3,
                      rec.rate = 1/20,
-                     rec.dist.mu = 13.0,
-                     rec.dist.sigma = 5.0,
+                     rec.dist.mu = 22.0,
+                     rec.dist.sigma = 6.0,
                      fat.rate.base = 1/100,
                      hosp.cap = 20,
                      fat.rate.overcap = 1/50,
@@ -392,15 +398,74 @@ simulate <- function(# control.icm params
                       dh.rate = dh.rate,
                       dr.rate = dr.rate)
 
-  sim <- icm(param, init, control)
+  sim <- icm.seiqhrf(param, init, control)
   sim_df <- as.data.frame(sim, out=out)
 
-  return(sim_df)
+  return(list(sim=sim, df=sim_df))
 }
 ```
 
 ```{r, echo=TRUE, eval=TRUE}
-seiqhrf_sim_df <- simulate()
+seiqhrf_sim <- simulate()
+```
+
+```{r, echo=TRUE, eval=TRUE}
+sim <- seiqhrf_sim$sim
+
+for (s in 1:sim$control$nsims) {
+  if (s == 1) {
+    times <- sim$times[[paste("sim",s,sep="")]]
+    times <- times %>% mutate(s=s)
+  } else {
+    times <- times %>%
+      bind_rows(sim$times[[paste("sim",s,sep="")]] %>%
+                  mutate(s=s))
+  }
+}
+
+times <- times %>%
+          mutate(infTime=ifelse(infTime <0, -5, infTime),
+                 expTime=ifelse(expTime <0, -5, expTime)) %>%
+          mutate(incubation_period = infTime - expTime,
+                 illness_duration = recovTime - infTime,
+                 hosp_los = dischTime - hospTime,
+                 quarantine_delay = quarTime - infTime,
+                 survival_time = fatTime - infTime)
+```
+
+```{r, echo=TRUE, eval=TRUE}
+times %>%
+  ggplot(aes(x=incubation_period)) +
+    geom_histogram() +
+    labs(title="Incubations period")
+```
+
+```{r, echo=TRUE, eval=TRUE}
+times %>%
+  ggplot(aes(x=illness_duration)) +
+    geom_histogram(bins=24) +
+    labs(title="Illness_duration")
+```
+
+```{r, echo=TRUE, eval=TRUE}
+times %>%
+  ggplot(aes(x=hosp_los)) +
+    geom_histogram() +
+    labs(title="Duration of need for hospitalisation")
+```
+
+```{r, echo=TRUE, eval=TRUE}
+times %>%
+  ggplot(aes(x=quarantine_delay)) +
+    geom_histogram() +
+    labs(title="Delay to start of quarantine")
+```
+
+```{r, echo=TRUE, eval=TRUE}
+times %>%
+  ggplot(aes(x=survival_time)) +
+    geom_histogram() +
+    labs(title="Survival time in case fatalities")
 ```
 
 ```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=10}
@@ -417,7 +482,7 @@ seir_sim_df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num) %>%
               mutate(model = "SEIQHR")) %>%
-  bind_rows(seiqhrf_sim_df %>%
+  bind_rows(seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "SEIQHRF")) %>%
@@ -446,7 +511,7 @@ seir_sim_df %>%
               select(time, s.num, e.num, i.num, q.num,
                      h.num, r.num, dh.flow) %>%
               mutate(model = "SEIQHR")) %>%
-  bind_rows(seiqhrf_sim_df %>%
+  bind_rows(seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num,
                      h.num, r.num, f.num) %>%
               mutate(model = "SEIQHRF")) %>%
@@ -468,47 +533,59 @@ seir_sim_df %>%
 
 
 ```{r, echo=TRUE, eval=TRUE}
-t30_act_rate_seiqhrf_sim_df <- simulate(act.rate.i = c(rep(10,30), rep(5, 335)))
+t30_act_rate_seiqhrf_sim <- simulate(act.rate.i = c(rep(10,30), rep(5, 335)))
 
-t30_inf_prob_seiqhrf_sim_df <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)))
+t30_inf_prob_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)))
 
-t30_both_seiqhrf_sim_df <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)),
+t30_both_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)),
                                     act.rate.i = c(rep(10,30), rep(5, 335)))
 
-t15_act_rate_seiqhrf_sim_df <- simulate(act.rate.i = c(rep(10,15), rep(5, 350)))
+t30_quar_inc_seiqhrf_sim <- simulate(quar.rate = c(rep(1/10,30), rep(1/3, 335)))
 
-t15_inf_prob_seiqhrf_sim_df <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 350)))
+t30_disch_inc_seiqhrf_sim <- simulate(disch.rate = c(rep(1/8,30), rep(1/4, 335)))
 
-t15_both_seiqhrf_sim_df <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 350)), 
+t15_act_rate_seiqhrf_sim <- simulate(act.rate.i = c(rep(10,15), rep(5, 350)))
+
+t15_inf_prob_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 350)))
+
+t15_both_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 350)), 
                                     act.rate.i = c(rep(10,15), rep(5, 350)))
 ```
 
 ```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=6}
-seiqhrf_sim_df %>%
+seiqhrf_sim$df %>%
   select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "Fixed params") %>%
-  bind_rows(t30_inf_prob_seiqhrf_sim_df %>%
+  bind_rows(t30_inf_prob_seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=30 inf prob")) %>%
-  bind_rows(t30_act_rate_seiqhrf_sim_df %>%
+  bind_rows(t30_act_rate_seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=30 act rate")) %>%
-  bind_rows(t30_both_seiqhrf_sim_df %>%
+  bind_rows(t30_both_seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=30 both")) %>%
-  bind_rows(t15_act_rate_seiqhrf_sim_df %>%
+  bind_rows(t30_quar_inc_seiqhrf_sim$df %>%
+              select(time, s.num, e.num, i.num, q.num, 
+                     h.num, r.num, f.num) %>%
+              mutate(model = "t=30 incr quar rate")) %>%
+  bind_rows(t30_disch_inc_seiqhrf_sim$df %>%
+              select(time, s.num, e.num, i.num, q.num, 
+                     h.num, r.num, f.num) %>%
+              mutate(model = "t=30 incr disch rate")) %>%
+  bind_rows(t15_act_rate_seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=15 act rate")) %>%
-  bind_rows(t15_inf_prob_seiqhrf_sim_df %>%
+  bind_rows(t15_inf_prob_seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=15 inf prob")) %>%
-  bind_rows(t15_both_seiqhrf_sim_df %>%
+  bind_rows(t15_both_seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=15 both")) %>%
@@ -518,7 +595,9 @@ seiqhrf_sim_df %>%
                values_to="count") %>%
   filter(compartment %in% c("e.num","i.num",
                             "q.num","h.num",
-                            "f.num")) %>%
+                            "f.num")) -> plot_df
+
+plot_df %>%
   ggplot(aes(x=time, y=count, colour=compartment)) +
     geom_line(size=2, alpha=0.4) +
     facet_grid(model ~ .) +
@@ -527,45 +606,14 @@ seiqhrf_sim_df %>%
 ```
 
 ```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=6}
-seiqhrf_sim_df %>%
-  select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num, f.num) %>%
-              mutate(model = "Fixed params") %>%
-  bind_rows(t30_inf_prob_seiqhrf_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num, f.num) %>%
-              mutate(model = "t=30 inf prob")) %>%
-  bind_rows(t30_act_rate_seiqhrf_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num, f.num) %>%
-              mutate(model = "t=30 act rate")) %>%
-  bind_rows(t30_both_seiqhrf_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num, f.num) %>%
-              mutate(model = "t=30 both")) %>%
-  bind_rows(t15_act_rate_seiqhrf_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num, f.num) %>%
-              mutate(model = "t=15 act rate")) %>%
-  bind_rows(t15_inf_prob_seiqhrf_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num, f.num) %>%
-              mutate(model = "t=15 inf prob")) %>%
-  bind_rows(t15_both_seiqhrf_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num, f.num) %>%
-              mutate(model = "t=15 both")) %>%
-  filter(time <= 200) %>%
-  pivot_longer(-c(time, model),
-               names_to="compartment",
-               values_to="count") %>%
+plot_df %>%
   filter(compartment %in% c("h.num",
                             "f.num")) %>%
   ggplot(aes(x=time, y=count, colour=compartment)) +
     geom_line(size=2, alpha=0.4) +
     facet_grid(model ~ .) +
     scale_colour_viridis_d() +
-    theme_minimal()
+    theme_dark()
 ```
 
 Up to here
@@ -600,4 +648,25 @@ seir_sim_df %>%
     facet_grid(model ~ ., scales="free_y") +
     scale_colour_brewer(type="div") +
     theme_minimal()
+```
+
+```{r}
+library(DiagrammeR)
+
+grViz("
+digraph SEIQHRF {
+
+  # a 'graph' statement
+  graph [overlap = false, fontsize = 10]
+
+  # several 'node' statements
+  node [shape = box,
+        fontname = Helvetica]
+  S; E; I; Q; H; R; F
+
+  # several 'edge' statements
+  S->E E->I I->Q I->R I->H
+  H->F H->R Q->R Q->H
+}
+")
 ```
