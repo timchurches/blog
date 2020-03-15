@@ -653,6 +653,7 @@ progress.seiqhrf.icm <- function(dat, at) {
     fat.rate.overcap.g2 <- ifelse(is.null(fat.rate.overcap.g2), 
                                   0, fat.rate.overcap.g2)
     hosp.cap <- dat$param$hosp.cap
+    fat.tcoeff <- dat$param$fat.tcoeff
     
     nFat <- nFatG2 <- 0
     idsElig <- which(active == 1 & status =="h")
@@ -660,6 +661,7 @@ progress.seiqhrf.icm <- function(dat, at) {
   
     if (nElig > 0) {
       gElig <- group[idsElig]
+      timeInHospElig <- at - dat$attr$hospTime[idsElig]
       rates <- c(fat.rate.base, fat.rate.base.g2)
       # print(rates)
       h.num.yesterday <- 0
@@ -678,6 +680,7 @@ progress.seiqhrf.icm <- function(dat, at) {
         }  
       } 
       ratesElig <- rates[gElig]
+      ratesElig <- ratesElig + timeInHospElig*fat.tcoeff*ratesElig
 
       if (fat.rand == TRUE) {
         vecFat <- which(rbinom(nElig, 1, ratesElig) == 1)
@@ -687,17 +690,20 @@ progress.seiqhrf.icm <- function(dat, at) {
           nFatG2 <- sum(group[idsFat] == 2)
           status[idsFat] <- fatState
           dat$attr$fatTime[idsFat] <- at
+          dat$attr$active[idsFat] <- 0
         }
       } else {
         nFat <- min(round(sum(ratesElig[gElig == 1])), sum(gElig == 1))
         idsFat <- ssample(idsElig[gElig == 1], nFat)
         status[idsFat] <- fatState
         dat$attr$fatTime[idsFat] <- at
+        dat$attr$active[idsFat] <- 0
         if (groups == 2) {
           nFatG2 <- min(round(sum(ratesElig[gElig == 2])), sum(gElig == 2))
           idsFatG2 <- ssample(idsElig[gElig == 2], nFatG2)
           status[idsFatG2] <- fatState
           dat$attr$fatTime[idsFatG2] <- at
+          dat$attr$active[idsFatG2] <- 0
         }
       }
     }

@@ -115,7 +115,12 @@ init_status.icm <- function(dat) {
   idsHosp <- which(status == "h")
   hospTime <- rep(NA, length(status))
   dat$attr$hospTime <- hospTime
-    
+
+   # Quarantine Time ----------------------------------------------------------
+  idsQuar <- which(status == "q")
+  quarTime <- rep(NA, length(status))
+  dat$attr$quarTime <- quarTime
+      
  # Hospital-need cessation  Time ----------------------------------------------------------
   dischTime <- rep(NA, length(status))
   dat$attr$dischTime <- dischTime
@@ -126,28 +131,34 @@ init_status.icm <- function(dat) {
       
   # If vital=TRUE, infTime is a uniform draw over the duration of infection
   # note the initial infections may have negative infTime!
-  if (dat$param$vital == TRUE && dat$param$di.rate > 0) {
-    infTime[idsInf] <- -rgeom(n = length(idsInf), prob = dat$param$di.rate) + 2
-  } else {
-    if (dat$control$type == "SI" || dat$param$rec.rate == 0) {
-      # infTime a uniform draw over the number of sim time steps
-      infTime[idsInf] <- ssample(1:(-dat$control$nsteps + 2),
-                                 length(idsInf), replace = TRUE)
+  if (FALSE) {
+    # not sure what the following section is trying to do, but it
+    # mucks up the gamma-distributed incumabtion periods, so set 
+    # infTime for initial infected people to t=1 instead
+    if (dat$param$vital == TRUE && dat$param$di.rate > 0) {
+      infTime[idsInf] <- -rgeom(n = length(idsInf), prob = dat$param$di.rate) + 2
     } else {
-      if (nGroups == 1) {
-        infTime[idsInf] <- ssample(1:(-round(1 / dat$param$rec.rate) + 2),
+      if (dat$control$type == "SI" || dat$param$rec.rate == 0) {
+        # infTime a uniform draw over the number of sim time steps
+        infTime[idsInf] <- ssample(1:(-dat$control$nsteps + 2),
                                    length(idsInf), replace = TRUE)
-      }
-      if (nGroups == 2) {
-        infG1 <- which(status == "i" & group == 1)
-        infTime[infG1] <- ssample(1:(-round(1 / dat$param$rec.rate) + 2),
-                                  length(infG1), replace = TRUE)
-        infG2 <- which(status == "i" & group == 2)
-        infTime[infG2] <- ssample(1:(-round(1 / dat$param$rec.rate.g2) + 2),
-                                  length(infG2), replace = TRUE)
+      } else {
+        if (nGroups == 1) {
+          infTime[idsInf] <- ssample(1:(-round(1 / dat$param$rec.rate) + 2),
+                                     length(idsInf), replace = TRUE)
+        }
+        if (nGroups == 2) {
+          infG1 <- which(status == "i" & group == 1)
+          infTime[infG1] <- ssample(1:(-round(1 / dat$param$rec.rate) + 2),
+                                    length(infG1), replace = TRUE)
+          infG2 <- which(status == "i" & group == 2)
+          infTime[infG2] <- ssample(1:(-round(1 / dat$param$rec.rate.g2) + 2),
+                                    length(infG2), replace = TRUE)
+        }
       }
     }
   }
+  infTime[idsInf] <- 1
   dat$attr$infTime <- infTime
 
   return(dat)
