@@ -270,9 +270,49 @@ arrivals.seiqhrf.icm <- function(dat, at) {
   groups <- dat$param$groups
   nOld <- dat$epi$num[at - 1]
 
+  # checking params, should be in control.icm or params.icm eventually
+  type <- dat$control$type
+  nsteps <- dat$control$nsteps
+  
+  if (!(length(a.rate) == 1 || length(a.rate == nsteps))) {
+    stop("Length of a.rate must be 1 or the value of nsteps")
+  }
+  if (!is.null(a.rate.g2) && 
+      !(length(a.rate.g2) == 1 || length(a.rate.g2 == nsteps))) {
+    stop("Length of a.rate.g2 must be 1 or the value of nsteps")
+  }
+  
+  a.prop.e <- dat$param$a.prop.e
+  if (!(length(a.prop.e) == 1 || length(a.prop.e == nsteps))) {
+    stop("Length of a.prop.e must be 1 or the value of nsteps")
+  }
+  a.prop.i <- dat$param$a.prop.i
+  if (!(length(a.prop.i) == 1 || length(a.prop.i == nsteps))) {
+    stop("Length of a.prop.i must be 1 or the value of nsteps")
+  }
+  a.prop.q <- dat$param$a.prop.q
+  if (!(length(a.prop.q) == 1 || length(a.prop.q == nsteps))) {
+    stop("Length of a.prop.q must be 1 or the value of nsteps")
+  }
 
+  a.prop.e.g2 <- dat$param$a.prop.e.g2
+  if (!is.null(a.prop.e.g2) &&
+      !(length(a.prop.e.g2) == 1 || length(a.prop.e.g2 == nsteps))) {
+    stop("Length of a.prop.e.g2 must be 1 or the value of nsteps")
+  }
+  a.prop.i.g2 <- dat$param$a.prop.i.g2
+  if (!is.null(a.prop.i.g2) &&
+      !(length(a.prop.i.g2) == 1 || length(a.prop.i.g2 == nsteps))) {
+    stop("Length of a.prop.i.g2 must be 1 or the value of nsteps")
+  }
+  a.prop.q.g2 <- dat$param$a.prop.q.g2
+  if (!is.null(a.prop.q.g2) &&
+      !(length(a.prop.q.g2) == 1 || length(a.prop.q.g2 == nsteps))) {
+    stop("Length of a.prop.q.g2 must be 1 or the value of nsteps")
+  }
+  
   # Process -----------------------------------------------------------------
-  nArrivals <- nArrivalsG2 <- 0
+  nArrivals <- nArrivals.g2 <- 0
 
   if (groups == 1) {
     if (a.rand == TRUE) {
@@ -287,42 +327,158 @@ arrivals.seiqhrf.icm <- function(dat, at) {
     if (a.rand == TRUE) {
       if (is.na(a.rate.g2)) {
         nArrivals <- sum(rbinom(nOld, 1, a.rate))
-        nArrivalsG2 <- sum(rbinom(nOld, 1, a.rate))
+        nArrivals.g2 <- sum(rbinom(nOld, 1, a.rate))
       } else {
         nArrivals <- sum(rbinom(nOld, 1, a.rate))
-        nArrivalsG2 <- sum(rbinom(nOldG2, 1, a.rate.g2))
+        nArrivals.g2 <- sum(rbinom(nOldG2, 1, a.rate.g2))
       }
     }
     if (a.rand == FALSE) {
       if (is.na(a.rate.g2)) {
         nArrivals <- round(nOld * a.rate)
-        nArrivalsG2 <- round(nOld * a.rate)
+        nArrivals.g2 <- round(nOld * a.rate)
       } else {
         nArrivals <- round(nOld * a.rate)
-        nArrivalsG2 <- round(nOldG2 * a.rate.g2)
+        nArrivals.g2 <- round(nOldG2 * a.rate.g2)
       }
     }
   }
 
+  
   ## Set attributes
-  totArrivals <- nArrivals + nArrivalsG2
+  totArrivals <- 0
+  totArrivals.g2 <- 0
+  
+  # partition arrivals into compartments
+  if (length(a.prop.e) > 1) {
+    nArrivals.e <- round(nArrivals*(a.prop.e[at]))
+    totArrivals <- totArrivals + nArrivals.e
+    if (!is.null(a.prop.e.g2)) {
+      nArrivals.e.g2 <- round(nArrivals.g2*(a.prop.e.g2[at]))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.e.g2
+    } else {
+      nArrivals.e.g2 <- round(nArrivals.g2*(a.prop.e.g2[at]))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.e.g2
+    }
+  } else {
+    nArrivals.e <- round(nArrivals*a.prop.e)
+    totArrivals <- totArrivals + nArrivals.e
+    if (!is.null(a.prop.e.g2)) {
+      nArrivals.e.g2 <- round(nArrivals.g2*(a.prop.e.g2))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.e.g2
+    } else {
+      nArrivals.e.g2 <- round(nArrivals.g2*(a.prop.e.g2))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.e.g2
+    }
+  }
+
+  if (length(a.prop.i) > 1) {
+    nArrivals.i <- round(nArrivals*(a.prop.i[at]))
+    totArrivals <- totArrivals + nArrivals.i
+    if (!is.null(a.prop.i.g2)) {
+      nArrivals.i.g2 <- round(nArrivals.g2*(a.prop.i.g2[at]))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.i.g2
+    } else {
+      nArrivals.i.g2 <- round(nArrivals.g2*(a.prop.i.g2[at]))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.i.g2
+    }
+  } else {
+    nArrivals.i <- round(nArrivals*a.prop.i)
+    totArrivals <- totArrivals + nArrivals.i
+    if (!is.null(a.prop.i.g2)) {
+      nArrivals.i.g2 <- round(nArrivals.g2*(a.prop.i.g2))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.i.g2
+    } else {
+      nArrivals.i.g2 <- round(nArrivals.g2*(a.prop.i.g2))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.i.g2
+    }
+  }
+
+  if (length(a.prop.q) > 1) {
+    nArrivals.q <- round(nArrivals*(a.prop.q[at]))
+    totArrivals <- totArrivals + nArrivals.q
+    if (!is.null(a.prop.q.g2)) {
+      nArrivals.q.g2 <- round(nArrivals.g2*(a.prop.q.g2[at]))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.q.g2
+    } else {
+      nArrivals.q.g2 <- round(nArrivals.g2*(a.prop.q.g2[at]))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.q.g2
+    }
+  } else {
+    nArrivals.q <- round(nArrivals*a.prop.q)
+    totArrivals <- totArrivals + nArrivals.q
+    if (!is.null(a.prop.q.g2)) {
+      nArrivals.q.g2 <- round(nArrivals.g2*(a.prop.q.g2))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.q.g2
+    } else {
+      nArrivals.q.g2 <- round(nArrivals.g2*(a.prop.q.g2))
+      totArrivals.g2 <- totArrivals.g2 + nArrivals.q.g2
+    }
+  }
+
+  # debug
+  print("totArrivals:")
+  print(totArrivals)
+  print("totArrivals.g2:")
+  print(totArrivals.g2)
+  print("----")
+  
+  # group 1
   dat$attr$active <- c(dat$attr$active, rep(1, totArrivals))
-  dat$attr$group <- c(dat$attr$group, c(rep(1, nArrivals), rep(2, nArrivalsG2)))
-  dat$attr$status <- c(dat$attr$status, rep("s", totArrivals))
+  dat$attr$group <- c(dat$attr$group, rep(1, totArrivals))
+  dat$attr$status <- c(dat$attr$status,
+                       rep("e", nArrivals.e),
+                       rep("i", nArrivals.i),
+                       rep("q", nArrivals.q),
+                       rep("s", totArrivals - nArrivals.e - nArrivals.i - nArrivals.q))
+  dat$attr$expTime <- c(dat$attr$expTime, rep(NA, totArrivals))
   dat$attr$infTime <- c(dat$attr$infTime, rep(NA, totArrivals))
+  dat$attr$quarTime <- c(dat$attr$quarTime, rep(NA, totArrivals))
+  dat$attr$hospTime <- c(dat$attr$ihospTime, rep(NA, totArrivals))
+  dat$attr$recovTime <- c(dat$attr$recovTime, rep(NA, totArrivals))
+  dat$attr$fatTime <- c(dat$attr$fatTime, rep(NA, totArrivals))
 
-
+  # group 2
+  if (length(totArrivals.g2) > 0) {
+    dat$attr$active <- c(dat$attr$active, rep(1, totArrivals.g2))
+    dat$attr$group <- c(dat$attr$group, rep(2, totArrivals.g2))
+    dat$attr$status <- c(dat$attr$status,
+                         rep("e", nArrivals.e.g2),
+                         rep("i", nArrivals.i.g2),
+                         rep("q", nArrivals.q.g2),
+                         rep("s", totArrivals.g2 - nArrivals.e.g2 - 
+                                   nArrivals.i.g2 - nArrivals.q.g2))
+    dat$attr$expTime <- c(dat$attr$expTime, rep(NA, totArrivals.g2))
+    dat$attr$infTime <- c(dat$attr$infTime, rep(NA, totArrivals.g2))
+    dat$attr$quarTime <- c(dat$attr$quarTime, rep(NA, totArrivals.g2))
+    dat$attr$hospTime <- c(dat$attr$ihospTime, rep(NA, totArrivals.g2))
+    dat$attr$recovTime <- c(dat$attr$recovTime, rep(NA, totArrivals.g2))
+    dat$attr$fatTime <- c(dat$attr$fatTime, rep(NA, totArrivals.g2))
+  }
+  
   # Output ------------------------------------------------------------------
   if (at == 2) {
-    dat$epi$a.flow <- c(0, nArrivals)
+    dat$epi$a.flow <- c(0, totArrivals)
+    dat$epi$a.e.flow <- c(0, nArrivals.e)
+    dat$epi$a.i.flow <- c(0, nArrivals.i)
+    dat$epi$a.q.flow <- c(0, nArrivals.q)
   } else {
-    dat$epi$a.flow[at] <- nArrivals
+    dat$epi$a.flow[at] <- totArrivals
+    dat$epi$a.e.flow[at] <- c(0, nArrivals.e)
+    dat$epi$a.i.flow[at] <- c(0, nArrivals.i)
+    dat$epi$a.q.flow[at] <- c(0, nArrivals.q)
   }
-  if (dat$param$groups == 2) {
+  if (length(totArrivals.g2) > 0 && dat$param$groups == 2) {
     if (at == 2) {
-      dat$epi$a.flow.g2 <- c(0, nArrivalsG2)
+      dat$epi$a.flow.g2 <- c(0, totArrivals.g2)
+      dat$epi$a.e.flow.g2 <- c(0, nArrivals.e.g2)
+      dat$epi$a.i.flow.g2 <- c(0, nArrivals.i.g2)
+      dat$epi$a.q.flow.g2 <- c(0, nArrivals.q.g2)
     } else {
-      dat$epi$a.flow.g2[at] <- nArrivalsG2
+      dat$epi$a.flow.g2[at] <- totArrivals.g2
+      dat$epi$a.e.flow.g2[at] <- c(0, nArrivals.e.g2)
+      dat$epi$a.i.flow.g2[at] <- c(0, nArrivals.i.g2)
+      dat$epi$a.q.flow.g2[at] <- c(0, nArrivals.q.g2)
     }
   }
 

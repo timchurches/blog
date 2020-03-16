@@ -42,285 +42,220 @@ library(ggplot2)
 library(ggthemes)
 library(gt)
 library(knitr)
+library(devtools)
+library(DiagrammeR)
+library(parallel)
+library(foreach)
+suppressMessages(library(EpiModel))
 
 ```
 
 # Introduction
 
-# Existing model
+We'll extend the SIR model quite a bit, adding the following compartments (states):
 
-```{r, echo=TRUE, eval=TRUE}
-# Load EpiModel
-suppressMessages(library(EpiModel))
+| Compartment | Functional definition                            |
+|=============|==================================================|
+| S           | Susceptible individuals                          |
+| E           | Exposed **and** infected, but not yet infectious |
+| I           | Infected **and** infectious                      |
+| Q           | Infectious, by quarantined or (self-)isolated    |
+| H           | Requiring hospitalisation (would normally be hospitalised if capacity avaialible) |
+| R           | Recovered, immune from further infection         |
+| F           | Case fatality (death due to COVID-19, not other causes) |
 
-src_path <- "./_posts/2020-03-11-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"
-  
-source(paste(src_path, "_icm.mod.init.seir.R", sep=""))
-source(paste(src_path, "_icm.mod.status.seir.R", sep=""))
-source(paste(src_path, "_icm.mod.vital.seir.R", sep=""))
-source(paste(src_path, "_icm.control.seir.R", sep=""))
-source(paste(src_path, "_icm.utils.seir.R", sep=""))
+The permitted transitions between compartments are as shown in this diagram:
 
-control <- control.icm(type = "SIR", nsteps = 365, nsims = 10)
-init <- init.icm(s.num = 997, i.num = 3, r.num = 0)
-param <-  param.icm(inf.prob = 0.05, 
-                    act.rate = 10,
-                    rec.rate = 1/20,
-                    a.rate = (10.5/365)/1000, 
-                    ds.rate = (7/365)/1000, 
-                    di.rate = (3.5/365)/1000,
-                    dr.rate = (7/365)/1000)
-sir_sim <- icm(param, init, control)
+```{r, echo=FALSE, eval=TRUE, message=FALSE}
+grViz("
+digraph SEIQHRF {
 
-sir_sim_df <- as.data.frame(sir_sim, out="mean")
+  # a 'graph' statement
+  graph [overlap = false, fontsize = 10] #, rankdir = LR]
+
+  # several 'node' statements
+  node [shape = box,
+        fontname = Helvetica]
+  S[label='S=Susceptible'];
+  E[label='E=Exposed and infected,\nnot infectious'];
+  I[label='I=Infected and infectious'];
+  Q[label='(Self-)isolated/quarantined'];
+  H[label='Requires hospitalisation'];
+  R[label='Recovered/immune'];
+  F[label='Case fatality']
+
+  # several 'edge' statements
+  S->E
+  I->S[style='dotted']
+  E->I
+  I->Q
+  Q->S[style='dotted']
+  I->R
+  I->H
+  H->F
+  H->R
+  Q->R
+  Q->H
+}
+")
 ```
 
-# SEIR model
+```{rr, echo=FALSE, eval=FALSE, message=FALSE}
+grViz("
+digraph SEIQHRF {
 
-```{r, echo=TRUE, eval=TRUE}
+  # a 'graph' statement
+  graph [overlap = false, fontsize = 10] #, rankdir = LR]
 
-control <- control.icm(type = "SEIR", 
-                       nsteps = 365, 
-                       nsims = 10,
-                       prog.rand = TRUE,
-                       infection.FUN = infection.seir.icm,
-                       recovery.FUN = progress.seir.icm)
+  # several 'node' statements
+  node [shape = box,
+        fontname = Helvetica]
+  S[label='Susceptible'];
+  E[label='Infected,\nnot infectious'];
+  I[label='Infectious'];
+  Q[label='Isolated/quarantined'];
+  H[label='Requires hospitalisation'];
+  R[label='Recovered/immune'];
+  F[label='Case fatality']
 
-init <- init.icm(s.num = 997, i.num = 3, e.num=0, r.num = 0)
-param <-  param.icm(inf.prob = 0.05, 
-                    act.rate = 10,
-                    prog.rate = 1/10,
-                    rec.rate = 1/20,
-                    a.rate = (10.5/365)/1000, 
-                    ds.rate = (7/365)/1000, 
-                    de.rate = (7/365)/1000, 
-                    di.rate = (3.5/365)/1000,
-                    dr.rate = (7/365)/1000)
-seir_sim <- icm(param, init, control)
-
-seir_sim_df <- as.data.frame(seir_sim, out="mean")
-
-```
-
-```{r, echo=TRUE, eval=TRUE}
-seir_sim_df %>%
-  select(time, s.num, e.num, i.num, r.num) %>%
-  mutate(model = "SEIR") %>%
-  bind_rows(sir_sim_df %>%
-              select(time, s.num, i.num, r.num) %>%
-              mutate(model = "SIR")) %>%
-  filter(time <= 200) %>%
-  pivot_longer(-c(time, model),
-               names_to="compartment",
-               values_to="count") %>%
-  ggplot(aes(x=time, y=count, colour=compartment)) +
-    geom_line() +
-    facet_grid(model ~ .)
-```
-
-```{r, echo=TRUE, eval=FALSE}
-seir_sim_df %>%
-  select(time, se.flow, ei.flow, ir.flow) %>%
-  mutate(model = "SEIR") %>%
-  bind_rows(sir_sim_df %>%
-              select(time, si.flow, ir.flow) %>%
-              mutate(model = "SIR")) %>%
-  filter(time <= 200) %>%
-  pivot_longer(-c(time, model),
-               names_to="compartment",
-               values_to="count") %>%
-  ggplot(aes(x=time, y=count, colour=compartment)) +
-    geom_line() +
-    facet_grid(model ~ .)
-```
-
-## SEIR model with gamma progress probs
-
-```{r, echo=TRUE, eval=FALSE}
-source(paste(src_path, "_icm.mod.init.seiqhr.R", sep=""))
-source(paste(src_path, "_icm.mod.status.seiqhr.R", sep=""))
-source(paste(src_path, "_icm.mod.vital.seiqhr.R", sep=""))
-source(paste(src_path, "_icm.control.seiqhr.R", sep=""))
-source(paste(src_path, "_icm.utils.seiqhr.R", sep=""))
-```
-
-```{r, echo=TRUE, eval=TRUE}
-source(paste(src_path, "_icm.mod.init.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.mod.status.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.mod.vital.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.control.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.utils.seiqhrf.R", sep=""))
-```
-
-```{r, echo=TRUE, eval=TRUE, tidy=FALSE}
-
-control <- control.icm(type = "SEIR", 
-                       nsteps = 365, 
-                       nsims = 10,
-                       prog.rand = FALSE,
-#                       infection.FUN = infection.seiqhr.icm,
-#                       recovery.FUN = progress.seiqhr.icm,
-#                       departures.FUN = departures.seiqhr.icm,
-#                       get_prev.FUN = get_prev.seiqhr.icm)
-                       infection.FUN = infection.seiqhrf.icm,
-                       recovery.FUN = progress.seiqhrf.icm,
-                       departures.FUN = departures.seiqhrf.icm,
-                       get_prev.FUN = get_prev.seiqhrf.icm)
-
-init <- init.icm(s.num = 997, i.num = 3, e.num=0, r.num = 0)
-param <-  param.icm(inf.prob.i = 0.05, 
-                    act.rate.i = 10,
-                    prog.rate = 1/10,
-                    prog.dist.mu = 5,
-                    prog.dist.sigma = 2.4,
-                    rec.rate = 1/20,
-                    a.rate = (10.5/365)/1000, 
-                    ds.rate = (7/365)/1000, 
-                    de.rate = (7/365)/1000, 
-                    di.rate = (3.5/365)/1000,
-                    dr.rate = (7/365)/1000)
-gamma_seir_sim <- icm(param, init, control)
-
-gamma_seir_sim_df <- as.data.frame(gamma_seir_sim, out="mean")
-```
-
-```{r, echo=TRUE, eval=TRUE}
-seir_sim_df %>%
-  select(time, s.num, e.num, i.num, r.num) %>%
-  mutate(model = "SEIR") %>%
-  bind_rows(sir_sim_df %>%
-              select(time, s.num, i.num, r.num) %>%
-              mutate(model = "SIR")) %>%
-  bind_rows(gamma_seir_sim_df %>%
-              select(time, s.num, e.num, i.num, r.num) %>%
-              mutate(model = "gamma SEIR")) %>%
-  filter(time <= 100) %>%
-  pivot_longer(-c(time, model),
-               names_to="compartment",
-               values_to="count") %>%
-  ggplot(aes(x=time, y=count, colour=compartment)) +
-    geom_line() +
-    facet_grid(model ~ .)
-```
-
-## SEIQHR model with gamma progress probs
-
-```{r, echo=TRUE, eval=TRUE}
-
-control <- control.icm(type = "SEIQHR", 
-                       nsteps = 365, 
-                       nsims = 10,
-                       prog.rand = FALSE,
-                       infection.FUN = infection.seiqhrf.icm,
-                       recovery.FUN = progress.seiqhrf.icm,
-                       departures.FUN = departures.seiqhrf.icm,
-                       get_prev.FUN = get_prev.seiqhrf.icm)
-
-init <- init.icm(s.num = 997, i.num = 3, e.num=0, q.num=0, h.num=0, r.num = 0)
-param <-  param.icm(inf.prob.i = 0.05, 
-                    act.rate.i = 10,
-                    inf.prob.q = 0.05, 
-                    act.rate.q = 5,                    
-                    quar.rate = 1/10,
-                    hosp.rate = 1/50,
-                    disch.rate = 1/8,
-                    prog.rate = 1/10,
-                    prog.dist.mu = 5,
-                    prog.dist.sigma = 2.4,
-                    rec.rate = 1/20,
-                    a.rate = (10.5/365)/1000, 
-                    ds.rate = (7/365)/1000, 
-                    de.rate = (7/365)/1000, 
-                    di.rate = (7/365)/1000,
-                    dq.rate = (7/365)/1000,
-                    dh.rate = (20/365)/1000,
-                    dr.rate = (7/365)/1000)
-seiqhr_sim <- icm(param, init, control)
-
-seiqhr_sim_df <- as.data.frame(seiqhr_sim, out="mean")
-```
-
-```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=10}
-seir_sim_df %>%
-  select(time, s.num, e.num, i.num, r.num) %>%
-  mutate(model = "SEIR") %>%
-  bind_rows(sir_sim_df %>%
-              select(time, s.num, i.num, r.num) %>%
-              mutate(model = "SIR")) %>%
-  bind_rows(gamma_seir_sim_df %>%
-              select(time, s.num, e.num, i.num, r.num) %>%
-              mutate(model = "gamma SEIR")) %>%
-  bind_rows(seiqhr_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num, dh.flow) %>%
-              mutate(model = "SEIQHR")) %>%
-  filter(time <= 100) %>%
-  pivot_longer(-c(time, model),
-               names_to="compartment",
-               values_to="count") %>%
-  ggplot(aes(x=time, y=count, colour=compartment)) +
-    geom_line(size=2, alpha=0.4) +
-    facet_grid(model ~ .) +
-    scale_colour_brewer(type="div") +
-    theme_minimal()
-```
-
-```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=10}
-seir_sim_df %>%
-  select(time, s.num, e.num, i.num, r.num) %>%
-  mutate(model = "SEIR") %>%
-  bind_rows(sir_sim_df %>%
-              select(time, s.num, i.num, r.num) %>%
-              mutate(model = "SIR")) %>%
-  bind_rows(gamma_seir_sim_df %>%
-              select(time, s.num, e.num, i.num, r.num) %>%
-              mutate(model = "gamma SEIR")) %>%
-  bind_rows(seiqhr_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num,
-                     h.num, r.num, dh.flow) %>%
-              mutate(model = "SEIQHR")) %>%
-  filter(time <= 100) %>%
-  pivot_longer(-c(time, model),
-               names_to="compartment",
-               values_to="count") %>%
-  filter(compartment %in% c("e.num","i.num",
-                            "q.num","h.num",
-                            "dh.flow")) %>%
-  ggplot(aes(x=time, y=count, colour=compartment)) +
-    geom_line(size=2, alpha=0.4) +
-    facet_grid(model ~ ., scales="free_y") +
-    scale_colour_brewer(type="div") +
-    theme_minimal()
+  # several 'edge' statements
+  S->E
+  I->S[style='dotted', label='act.rate.i\ninf.prob.i']
+  E->I[label='prog.rate\nprog.dist.mu\nprog.dist.sigma']
+  I->Q
+  Q->S[style='dotted', label='act.rate.q\ninf.prob.q']
+  I->R
+  I->H
+  H->F
+  H->R
+  Q->R
+  Q->H
+}
+")
 ```
 
 ## SEIQHRF model with gamma progress and recovery probs
 
-```{r, echo=TRUE, eval=TRUE}
-source(paste(src_path, "_icm.mod.init.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.mod.status.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.mod.vital.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.control.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.utils.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.saveout.seiqhrf.R", sep=""))
-source(paste(src_path, "_icm.icm.seiqhrf.R", sep=""))
+For now, we'll just monkey-patch the EpiModel code with our extensions, which can be pulled from a GitHub gist.  Later we'll provide a proper package.
+
+```{r, echo=FALSE, eval=TRUE, message=TRUE}
+source_files <- c("_icm.mod.init.seiqhrf.R",
+                  "_icm.mod.status.seiqhrf.R",
+                  "_icm.mod.vital.seiqhrf.R",
+                  "_icm.control.seiqhrf.R",
+                  "_icm.utils.seiqhrf.R",
+                  "_icm.saveout.seiqhrf.R",
+                  "_icm.icm.seiqhrf.R")
+src_path <- "./_posts/2020-03-11-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"
+gist_url <- "https://gist.github.com/timchurches/92073d0ea75cfbd387f91f7c6e624bd7"
+
+local_source <- TRUE
+for (source_file in source_files) {
+  if (local_source) {
+    source(paste(src_path, source_file, sep=""))
+  } else {
+    source_gist(gist_url, filename=source_file)
+  }
+}
+```
+
+We'll define a function called `simulate()` that wraps the various simulation constructors and provides baseline defaults for the (very) many parameters. You can change the defaults in this function definition for you own model comparisons.
+
+Public health interventions can then be investigated by changing just those parameters which relate to or represent the intervention. 
+
+The available parameters are as follows:
+
+```{r, echo=FALSE, eval=FALSE, message=FALSE}
+param_docs <- tribble(~name, ~default, ~explanation,
+ "type", "SEIQHRF", "Type of model: SI, SIR, SIS, SEIR, SEIQHR and SEIQHRF available, only SEIQHRF fully tested.",
+
+  "nsteps", 366, "Number of days for simulation. Note that day 1 is for initialisation, day 2 is the first day of the simulation, hence default of 366 for 1 year.",
+
+  "nsims", 10, "Number of simulations to run and then average.",
+
+  "prog.rand", FALSE, "Method for progression from E to I. If TRUE, random binomial draws at `prog.rate`, if FALSE, random draws from a truncated gamma distribution, with mean `prog.dist.mu` and standard deviation `prog.dist.sigma`",
+
+  "rec.rand", FALSE, "Method for recovery transition from I, Q or H to R. If TRUE, random binomial draws at `prog.rate`, if FALSE, random draws from a truncated gamma distribution, with mean `prog.dist.mu` and standard deviation `prog.dist.sigma`",
+
+  "fat.rand", FALSE, "Method for case fatality transition from H to F. If TRUE, random binomial draws at `prog.rate`, if FALSE, random draws from a uniform distribution, with a rate given by `fat.rate.base`. However, if the current number of patients in the H (needs hospitalsiation) compartment is above a hospital capacity level specified by `hosp.cap`, then the fatality rate is a weighed sum of the base fatality rate up to the hospital capacity, then at a higher rate, specified by `fat.rate.overcap`.",
+
+  "quar.rand", FALSE, "Method for quarantine transition from I to Q. If TRUE, random binomial draws at `quar.rate`, if FALSE, random draws from a uniform distribution, with a rate also given by `quar.rate.",
+
+  "hosp.rand", FALSE, "Method for transition from I or Q to H -- that is, from infectious or from quarantined/isolated to requiring hospitalisation. If TRUE, random binomial draws at `hosp.rate`, if FALSE, random draws from a uniform distribution, with a rate also given by `hosp.rate.",
+  
+ )
+  
+kable(param_docs)
+```
+
+```
+ quar.rand = TRUE,
+ hosp.rand = FALSE,
+ disch.rand = TRUE,
+ infection.FUN = infection.seiqhrf.icm,
+ recovery.FUN = progress.seiqhrf.icm,
+ departures.FUN = departures.seiqhrf.icm,
+ # arrivals.FUN = arrivals.seiqhrf.icm,
+ arrivals.FUN = arrivals.icm,
+ get_prev.FUN = get_prev.seiqhrf.icm,
+ # init.icm params
+ s.num = 997,
+ e.num=0,
+ i.num = 3,
+ q.num=0,
+ h.num=0,
+ r.num = 0,
+ f.num = 0,
+ # param.icm params
+ inf.prob.i = 0.05, 
+ act.rate.i = 10,
+ inf.prob.q = 0.05, 
+ act.rate.q = 8,                    
+ quar.rate = 0, # 1/3
+ hosp.rate = 1/50,
+ disch.rate = 1/12,
+ prog.rate = 1/10,
+ prog.dist.mu = 8.0,
+ prog.dist.sigma = 3,
+ rec.rate = 1/20,
+ rec.dist.mu = 22.0,
+ rec.dist.sigma = 6.0,
+ fat.rate.base = 1/100,
+ hosp.cap = 20,
+ fat.rate.overcap = 1/50,
+ fat.tcoeff = 0.5,
+ vital = TRUE,
+ a.rate = (10.5/365)/1000, 
+ a.prop.e = 0.01,
+ a.prop.i = 0.001,
+ a.prop.q = 0.01,
+ ds.rate = (7/365)/1000, 
+ de.rate = (7/365)/1000, 
+ di.rate = (7/365)/1000,
+ dq.rate = (7/365)/1000,
+ dh.rate = (20/365)/1000,
+ dr.rate = (7/365)/1000,
+ out="mean"
 ```
 
 ```{r, echo=TRUE, eval=TRUE}
 # function to set-up and run the baseline simulations
 simulate <- function(# control.icm params
                      type = "SEIQHRF", 
-                     nsteps = 365, 
-                     nsims = 10,
+                     nsteps = 366, 
+                     nsims = 8,
+                     ncores = 4,
                      prog.rand = FALSE,
                      rec.rand = FALSE,
-                     fat.rand = FALSE,
-                     quar.rand = TRUE,
+                     fat.rand = TRUE,
+                     quar.rand = FALSE,
                      hosp.rand = FALSE,
                      disch.rand = TRUE,
                      infection.FUN = infection.seiqhrf.icm,
                      recovery.FUN = progress.seiqhrf.icm,
                      departures.FUN = departures.seiqhrf.icm,
-                     arrivals.FUN = arrivals.seiqhrf.icm,
+                     # arrivals.FUN = arrivals.seiqhrf.icm,
+                     arrivals.FUN = arrivals.icm,
                      get_prev.FUN = get_prev.seiqhrf.icm,
                      # init.icm params
                      s.num = 997,
@@ -334,22 +269,25 @@ simulate <- function(# control.icm params
                      inf.prob.i = 0.05, 
                      act.rate.i = 10,
                      inf.prob.q = 0.05, 
-                     act.rate.q = 8,                    
-                     quar.rate = 0, # 1/3
-                     hosp.rate = 1/50,
-                     disch.rate = 1/12,
+                     act.rate.q = 2.5,                    
+                     quar.rate = 1/10, #1/3,
+                     hosp.rate = 1/100,
+                     disch.rate = 1/15,
                      prog.rate = 1/10,
-                     prog.dist.mu = 8.0,
-                     prog.dist.sigma = 3,
+                     prog.dist.mu = 5,
+                     prog.dist.sigma = 2.4,
                      rec.rate = 1/20,
                      rec.dist.mu = 22.0,
                      rec.dist.sigma = 6.0,
-                     fat.rate.base = 1/100,
-                     hosp.cap = 20,
-                     fat.rate.overcap = 1/50,
+                     fat.rate.base = 1/50,
+                     hosp.cap = 8,
+                     fat.rate.overcap = 1/25,
                      fat.tcoeff = 0.5,
                      vital = TRUE,
                      a.rate = (10.5/365)/1000, 
+                     a.prop.e = 0.01,
+                     a.prop.i = 0.001,
+                     a.prop.q = 0.01,
                      ds.rate = (7/365)/1000, 
                      de.rate = (7/365)/1000, 
                      di.rate = (7/365)/1000,
@@ -362,10 +300,12 @@ simulate <- function(# control.icm params
   control <- control.icm(type = type, 
                          nsteps = nsteps, 
                          nsims = nsims,
+                         ncores = ncores,
                          prog.rand = prog.rand,
                          rec.rand = rec.rand,
                          infection.FUN = infection.FUN,
                          recovery.FUN = recovery.FUN,
+                         arrivals.FUN = arrivals.FUN,
                          departures.FUN = departures.FUN,
                          get_prev.FUN = get_prev.FUN)
 
@@ -396,6 +336,9 @@ simulate <- function(# control.icm params
                       fat.tcoeff = fat.tcoeff,
                       vital = vital,
                       a.rate = a.rate, 
+                      a.prop.e = a.prop.e,
+                      a.prop.i = a.prop.i,
+                      a.prop.q = a.prop.q,
                       ds.rate = ds.rate, 
                       de.rate = de.rate, 
                       di.rate = di.rate,
@@ -411,116 +354,102 @@ simulate <- function(# control.icm params
 ```
 
 ```{r, echo=TRUE, eval=TRUE}
+library(tictoc)
+tic("simulate")
 seiqhrf_sim <- simulate()
+toc()
 ```
 
-```{r, echo=TRUE, eval=TRUE}
-sim <- seiqhrf_sim$sim
+Let's examine the distributions of timings for various transitions.
 
-for (s in 1:sim$control$nsims) {
-  if (s == 1) {
-    times <- sim$times[[paste("sim",s,sep="")]]
-    times <- times %>% mutate(s=s)
-  } else {
-    times <- times %>%
-      bind_rows(sim$times[[paste("sim",s,sep="")]] %>%
-                  mutate(s=s))
+```{r, echo=TRUE, eval=TRUE}
+# define a function to extract timings and assemble a data frame
+get_times <- function(simulate_results) {
+
+  sim <- simulate_results$sim
+  
+  for (s in 1:sim$control$nsims) {
+    if (s == 1) {
+      times <- sim$times[[paste("sim",s,sep="")]]
+      times <- times %>% mutate(s=s)
+    } else {
+      times <- times %>%
+        bind_rows(sim$times[[paste("sim",s,sep="")]] %>%
+                    mutate(s=s))
+    }
   }
+  
+  times <- times %>%
+            mutate(infTime=ifelse(infTime <0, -5, infTime),
+                   expTime=ifelse(expTime <0, -5, expTime)) %>%
+            mutate(incubation_period = infTime - expTime,
+                   illness_duration = recovTime - expTime,
+                   illness_duration_hosp = dischTime - expTime,
+                   hosp_los = dischTime - hospTime,
+                   quarantine_delay = quarTime - infTime,
+                   survival_time = fatTime - infTime) %>%
+            select(s, 
+                   incubation_period,
+                   quarantine_delay,
+                   illness_duration,
+                   illness_duration_hosp,
+                   hosp_los,
+                   survival_time) %>%
+            pivot_longer(-s, names_to="period_type",
+                             values_to="duration") %>%
+            mutate(period_type = factor(period_type, levels=c("incubation_period",
+                                            "quarantine_delay",
+                                            "illness_duration",
+                                            "illness_duration_hosp",
+                                            "hosp_los",
+                                            "survival_time"),
+                                   labels=c("Incubation period",
+                                            "Delay entering quarantine",
+                                            "Illness duration",
+                                            "Illness duration (hosp)",
+                                            "Hospital care required duration",
+                                            "Survival time of case fatalities"),
+                                   ordered = TRUE))
+  return(times)
 }
-
-times <- times %>%
-          mutate(infTime=ifelse(infTime <0, -5, infTime),
-                 expTime=ifelse(expTime <0, -5, expTime)) %>%
-          mutate(incubation_period = infTime - expTime,
-                 illness_duration = recovTime - expTime,
-                 hosp_los = dischTime - hospTime,
-                 quarantine_delay = quarTime - infTime,
-                 survival_time = fatTime - infTime)
 ```
 
 ```{r, echo=TRUE, eval=TRUE}
-times %>%
-  ggplot(aes(x=incubation_period)) +
-    geom_histogram() +
-    labs(title="Incubations period")
+
+times <- get_times(seiqhrf_sim)
+
 ```
 
-```{r, echo=TRUE, eval=TRUE}
+```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=8}
 times %>%
-  ggplot(aes(x=illness_duration)) +
-    geom_histogram(bins=24) +
-    labs(title="Illness_duration")
+  filter(duration <= 30) %>%
+  ggplot(aes(x=duration)) +
+    geom_bar() +
+    facet_grid(period_type~., scales="free_y") +
+    labs(title="Duration frequency distributions")
 ```
 
-```{r, echo=TRUE, eval=TRUE}
-times %>%
-  ggplot(aes(x=hosp_los)) +
-    geom_histogram() +
-    labs(title="Duration of need for hospitalisation")
-```
-
-```{r, echo=TRUE, eval=TRUE}
-times %>%
-  ggplot(aes(x=quarantine_delay)) +
-    geom_histogram() +
-    labs(title="Delay to start of quarantine")
-```
-
-```{r, echo=TRUE, eval=TRUE}
-times %>%
-  filter(survival_time <= 25) %>%
-  ggplot(aes(x=survival_time)) +
-    geom_histogram() +
-    labs(title="Survival time in case fatalities")
-```
 
 ```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=10}
-seir_sim_df %>%
-  select(time, s.num, e.num, i.num, r.num) %>%
-  mutate(model = "SEIR") %>%
-  bind_rows(sir_sim_df %>%
-              select(time, s.num, i.num, r.num) %>%
-              mutate(model = "SIR")) %>%
-  bind_rows(gamma_seir_sim_df %>%
-              select(time, s.num, e.num, i.num, r.num) %>%
-              mutate(model = "SEIR")) %>%
-  bind_rows(seiqhr_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num, 
-                     h.num, r.num) %>%
-              mutate(model = "SEIQHR")) %>%
-  bind_rows(seiqhrf_sim$df %>%
+seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
-              mutate(model = "SEIQHRF")) %>%
+              mutate(model = "SEIQHRF") %>%
   filter(time <= 100) %>%
   pivot_longer(-c(time, model),
                names_to="compartment",
                values_to="count") %>%
   ggplot(aes(x=time, y=count, colour=compartment)) +
     geom_line(size=2, alpha=0.7) +
-    facet_grid(model ~ .) +
     scale_colour_brewer(type="div") +
     theme_dark()
 ```
 
 ```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=10}
-seir_sim_df %>%
-  select(time, s.num, e.num, i.num, r.num) %>%
-  mutate(model = "SEIR") %>%
-  bind_rows(sir_sim_df %>%
-              select(time, s.num, i.num, r.num) %>%
-              mutate(model = "SIR")) %>%
-  bind_rows(gamma_seir_sim_df %>%
-              select(time, s.num, e.num, i.num, r.num) %>%
-              mutate(model = "gamma SEIR")) %>%
-  bind_rows(seiqhr_sim_df %>%
-              select(time, s.num, e.num, i.num, q.num,
-                     h.num, r.num, dh.flow) %>%
-              mutate(model = "SEIQHR")) %>%
-  bind_rows(seiqhrf_sim$df %>%
+seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num,
                      h.num, r.num, f.num) %>%
-              mutate(model = "SEIQHRF")) %>%
+              mutate(model = "SEIQHRF") %>%
   filter(time <= 100) %>%
   pivot_longer(-c(time, model),
                names_to="compartment",
@@ -530,15 +459,15 @@ seir_sim_df %>%
                             "f.num")) %>%
   ggplot(aes(x=time, y=count, colour=compartment)) +
     geom_line(size=2, alpha=0.7) +
-    facet_grid(model ~ ., scales="free_y") +
     scale_colour_brewer(type="div") +
     theme_dark()
 ```
 
 ## comparing SEIQHRF models - fixed vs time-variant act rates and inf probs
 
-
 ```{r, echo=TRUE, eval=TRUE}
+t30_raise_hosp_cap_seiqhrf_sim <- simulate(hosp.cap = c(rep(8,30), rep(14, 335)))
+
 t30_act_rate_seiqhrf_sim <- simulate(act.rate.i = c(rep(10,30), rep(5, 335)))
 
 t30_inf_prob_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)))
@@ -547,8 +476,6 @@ t30_both_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)),
                                     act.rate.i = c(rep(10,30), rep(5, 335)))
 
 t30_quar_inc_seiqhrf_sim <- simulate(quar.rate = c(rep(1/10,30), rep(1/3, 335)))
-
-t30_disch_inc_seiqhrf_sim <- simulate(disch.rate = c(rep(1/8,30), rep(1/4, 335)))
 
 t15_act_rate_seiqhrf_sim <- simulate(act.rate.i = c(rep(10,15), rep(5, 350)))
 
@@ -579,10 +506,10 @@ seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=30 incr quar rate")) %>%
-  bind_rows(t30_disch_inc_seiqhrf_sim$df %>%
+  bind_rows(t30_raise_hosp_cap_seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
-              mutate(model = "t=30 incr disch rate")) %>%
+              mutate(model = "t=30 hosp cap")) %>%
   bind_rows(t15_act_rate_seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
@@ -595,7 +522,7 @@ seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=15 both")) %>%
-  filter(time <= 200) %>%
+  filter(time <= 150) %>%
   pivot_longer(-c(time, model),
                names_to="compartment",
                values_to="count") %>%
@@ -608,7 +535,7 @@ plot_df %>%
     geom_line(size=2, alpha=0.4) +
     facet_grid(model ~ .) +
     scale_colour_viridis_d() +
-    theme_minimal()
+    theme_dark()
 ```
 
 ```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=6}
@@ -654,40 +581,4 @@ seir_sim_df %>%
     facet_grid(model ~ ., scales="free_y") +
     scale_colour_brewer(type="div") +
     theme_minimal()
-```
-
-```{r}
-library(DiagrammeR)
-
-grViz("
-digraph SEIQHRF {
-
-  # a 'graph' statement
-  graph [overlap = false, fontsize = 10] #, rankdir = LR]
-
-  # several 'node' statements
-  node [shape = box,
-        fontname = Helvetica]
-  S[label='Susceptible'];
-  E[label='Infected,\nnot infectious'];
-  I[label='Infectious'];
-  Q[label='Isolated/quarantined'];
-  H[label='Requires hospitalisation'];
-  R[label='Recovered/immune'];
-  F[label='Case fatality']
-
-  # several 'edge' statements
-  S->E
-  I->S[style='dotted', label='act.rate.i\ninf.prob.i']
-  E->I[label='prog.rate\nprog.dist.mu\nprog.dist.sigma']
-  I->Q
-  Q->S[style='dotted', label='act.rate.q\ninf.prob.q']
-  I->R
-  I->H
-  H->F
-  H->R
-  Q->R
-  Q->H
-}
-")
 ```
