@@ -3,6 +3,7 @@ infection.seiqhrf.icm <- function(dat, at) {
   
   # the following checks need to be moved to control.icm in due course
   nsteps <- dat$control$nsteps
+
   act.rate.i <- dat$param$act.rate.i
   if (!(length(act.rate.i) == 1 || length(act.rate.i == nsteps))) {
     stop("Length of act.rate.i must be 1 or the value of nsteps")
@@ -663,12 +664,9 @@ progress.seiqhrf.icm <- function(dat, at) {
       gElig <- group[idsElig]
       timeInHospElig <- at - dat$attr$hospTime[idsElig]
       rates <- c(fat.rate.base, fat.rate.base.g2)
-      # print(rates)
       h.num.yesterday <- 0
       if (!is.null(dat$epi$h.num[at - 1])) {
         h.num.yesterday <- dat$epi$h.num[at - 1]
-        # print(h.num.yesterday)
-        # print(hosp.cap)
         if (h.num.yesterday > hosp.cap) {
           blended.rate <- ((hosp.cap * fat.rate.base) + 
                 ((h.num.yesterday - hosp.cap) * fat.rate.overcap)) / 
@@ -690,20 +688,17 @@ progress.seiqhrf.icm <- function(dat, at) {
           nFatG2 <- sum(group[idsFat] == 2)
           status[idsFat] <- fatState
           dat$attr$fatTime[idsFat] <- at
-          dat$attr$active[idsFat] <- 0
         }
       } else {
         nFat <- min(round(sum(ratesElig[gElig == 1])), sum(gElig == 1))
         idsFat <- ssample(idsElig[gElig == 1], nFat)
         status[idsFat] <- fatState
         dat$attr$fatTime[idsFat] <- at
-        dat$attr$active[idsFat] <- 0
         if (groups == 2) {
           nFatG2 <- min(round(sum(ratesElig[gElig == 2])), sum(gElig == 2))
           idsFatG2 <- ssample(idsElig[gElig == 2], nFatG2)
           status[idsFatG2] <- fatState
           dat$attr$fatTime[idsFatG2] <- at
-          dat$attr$active[idsFatG2] <- 0
         }
       }
     }

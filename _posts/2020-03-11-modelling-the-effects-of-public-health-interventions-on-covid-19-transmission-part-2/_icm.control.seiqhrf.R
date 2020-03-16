@@ -4,7 +4,7 @@ control.icm <- function(type, nsteps, nsims = 1,
                         infection.FUN = infection.icm, recovery.FUN = recovery.icm,
                         departures.FUN = departures.icm, arrivals.FUN = arrivals.icm,
                         get_prev.FUN = get_prev.icm, verbose = FALSE,
-                        verbose.int = 0, skip.check = FALSE, ...) {
+                        verbose.int = 0, skip.check = FALSE, ncores=1, ...) {
 
   # Get arguments
   p <- list()
