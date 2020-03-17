@@ -100,7 +100,7 @@ digraph SEIQHRF {
 ")
 ```
 
-```{rr, echo=FALSE, eval=FALSE, message=FALSE}
+```{r, echo=FALSE, eval=FALSE, message=FALSE}
 grViz("
 digraph SEIQHRF {
 
@@ -266,9 +266,11 @@ simulate <- function(# control.icm params
                      r.num = 0,
                      f.num = 0,
                      # param.icm params
+                     inf.prob.e = 0.02, 
+                     act.rate.e = 10,
                      inf.prob.i = 0.05, 
                      act.rate.i = 10,
-                     inf.prob.q = 0.05, 
+                     inf.prob.q = 0.02, 
                      act.rate.q = 2.5,                    
                      quar.rate = 1/10, #1/3,
                      hosp.rate = 1/100,
@@ -317,7 +319,9 @@ simulate <- function(# control.icm params
                    r.num = r.num,
                    f.num = f.num)
 
-  param <-  param.icm(inf.prob.i = inf.prob.i, 
+  param <-  param.icm(inf.prob.e = inf.prob.e, 
+                      act.rate.e = act.rate.e,
+                      inf.prob.i = inf.prob.i, 
                       act.rate.i = act.rate.i,
                       inf.prob.q = inf.prob.q, 
                       act.rate.q = act.rate.q,                    
@@ -468,21 +472,32 @@ seiqhrf_sim$df %>%
 ```{r, echo=TRUE, eval=TRUE}
 t30_raise_hosp_cap_seiqhrf_sim <- simulate(hosp.cap = c(rep(8,30), rep(14, 335)))
 
-t30_act_rate_seiqhrf_sim <- simulate(act.rate.i = c(rep(10,30), rep(5, 335)))
+t30_act_rate_seiqhrf_sim <- simulate(act.rate.i = c(rep(10,30), rep(5, 335)),
+                                     act.rate.e = c(rep(10,30), rep(5, 335)))
 
-t30_inf_prob_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)))
+t30_inf_prob_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)),
+                                     inf.prob.e = c(rep(0.02,30), rep(0.01, 335)))
 
 t30_both_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,30), rep(0.025, 335)),
-                                    act.rate.i = c(rep(10,30), rep(5, 335)))
+                                    act.rate.i = c(rep(10,30), rep(5, 335)),
+                                 inf.prob.e = c(rep(0.02,30), rep(0.01, 335)),
+                                    act.rate.e = c(rep(10,30), rep(5, 335)))
 
 t30_quar_inc_seiqhrf_sim <- simulate(quar.rate = c(rep(1/10,30), rep(1/3, 335)))
 
-t15_act_rate_seiqhrf_sim <- simulate(act.rate.i = c(rep(10,15), rep(5, 350)))
+t15_act_rate_seiqhrf_sim <- simulate(act.rate.i = c(rep(10,15), rep(5, 350)),
+                                     act.rate.e = c(rep(10,15), rep(5, 350)))
 
-t15_inf_prob_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 350)))
+t15_inf_prob_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 350)),
+                                     inf.prob.e = c(rep(0.02,15), rep(0.01, 350)))
 
 t15_both_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 350)), 
+                                    act.rate.i = c(rep(10,15), rep(5, 350)),
+                                 inf.prob.e = c(rep(0.02,15), rep(0.01, 350)), 
+                                    act.rate.e = c(rep(10,15), rep(5, 350)))
+t15_both_i_only_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 350)), 
                                     act.rate.i = c(rep(10,15), rep(5, 350)))
+                                 
 ```
 
 ```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=6}
@@ -522,7 +537,11 @@ seiqhrf_sim$df %>%
               select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
               mutate(model = "t=15 both")) %>%
-  filter(time <= 150) %>%
+  bind_rows(t15_both_i_only_seiqhrf_sim$df %>%
+              select(time, s.num, e.num, i.num, q.num, 
+                     h.num, r.num, f.num) %>%
+              mutate(model = "t=15 both (i)")) %>%
+filter(time <= 150) %>%
   pivot_longer(-c(time, model),
                names_to="compartment",
                values_to="count") %>%
