@@ -434,18 +434,13 @@ infection.seiqhrf.icm <- function(dat, at) {
 
 }
 
-cum_discr_si <- function(vecTimeSinceExp, prog.dist.mu, prog.dist.sigma) {
+# utility functions
+cum_discr_si <- function(vecTimeSinceExp, scale, shape) {
   vlen <- length(vecTimeSinceExp)
   if (vlen > 0) {
     probVec <- numeric(vlen)
     for (p in 1:vlen) {
-      cumprobs <- numeric(vecTimeSinceExp[p]+1)
-      for (t in 0:vecTimeSinceExp[p]) {
-        cumprobs[t+1] <- EpiEstim::discr_si(t, 
-                                          prog.dist.mu, 
-                                          prog.dist.sigma)
-      }
-      probVec[p] <- sum(cumprobs, na.rm=TRUE)
+      probVec[p] <- pweibull(vecTimeSinceExp[p], shape=shape, scale=scale)
     }
   } else {
       probVec <- 0    
@@ -483,10 +478,10 @@ progress.seiqhrf.icm <- function(dat, at) {
   prog.rand <- dat$control$prog.rand
   prog.rate <- dat$param$prog.rate
   prog.rate.g2 <- dat$param$prog.rate.g2
-  prog.dist.mu <- dat$param$prog.dist.mu
-  prog.dist.sigma <- dat$param$prog.dist.sigma
-  prog.dist.mu.g2 <- dat$param$prog.dist.mu.g2
-  prog.dist.sigma.g2 <- dat$param$prog.dist.sigma.g2
+  prog.dist.scale <- dat$param$prog.dist.scale
+  prog.dist.shape <- dat$param$prog.dist.shape
+  prog.dist.scale.g2 <- dat$param$prog.dist.scale.g2
+  prog.dist.shape.g2 <- dat$param$prog.dist.shape.g2
   
   nProg <- nProgG2 <- 0
   idsElig <- which(active == 1 & status == "e")
@@ -509,7 +504,7 @@ progress.seiqhrf.icm <- function(dat, at) {
       }
     } else {
       vecTimeSinceExp <- at - dat$attr$expTime[idsElig]
-      gammaRatesElig <- cum_discr_si(vecTimeSinceExp, prog.dist.mu, prog.dist.sigma) 
+      gammaRatesElig <- pweibull(vecTimeSinceExp, prog.dist.shape, scale=prog.dist.scale) 
       nProg <- round(sum(gammaRatesElig[gElig == 1], na.rm=TRUE))
       if (nProg > 0) {
         ids2bProg <- ssample(idsElig[gElig == 1], 
@@ -697,10 +692,10 @@ progress.seiqhrf.icm <- function(dat, at) {
   rec.rand <- dat$control$rec.rand
   rec.rate <- dat$param$rec.rate
   rec.rate.g2 <- dat$param$rec.rate.g2
-  rec.dist.mu <- dat$param$rec.dist.mu
-  rec.dist.sigma <- dat$param$rec.dist.sigma
-  rec.dist.mu.g2 <- dat$param$rec.dist.mu.g2
-  rec.dist.sigma.g2 <- dat$param$rec.dist.sigma.g2
+  rec.dist.scale <- dat$param$rec.dist.scale
+  rec.dist.shape <- dat$param$rec.dist.shape
+  rec.dist.scale.g2 <- dat$param$rec.dist.scale.g2
+  rec.dist.shape.g2 <- dat$param$rec.dist.shape.g2
 
   nRecov <- nRecovG2 <- 0
   idsElig <- which(active == 1 & (status == "i" | status == "q" | status == "h"))
@@ -724,7 +719,7 @@ progress.seiqhrf.icm <- function(dat, at) {
     } else {
       vecTimeSinceExp <- at - dat$attr$expTime[idsElig]
       vecTimeSinceExp[is.na(vecTimeSinceExp)] <- 0
-      gammaRatesElig <- cum_discr_si(vecTimeSinceExp, rec.dist.mu, rec.dist.sigma) 
+      gammaRatesElig <- pweibull(vecTimeSinceExp, rec.dist.shape, scale=rec.dist.scale) 
       nRecov <- round(sum(gammaRatesElig[gElig == 1], na.rm=TRUE))
       if (nRecov > 0) {
         idsRecov <- ssample(idsElig[gElig == 1], 
