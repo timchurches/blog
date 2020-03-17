@@ -44,6 +44,25 @@ infection.seiqhrf.icm <- function(dat, at) {
   }
   
   if (type %in% c("SEIQHR", "SEIQHRF")) {  
+    act.rate.e <- dat$param$act.rate.e
+    if (!(length(act.rate.e) == 1 || length(act.rate.e == nsteps))) {
+      stop("Length of act.rate.e must be 1 or the value of nsteps")
+    }
+    act.rate.e.g2 <- dat$param$act.rate.e.g2
+    if (!is.null(act.rate.e.g2) &&
+        !(length(act.rate.e.g2) == 1 || length(act.rate.e.g2 == nsteps))) {
+      stop("Length of act.rate.e.g2 must be 1 or the value of nsteps")
+    }
+    inf.prob.e <- dat$param$inf.prob.e
+    if (!(length(inf.prob.e) == 1 || length(inf.prob.e == nsteps))) {
+      stop("Length of inf.prob.e must be 1 or the value of nsteps")
+    }
+    inf.prob.e.g2 <- dat$param$inf.prob.e.g2
+    if (!is.null(inf.prob.e.g2) &&
+        !(length(inf.prob.e.g2) == 1 || length(inf.prob.e.g2 == nsteps))) {
+      stop("Length of inf.prob.e.g2 must be 1 or the value of nsteps")
+    }
+    
     act.rate.q <- dat$param$act.rate.q
     if (!(length(act.rate.q) == 1 || length(act.rate.q == nsteps))) {
       stop("Length of act.rate.q must be 1 or the value of nsteps")
@@ -96,12 +115,12 @@ infection.seiqhrf.icm <- function(dat, at) {
 
   ## Edgelist
   if (dat$param$groups == 1) {
-    p1 <- ssample(which(dat$attr$active == 1), acts, replace = TRUE)
-    p2 <- ssample(which(dat$attr$active == 1), acts, replace = TRUE)
+    p1 <- ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), acts, replace = TRUE)
+    p2 <- ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), acts, replace = TRUE)
   } else {
-    p1 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 1),
+    p1 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 1 & dat$attr$status != "f"),
                   acts, replace = TRUE)
-    p2 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 2),
+    p2 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 2 & dat$attr$status != "f"),
                   acts, replace = TRUE)
   }
 
@@ -111,57 +130,55 @@ infection.seiqhrf.icm <- function(dat, at) {
     if (dat$param$groups == 1) {
       while (any(del$p1 == del$p2)) {
         del$p2 <- ifelse(del$p1 == del$p2,
-                         ssample(which(dat$attr$active == 1), 1), del$p2)
+                         ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), 1), del$p2)
       }
     }
+  } 
 
-    ## Discordant edgelist (del)
-    del$p1.stat <- dat$attr$status[del$p1]
-    del$p2.stat <- dat$attr$status[del$p2]
-    serodis <- (del$p1.stat == "s" & del$p2.stat == "i") |
-               (del$p1.stat == "i" & del$p2.stat == "s")
-    del <- del[serodis == TRUE, ]
+  ## Discordant edgelist (del)
+  del$p1.stat <- dat$attr$status[del$p1]
+  del$p2.stat <- dat$attr$status[del$p2]
+  serodis <- (del$p1.stat == "s" & del$p2.stat == "i") |
+             (del$p1.stat == "i" & del$p2.stat == "s")
+  del <- del[serodis == TRUE, ]
 
-    ## Transmission on edgelist
+  ## Transmission on edgelist
+  if (nrow(del) > 0) {
+    if (dat$param$groups == 1) {
+      if (length(inf.prob.i) > 1) {
+        del$tprob <- inf.prob.i[at]
+      } else {
+        del$tprob <- inf.prob.i
+      }
+    } else {
+      if (length(inf.prob.i) > 1) {
+        del$tprob <- ifelse(del$p1.stat == "s", inf.prob.i[at],
+                                                inf.prob.i.g2[at])
+      } else {
+        del$tprob <- ifelse(del$p1.stat == "s", inf.prob.i,
+                                                inf.prob.i.g2)
+      }
+    }
+    if (!is.null(dat$param$inter.eff.i) && at >= dat$param$inter.start.i &&
+        at <= dat$param$inter.stop.i) {
+      del$tprob <- del$tprob * (1 - dat$param$inter.eff.i)
+    }
+    del$trans <- rbinom(nrow(del), 1, del$tprob)
+    del <- del[del$trans == TRUE, ]
     if (nrow(del) > 0) {
       if (dat$param$groups == 1) {
-        if (length(inf.prob.i) > 1) {
-          del$tprob <- inf.prob.i[at]
-        } else {
-          del$tprob <- inf.prob.i
-        }
-      } else {
-        if (length(inf.prob.i) > 1) {
-          del$tprob <- ifelse(del$p1.stat == "s", inf.prob.i[at],
-                                                  inf.prob.i.g2[at])
-        } else {
-          del$tprob <- ifelse(del$p1.stat == "s", inf.prob.i,
-                                                  inf.prob.i.g2)
-        }
+        newIds <- unique(ifelse(del$p1.stat == "s", del$p1, del$p2))
+        nExp.i <- length(newIds)
       }
-      if (!is.null(dat$param$inter.eff.i) && at >= dat$param$inter.start.i &&
-          at <= dat$param$inter.stop.i) {
-        del$tprob <- del$tprob * (1 - dat$param$inter.eff.i)
+      if (dat$param$groups == 2) {
+        newIdsg1 <- unique(del$p1[del$p1.stat == "s"])
+        newIdsg2 <- unique(del$p2[del$p2.stat == "s"])
+        nExp.i <- length(newIdsg1)
+        nExpg2.i <- length(newIdsg2)
+        newIds <- c(newIdsg1, newIdsg2)
       }
-      del$trans <- rbinom(nrow(del), 1, del$tprob)
-      del <- del[del$trans == TRUE, ]
-      if (nrow(del) > 0) {
-        if (dat$param$groups == 1) {
-          newIds <- unique(ifelse(del$p1.stat == "s", del$p1, del$p2))
-          nExp.i <- length(newIds)
-        }
-        if (dat$param$groups == 2) {
-          newIdsg1 <- unique(del$p1[del$p1.stat == "s"])
-          newIdsg2 <- unique(del$p2[del$p2.stat == "s"])
-          nExp.i <- length(newIdsg1)
-          nExpg2.i <- length(newIdsg2)
-          newIds <- c(newIdsg1, newIdsg2)
-        }
-        dat$attr$status[newIds] <- "e"
-        dat$attr$expTime[newIds] <- at
-      } else {
-        nExp.i <- nExpg2.i <- 0
-      }
+      dat$attr$status[newIds] <- "e"
+      dat$attr$expTime[newIds] <- at
     } else {
       nExp.i <- nExpg2.i <- 0
     }
@@ -169,7 +186,115 @@ infection.seiqhrf.icm <- function(dat, at) {
     nExp.i <- nExpg2.i <- 0
   }
 
-  if (type %in% c("SEIQHR", "SEIQHRF")) {  
+  if (type %in% c("SEIQHRF")) {  
+    
+  # Transmission from exposed  
+    ## Expected acts
+    if (dat$param$groups == 1) {
+      if (length(act.rate.e) > 1) {
+        acts <- round(act.rate.e[at - 1] * dat$epi$num[at - 1] / 2)
+      } else {
+        acts <- round(act.rate.e * dat$epi$num[at - 1] / 2)
+      }
+    }
+    if (dat$param$groups == 2) {
+      if (dat$param$balance == "g1") {
+        if (length(act.rate.e.g2) > 1) {
+          acts <- round(act.rate.e.g2[at - 1] *
+                        (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+        } else {
+          acts <- round(act.rate.e.g2 *
+                        (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+        }
+      }
+      if (dat$param$balance == "g2") {
+        if (length(act.rate.e.g2) > 1) {
+          acts <- round(act.rate.e.g2[at - 1] *
+                        (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+        } else {
+          acts <- round(act.rate.e.g2 *
+                        (dat$epi$num[at - 1] + dat$epi$num.g2[at - 1]) / 2)
+        }
+      }
+    }
+  
+    ## Edgelist
+    if (dat$param$groups == 1) {
+      p1 <- ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), acts, replace = TRUE)
+      p2 <- ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), acts, replace = TRUE)
+    } else {
+      p1 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 1 & dat$attr$status != "f"),
+                    acts, replace = TRUE)
+      p2 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 2 & dat$attr$status != "f"),
+                    acts, replace = TRUE)
+    }
+  
+    del <- NULL
+    if (length(p1) > 0 & length(p2) > 0) {
+      del <- data.frame(p1, p2)
+      if (dat$param$groups == 1) {
+        while (any(del$p1 == del$p2)) {
+          del$p2 <- ifelse(del$p1 == del$p2,
+                           ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), 1), del$p2)
+        }
+      }
+  
+      ## Discordant edgelist (del)
+      del$p1.stat <- dat$attr$status[del$p1]
+      del$p2.stat <- dat$attr$status[del$p2]
+      # serodiscordance
+      serodis <- (del$p1.stat == "s" & del$p2.stat == "e") |
+                 (del$p1.stat == "e" & del$p2.stat == "s")
+      del <- del[serodis == TRUE, ]
+  
+      ## Transmission on edgelist
+      if (nrow(del) > 0) {
+        if (dat$param$groups == 1) {
+          if (length(inf.prob.e) > 1) {
+            del$tprob <- inf.prob.e[at]
+          } else {
+            del$tprob <- inf.prob.e
+          }
+        } else {
+          if (length(inf.prob.e) > 1) {
+            del$tprob <- ifelse(del$p1.stat == "s", inf.prob.e[at],
+                                                    inf.prob.e.g2[at])
+          } else {
+            del$tprob <- ifelse(del$p1.stat == "s", inf.prob.e,
+                                                    inf.prob.e.g2)
+          }
+        }
+        if (!is.null(dat$param$inter.eff.e) && at >= dat$param$inter.start.e &&
+            at <= dat$param$inter.stop.e) {
+          del$tprob <- del$tprob * (1 - dat$param$inter.eff.e)
+        }
+        del$trans <- rbinom(nrow(del), 1, del$tprob)
+        del <- del[del$trans == TRUE, ]
+        if (nrow(del) > 0) {
+          if (dat$param$groups == 1) {
+            newIds <- unique(ifelse(del$p1.stat == "s", del$p1, del$p2))
+            nExp.e <- length(newIds)
+          }
+          if (dat$param$groups == 2) {
+            newIdsg1 <- unique(del$p1[del$p1.stat == "s"])
+            newIdsg2 <- unique(del$p2[del$p2.stat == "s"])
+            nExp.e <- length(newIdsg1)
+            nExpg2.e <- length(newIdsg2)
+            newIds <- c(newIdsg1, newIdsg2)
+          }
+          dat$attr$status[newIds] <- "e"
+          dat$attr$expTime[newIds] <- at
+        } else {
+          nExp.e <- nExpg2.e <- 0
+        }
+      } else {
+        nExp.e <- nExpg2.e <- 0
+      }
+    } else {
+      nExp.e <- nExpg2.e <- 0
+    }
+    
+    
   # Transmission from quarantined  
     ## Expected acts
     if (dat$param$groups == 1) {
@@ -202,12 +327,12 @@ infection.seiqhrf.icm <- function(dat, at) {
   
     ## Edgelist
     if (dat$param$groups == 1) {
-      p1 <- ssample(which(dat$attr$active == 1), acts, replace = TRUE)
-      p2 <- ssample(which(dat$attr$active == 1), acts, replace = TRUE)
+      p1 <- ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), acts, replace = TRUE)
+      p2 <- ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), acts, replace = TRUE)
     } else {
-      p1 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 1),
+      p1 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 1 & dat$attr$status != "f"),
                     acts, replace = TRUE)
-      p2 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 2),
+      p2 <- ssample(which(dat$attr$active == 1 & dat$attr$group == 2 & dat$attr$status != "f"),
                     acts, replace = TRUE)
     }
   
@@ -217,7 +342,7 @@ infection.seiqhrf.icm <- function(dat, at) {
       if (dat$param$groups == 1) {
         while (any(del$p1 == del$p2)) {
           del$p2 <- ifelse(del$p1 == del$p2,
-                           ssample(which(dat$attr$active == 1), 1), del$p2)
+                           ssample(which(dat$attr$active == 1 & dat$attr$status != "f"), 1), del$p2)
         }
       }
   
