@@ -276,13 +276,13 @@ simulate <- function(# control.icm params
                      hosp.rate = 1/100,
                      disch.rate = 1/15,
                      prog.rate = 1/10,
-                     prog.dist.mu = 5,
-                     prog.dist.sigma = 2.4,
+                     prog.dist.scale = 5,
+                     prog.dist.shape = 1.5,
                      rec.rate = 1/20,
-                     rec.dist.mu = 22.0,
-                     rec.dist.sigma = 6.0,
+                     rec.dist.scale = 35,
+                     rec.dist.shape = 1.5,
                      fat.rate.base = 1/50,
-                     hosp.cap = 8,
+                     hosp.cap = 40,
                      fat.rate.overcap = 1/25,
                      fat.tcoeff = 0.5,
                      vital = TRUE,
@@ -329,11 +329,11 @@ simulate <- function(# control.icm params
                       hosp.rate = hosp.rate,
                       disch.rate = disch.rate,
                       prog.rate = prog.rate,
-                      prog.dist.mu = prog.dist.mu,
-                      prog.dist.sigma = prog.dist.sigma,
+                      prog.dist.scale = prog.dist.scale,
+                      prog.dist.shape = prog.dist.shape,
                       rec.rate = rec.rate,
-                      rec.dist.mu = rec.dist.mu,
-                      rec.dist.sigma = rec.dist.sigma,
+                      rec.dist.scale = rec.dist.scale,
+                      rec.dist.shape = rec.dist.shape,
                       fat.rate.base = fat.rate.base,
                       hosp.cap = hosp.cap,
                       fat.rate.overcap = fat.rate.overcap,
@@ -358,10 +358,10 @@ simulate <- function(# control.icm params
 ```
 
 ```{r, echo=TRUE, eval=TRUE}
-library(tictoc)
-tic("simulate")
-seiqhrf_sim <- simulate()
-toc()
+#library(profvis)
+#profvis({
+  seiqhrf_sim <- simulate(ncores=4)
+#})
 ```
 
 Let's examine the distributions of timings for various transitions.
@@ -501,6 +501,16 @@ t15_both_i_only_seiqhrf_sim <- simulate(inf.prob.i = c(rep(0.05,15), rep(0.025, 
 ```
 
 ```{r, echo=TRUE, eval=TRUE, fig.height=12, fig.width=6}
+bind_sim_rows <- function(sim_df_a, sim_df_b, label=NULL) {
+  sim_df_c <- sim_df_a %>%
+                bind_rows(sim_df_b %>%
+                    select(time, s.num, e.num, i.num, q.num, 
+                            h.num, r.num, f.num) %>%
+                    mutate(model = label))
+  return(sim_df_c)
+}
+                
+
 seiqhrf_sim$df %>%
   select(time, s.num, e.num, i.num, q.num, 
                      h.num, r.num, f.num) %>%
