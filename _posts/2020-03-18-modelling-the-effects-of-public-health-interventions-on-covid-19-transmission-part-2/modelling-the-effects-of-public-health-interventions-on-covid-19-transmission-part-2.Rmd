@@ -1,7 +1,7 @@
 ---
 title: "Modelling the effects of public health interventions on COVID-19 transmission using R - part 2"
 description: |
-  This is the secondof several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic compartmental models implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude.
+  This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude and utility for COVID-19 simulation.
 categories:
   - R
   - "COVID-19"
@@ -10,7 +10,7 @@ author:
     affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
     affiliation_url: https://swscs.med.unsw.edu.au
 creative_commons: CC BY-SA
-date: 03-11-2020
+date: 03-18-2020
 base_url: https://timchurches.github.io/blog/
 slug: churches2020modellingcovid19rpart2
 twitter:
@@ -20,9 +20,9 @@ output:
     toc: true
     toc_depth: 3
     self_contained: false
-draft: true
-repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-03-11-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2
-# bibliography: churches2020modellingcovid19rpart2_references.bib
+draft: false
+repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2
+bibliography: churches2020modellingcovid19rpart2_references.bib
 ---
 
 ```{r setup, include=FALSE, eval=TRUE}
@@ -47,7 +47,7 @@ The `EpiModel` package is intended to be extended, and provides for drop-in repl
 
 In this post, I will show all the required code required to run your own simulations. Or you can just copy the `Rmarkdown` source code for this post from the repository for this blog (see link at foot of page). 
 
-First we need quite a few libraries: install these in the usual fashion (if you load the source for this document -- see link at the foot of this post -- then recent versions of RStudio should offer to install any missing libraries for you).
+First we need quite a few libraries: install these in the usual fashion (if you load the source for this document, then recent versions of RStudio should offer to install any missing libraries for you).
 
 ```{r, echo=TRUE, eval=TRUE, message=FALSE}
 library(tidyverse)
@@ -57,7 +57,6 @@ library(stringr)
 library(tibble)
 library(broom)
 library(ggplot2)
-# library(ggthemes)
 library(gt)
 library(knitr)
 library(devtools)
@@ -83,12 +82,12 @@ source_files <- c("_icm.mod.init.seiqhrf.R",
                   "_icm.saveout.seiqhrf.R",
                   "_icm.icm.seiqhrf.R")
 
-src_path <- paste0("./_posts/2020-03-11-modelling-the-effects-of-public-health-",
+src_path <- paste0("./_posts/2020-03-18-modelling-the-effects-of-public-health-",
             "interventions-on-covid-19-transmission-part-2/")
 
 gist_url <- "https://gist.github.com/timchurches/92073d0ea75cfbd387f91f7c6e624bd7"
 
-local_source <- TRUE
+local_source <- FALSE
 
 for (source_file in source_files) {
   if (local_source) {
@@ -101,9 +100,9 @@ for (source_file in source_files) {
 
 ## New compartments
 
-The extensions add quite a few compartments. Note the descriptions of each compartment, which may not be exactly what you might assume. For example, the **E** compartment is used for individuals who have been exposed to the virus **and** infected with it, but aren't yet symptomatic (asymptomatic). That's also the case with traditional SEIR models, but the assumption is usually that the asymptomatic infected are not infectious to others. I have relaxed that assumption in the face of mounting evidence that the COVID-19 is transmissible during the asymptomatic incubation period. 
+The extensions add quite a few compartments. Note the descriptions of each compartment, which may not be exactly what you might assume. For example, the **E** compartment is used for individuals who have been exposed to the virus **and** infected with it, but aren't yet symptomatic -- that is, they are asymptomatic. That's also the case with traditional SEIR models, but the assumption is usually that the asymptomatic infected are not infectious to others. I have relaxed that assumption in the face of mounting evidence that the COVID-19 virus is transmissible during the asymptomatic incubation period. 
 
-Similarly, the **H** compartment doesn't represent those in hospital, but rather those needing hospitalisation. The assumption is that if hospital capacity is available, people in the **H** compartment would be admitted to hospital, but it is clear that hospital capacity is likely to be exceeded in most countries. There's a hospital capacity parameter `hosp.cap` that specifies the hospital capacity, and it is possible to specify elevated mortality rates for those in the **H** compartment needing hospitalisation but can't obtain it because the total `hosp.cap` has been exceeded. 
+Similarly, the **H** compartment doesn't represent those in hospital, but rather those needing hospitalisation. The assumption is that if hospital capacity were available, then people in the **H** compartment would be admitted to hospital. At the time of writing, it is clear that hospital capacity is likely to be exceeded in most countries due to COVID-19 morbidity, as has already occured in China and Italy. There's a hospital capacity parameter `hosp.cap` that specifies the hospital capacity, and it is possible to specify elevated mortality rates for those in the **H** compartment needing hospitalisation but who can't obtain such care because the total `hosp.cap` has been exceeded. 
 
 Related to this, the **F** compartment represents _case fatalities_ -- that is, deaths in COVID-19 cases due to the virus. There are also parameters for background death rates for other causes (departure rates). I thought it was important to specifically model case fatalities, and having a compartment for that was the easiest way to do that. Note also that case fatalities are assumed only to occur in those in the **H** compartment, that is, those requiring hospitalisation (whether they can get it or not).
 
@@ -121,7 +120,7 @@ Related to this, the **F** compartment represents _case fatalities_ -- that is, 
 
 The supported  transitions between compartments are as shown in the diagram below. The letters on the transition edges denote model parameters relating to that transition in the table that follows.
 
-```{r, echo=FALSE, eval=TRUE, message=FALSE, layout="l-body-outset"}
+```{r, echo=FALSE, eval=TRUE, message=FALSE, layout="l-page"}
 grViz("
 digraph SEIQHRF {
 
@@ -178,7 +177,7 @@ param_docs <- tribble(~DiagramRef, ~Parameter, ~Default, ~Explanation,
 
   "d,g,h", "rec.rand", FALSE, "Method for recovery transition from I, Q or H to R. If TRUE, random binomial draws at `prog.rate`, if FALSE, random draws from a random draws from a Weibull distribution, with parameters `rec.dist.scale` and  `rec.dist.shape`",
 
-  "f", "fat.rand", FALSE, "Method for case fatality transition from H to F. If TRUE, random binomial draws at `fat.rate.base`, if FALSE, random sample with a sample fraction also given by `fat.rate.base`. However, if the current number of patients in the H (needs hospitalisation) compartment is above a hospital capacity level specified by `hosp.cap`, then the fatality rate is the mean of the base fatality rate weighted by the hospital capacity, plus a higher rate, specified by `fat.rate.overcap`, weighted by the balance of those requiring hospitalisation (but who can't be accommodated). By setting `fat.rate.overcap' higher, the effect of exceeding the capacity of the health care system can be simulated. There is also a coefficient `fat.tcoeff` for the fatality rates that increases them as a linear function of the number of days the individual has been in the **H** compartment. Use of the co-efficient better approximates the trapezoid survival time distribution typical of ICU patients.",
+  "f", "fat.rand", FALSE, "Method for case fatality transition from H to F. If TRUE, random binomial draws at `fat.rate.base`, if FALSE, random sample with a sample fraction also given by `fat.rate.base`. However, if the current number of patients in the H (needs hospitalisation) compartment is above a hospital capacity level specified by `hosp.cap`, then the fatality rate is the mean of the base fatality rate weighted by the hospital capacity, plus a higher rate, specified by `fat.rate.overcap`, weighted by the balance of those requiring hospitalisation (but who can't be accommodated). By setting `fat.rate.overcap` higher, the effect of exceeding the capacity of the health care system can be simulated. There is also a coefficient `fat.tcoeff` for the fatality rates that increases them as a linear function of the number of days the individual has been in the H compartment. Use of the co-efficient better approximates the trapezoid survival time distribution typical of ICU patients.",
 
   "c", "quar.rand", FALSE, "Method for quarantine transition from I to Q. If TRUE, random binomial draws at `quar.rate`, if FALSE, random sample with a sample fraction also given by `quar.rate.",
 
@@ -255,16 +254,17 @@ param_docs <- tribble(~DiagramRef, ~Parameter, ~Default, ~Explanation,
   "", "out", "mean", "Summary function for the simulation runs. median is also available, or percentiles, see the `EpiModel` documentation.",
                                        
   )
-  
-gt(param_docs) %>%
+param_docs %>%
+  gt() %>%
+  fmt_markdown(columns = TRUE) %>%
   tab_options(table.width=pct(90))
 ```
 
-Phew! That's a lot of parameters. However, the trick is to establish a baseline model with a set of defaults (start with the ones given here, then adjust as you see fit).
+Phew! That's a lot of parameters. However, the trick is to establish a baseline model with a set of defaults (start with the ones given here, then adjust as you see fit), then modify only the ones you wish to for each intervention "experiment".
 
 ### Time-variant parameters
 
-Several of the simulation parameters can also be varied over time. That is, as well as accepting a single value, they also accept a vector of values with length equal to `nsteps`, the number of days over which the simulation runs. Assuming `nsteps=366`, we can, for example, set `quar.rate = c(rep(1/10,30), rep(1/3, 335))`. That defines a step function in which the transition-to-quarantine rate for the **I** compartment is 0.1 for the first 30 days, then steps up to 0.33 thereafter, reflecting, say, a campaign or government edit to self-quarantine. Of course, the vector of values can be a smooth function, or can go up then down again, or whatever you wish to model. This is an extremely powerful feature of computational models such as this, and one very hard to incorporate into purely mathematical models.
+Several of the simulation parameters can also be varied over time. That is, as well as accepting a single value, they also accept a vector of values with length equal to `nsteps`, the number of days over which the simulation runs. Assuming `nsteps=366`, we can, for example, set `quar.rate = c(rep(1/10,30), rep(1/3, 335))`. That defines a step function in which the transition-to-quarantine rate for the **I** compartment is 0.1 for the first 30 days, then steps up to 0.33 thereafter, reflecting, say, a campaign or government edict to self-quarantine. Of course, the vector of values can be a smooth function, or can go up then down again, or whatever you wish to model. This is an extremely powerful feature of computational models such as this, and one very hard to incorporate into purely mathematical models.
 
 Most of the parameters for which time-variation is useful support it. If they don't, you will receive an error message (the table above will be updated to include this information later).
 
@@ -272,7 +272,7 @@ Most of the parameters for which time-variation is useful support it. If they do
 
 Here is the definition of the `simulate()` function, that wraps the various simulation model constructors into one function and provides defaults (as documented above) for all their values, so that just one or two values can be over-ridden to run an "experiment" to see what effect certain interventions at certain times might have. 
 
-The function returns a list with two elements: the simulation result object, and a data frame with one row with the relevant columns, ready for use.
+The function returns a list with two elements: the simulation result object, and a data frame with one row per day, with the relevant columns ready for use.
 
 ```{r, echo=TRUE, eval=TRUE}
 # function to set-up and run the baseline simulations
@@ -482,7 +482,7 @@ times %>%
          subtitle="Baseline simulation")
 ```
 
-OK, all of those distributions of the time spent in the various states (compartments) look reasonable, with the exception of _Hospital care required duration_. For quite a few individuals, that duration is zero. You could argue that these are day-only admissions, but really, hospital acre should be required for at least one day. It's something that can be fixed later, but it makes little difference for now.
+OK, all of those distributions of the time spent in the various states (compartments) look reasonable, with the exception of _Hospital care required duration_. For quite a few individuals, that duration is zero. You could argue that these are day-only admissions, but really, hospital care should be required for at least one day. It's something that can be fixed later, but it makes little difference for now.
 
 Strictly, you should check these duration distributions for every model you run. In practice, I have used them to check the baseline model, and for spot checks on intervention "experiment" models. But if you change the Weibull distribution parameters for the progression and recovery rates, please do check the duration distributions to ensure they are still sensible.
 
@@ -490,7 +490,7 @@ Strictly, you should check these duration distributions for every model you run.
 
 Prevalence is the number of individuals in each compartment at each point in time (each day). That's the usual way disease models are presented.
 
-It's very straightforward to use the data frame output from out simulation to do this, using `tidyverse` tools.
+It's very straightforward to use the data frame output from our simulation to do this, using `tidyverse` tools.
 
 ```{r, echo=TRUE, eval=TRUE, layout="l-body-outset"}
 baseline_plot_df <- baseline_sim$df %>%
@@ -519,7 +519,8 @@ baseline_plot_df %>%
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
     labs(title="Baseline simulation",
-         x="Days since beginning of epidemic")
+         x="Days since beginning of epidemic",
+         y="Prevalence (persons)")
 ```
 
 OK, that looks very reasonable. Note that almost the entire population ends up being infected. However, the **S** and **R** compartments dominate the plot (good, humanity survives!). Let's re-plot leaving out those compartments.
@@ -534,7 +535,8 @@ baseline_plot_df %>%
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
     labs(title="Baseline simulation",
-         x="Days since beginning of epidemic")
+         x="Days since beginning of epidemic",
+         y="Prevalence (persons)")
 ```
 
 What can we see in this plot of our simulation of our hypothetical world of 10,000 people (meaning the results may be indicative of virus behaviour in the real world, but not necessarily the same timings or values)?
@@ -547,7 +549,7 @@ What can we see in this plot of our simulation of our hypothetical world of 10,0
 
 ## Checking the basic reproduction number $R_{0}$
 
-In the [previous post on simulation](https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/), we saw how we could check the $R_{0}$ for our simulated outbreak. Let's repeat that for our baseline simulation. refer to the [previous post](https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/) for explanation of what's being done here.
+In the [previous post on simulation](https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/), we saw how we could check the $R_{0}$ for our simulated outbreak. Let's repeat that for our baseline simulation. Refer to the [previous post](https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/) for explanation of what's being done here.
 
 ```{r, message=FALSE, warning=FALSE}
 # get the S-> E compartment flow, which is
@@ -590,13 +592,13 @@ res <- get_R(incidence_growth_phase, si_mean =si_mean, si_sd = si_sd)
 plot(res, "R")
 ```
 
-That $R_{0}$ might seem s bit low - values of around 2 were being quoted in January 2020, but remember that is calculating using new estimates of the _serial interval_ that are much shorter than previously assumed. We also have some people going into self-quarantine even in our baseline model, but at a desultory rate.
+That $R_{0}$ might seem s bit low - values of around 2 or 2.5 were being quoted in January 2020, but remember our value has been calculated using new estimates of the _serial interval_ that are much shorter than previously assumed. We also have some people going into self-quarantine even in our baseline model, but at a desultory rate.
 
 # Running an intervention experiment
 
 Now we are in a position to run an experiment, by altering some parameters of our baseline model.
 
-Let's model the effect of increasing the rate at which people enter (self-)quarantine. Because we can use time-variant parameters, we will, so we will ramp up the quarantine rate from it's low level of 0.033 (as in the baseline simulation), starting at day 15, up to 0.5 at day 30. to 0.5, starting at day 15. We'll write a little function to do that.
+Let's model the effect of increasing the rate at which people enter (self-)quarantine. Because we can use time-variant parameters, we will! Thus we ramp up the quarantine rate from it's low level of 0.033 (as in the baseline simulation), starting at day 15, up to 0.5 at day 30. We'll write a little function to do that.
 
 ```{r, echo=TRUE, eval=TRUE}
 quar_rate_ramp <- function(t) {
@@ -608,7 +610,7 @@ ramp_quar_rate_sim <- simulate(quar.rate = quar_rate_ramp(1:366))
 
 Let's examine the result. The code used is similar to that used above for the baseline model and won't be shown here.
 
-```{r, echo=TRUE, eval=TRUE, layout="l-body-outset"}
+```{r, echo=FALSE, eval=TRUE, layout="l-body-outset"}
 ramp_quar_rate_sim_plot_df <- ramp_quar_rate_sim$df %>%
   # use only the prevalence columns
   select(time, s.num, e.num, i.num, q.num, 
@@ -629,12 +631,13 @@ ramp_quar_rate_sim_plot_df %>%
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
     labs(title="Ramp up quarantining rates from day 15 to day 30",
-         x="Days since beginning of epidemic")
+         x="Days since beginning of epidemic",
+         y="Prevalence (persons)")
 ```
 
 Let's see that with the baseline again for comparison:
  
-```{r, echo=TRUE, eval=TRUE, layout="l-body-outset"}
+```{r, echo=TRUE, eval=TRUE, layout="l-body-outset", preview=TRUE}
 baseline_plot_df %>%
   mutate(experiment="Baseline") %>%
   bind_rows(ramp_quar_rate_sim_plot_df %>%
@@ -648,7 +651,8 @@ baseline_plot_df %>%
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
     labs(title="Baseline vs ramping up quarantine simulations",
-         x="Days since beginning of epidemic")
+         x="Days since beginning of epidemic",
+         y="Prevalence (persons)")
 ```
 
 Yeah, that's good! Everyone who gets sick should immediately self-quarantine! But let's look at the same results, but only the _requiring hospitalisation_ and _case fatality_ prevalence numbers. We'll draw a horizontal red line showing hospital capacity. Where the _Requires hospitalisation_ prevalence numbers exceed the hospital capacity line, people who need to be in hospital miss out and start dying at a much higher rate (that's what we are simulating in our model).
@@ -667,7 +671,8 @@ baseline_plot_df %>%
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
     labs(title="Baseline vs ramping up quarantine simulations",
-         x="Days since beginning of epidemic")
+         x="Days since beginning of epidemic",
+         y="Prevalence (persons)")
 ```
 
 
@@ -775,7 +780,8 @@ plot_df %>%
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
     labs(title="Baseline vs experiments",
-         x="Days since beginning of epidemic")
+         x="Days since beginning of epidemic",
+         y="Prevalence (persons)")
 ```
 
 Let's see that again showing just the _requiring hospitalisation_ and _case fatality_ prevalence numbers.
@@ -790,14 +796,25 @@ plot_df %>%
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
     labs(title="Baseline vs experiments",
-         x="Days since beginning of epidemic")
+         x="Days since beginning of epidemic",
+         y="Prevalence (persons)")
 ```
+
+I won't laboriously comment on each experiment, but there are a few things worth remarking upon.
+
+Firstly, increasing hospital capacity is probably sensible, but may have little effect on fatalities if the numbers swamp available capacity by an order of magnitude. And increasing hospital capcity is not easy, nor can it be done swiftly, except perhaps in China.
+
+Secondly, rigorous and swift self-quarantining in those who are symptomatic is very effective, especially if done early, even in teh presence of infectivity in the asymptomatic infected. 
+
+Thirdly, increasing social distancing also works, but works much better if done early, possibly before there is an obvious need for it based on numbers infected or deaths. Implement early, implement hard!
+
+Fourthly, a combination of prompt self-quarantining plus moderate social distancing is also very effective, without necessarily killing the entire economy. This combination warrants further simulations. It is also the combination recommended by the Imperial College London group (see below).
 
 # Conclusions
 
-At this point, it looks like these extensions to `EpiModel` provide a potentially useful too for exploring the effects of various public health interventions, in a somewhat realistic manner. It is not nearly as sophisticated as the individual contact model use by the WHO Collaborating Centre for Infectious Disease Modelling at Imperial College London (ICL) for their [latest report on the impact of non-pharmaceutical interventions (NPIs) to reduce COVID-19 mortality and healthcare demand](https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/news--wuhan-coronavirus/). Nevertheless, even the very preliminary insights provided by the experiments above are consistent with those contained in the ICL report. 
+At this point, it looks like these extensions to `EpiModel` provide a potentially useful tool for exploring the effects of various public health interventions, in a somewhat realistic manner. It is not nearly as sophisticated as the individual contact model used by the WHO Collaborating Centre for Infectious Disease Modelling at Imperial College London (ICL) for their [latest report on the impact of non-pharmaceutical interventions (NPIs) to reduce COVID-19 mortality and healthcare demand](https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/news--wuhan-coronavirus/). Nevertheless, even the very preliminary insights provided by the experiments above are consistent with those contained in the ICL report. 
 
-The next steps are to move the code used here into a package to make deployment easier, implement modelling of infected arrivals, as discussed, and improve the default parameterisation of the simulation, and validate the simulation results against some real-world data. Assistance from the `R` community in any or all of these tasks would be gratefully received.
+The next steps are: a) to move the code used here into a package to make deployment easier; b) implement modelling of infected arrivals, as discussed; c) improve the default parameterisation of the simulation; and d) validate the simulation results against some real-world data. Assistance from the `R` community in any or all of these tasks would be gratefully received.
 
 ```{r, eval=TRUE}
 toc()

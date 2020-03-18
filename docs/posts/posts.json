@@ -1,5 +1,26 @@
 [
   {
+    "path": "posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/",
+    "title": "Modelling the effects of public health interventions on COVID-19 transmission using R - part 2",
+    "description": "This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude and utility for COVID-19 simulation.",
+    "author": [
+      {
+        "name": "Tim Churches",
+        "url": {}
+      }
+    ],
+    "date": "2020-03-18",
+    "categories": [
+      "R",
+      "COVID-19"
+    ],
+    "preview": "posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-16-1.png",
+    "last_modified": "2020-03-18T21:47:30+11:00",
+    "input_file": {},
+    "preview_width": 1248,
+    "preview_height": 768
+  },
+  {
     "path": "posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/",
     "title": "Modelling the effects of public health interventions on COVID-19 transmission using R - part 1",
     "description": "This is the first post of several that examines the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic compartmental models implemented by the `EpiModel` library for R.",

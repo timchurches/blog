@@ -1,0 +1,2718 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+  <meta name="generator" content="distill" />
+
+  <style type="text/css">
+  /* Hide doc at startup (prevent jankiness while JS renders/transforms) */
+  body {
+    visibility: hidden;
+  }
+  </style>
+
+ <!--radix_placeholder_import_source-->
+ <!--/radix_placeholder_import_source-->
+
+  <!--radix_placeholder_meta_tags-->
+<title>Tim Churches Health Data Science Blog: Modelling the effects of public health interventions on COVID-19 transmission using R - part 2</title>
+
+<meta property="description" itemprop="description" content="This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude and utility for COVID-19 simulation."/>
+
+<link rel="canonical" href="https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"/>
+<link rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/"/>
+
+<!--  https://schema.org/Article -->
+<meta property="article:published" itemprop="datePublished" content="2020-03-18"/>
+<meta property="article:created" itemprop="dateCreated" content="2020-03-18"/>
+<meta name="article:author" content="Tim Churches"/>
+
+<!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
+<meta property="og:title" content="Tim Churches Health Data Science Blog: Modelling the effects of public health interventions on COVID-19 transmission using R - part 2"/>
+<meta property="og:type" content="article"/>
+<meta property="og:description" content="This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude and utility for COVID-19 simulation."/>
+<meta property="og:url" content="https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"/>
+<meta property="og:image" content="https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-16-1.png"/>
+<meta property="og:image:width" content="1248"/>
+<meta property="og:image:height" content="768"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:site_name" content="Tim Churches Health Data Science Blog"/>
+
+<!--  https://dev.twitter.com/cards/types/summary -->
+<meta property="twitter:card" content="summary_large_image"/>
+<meta property="twitter:title" content="Tim Churches Health Data Science Blog: Modelling the effects of public health interventions on COVID-19 transmission using R - part 2"/>
+<meta property="twitter:description" content="This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude and utility for COVID-19 simulation."/>
+<meta property="twitter:url" content="https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"/>
+<meta property="twitter:image" content="https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-16-1.png"/>
+<meta property="twitter:image:width" content="1248"/>
+<meta property="twitter:image:height" content="768"/>
+<meta property="twitter:creator" content="@timchurches"/>
+
+<!--  https://scholar.google.com/intl/en/scholar/inclusion.html#indexing -->
+<meta name="citation_title" content="Tim Churches Health Data Science Blog: Modelling the effects of public health interventions on COVID-19 transmission using R - part 2"/>
+<meta name="citation_fulltext_html_url" content="https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"/>
+<meta name="citation_fulltext_world_readable" content=""/>
+<meta name="citation_online_date" content="2020/03/18"/>
+<meta name="citation_publication_date" content="2020/03/18"/>
+<meta name="citation_author" content="Tim Churches"/>
+<meta name="citation_author_institution" content="South Western Sydney Clinical School, UNSW Medicine &amp; Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia"/>
+<!--/radix_placeholder_meta_tags-->
+  
+  <!--radix_placeholder_rmarkdown_metadata-->
+
+<script type="text/json" id="radix-rmarkdown-metadata">
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","categories","author","creative_commons","date","base_url","slug","twitter","output","draft","repository_url","bibliography","citation_url","canonical_url"]}},"value":[{"type":"character","attributes":{},"value":["Modelling the effects of public health interventions on COVID-19 transmission using R - part 2"]},{"type":"character","attributes":{},"value":["This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude and utility for COVID-19 simulation."]},{"type":"character","attributes":{},"value":["R","COVID-19"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","affiliation","affiliation_url"]}},"value":[{"type":"character","attributes":{},"value":["Tim Churches"]},{"type":"character","attributes":{},"value":["South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia"]},{"type":"character","attributes":{},"value":["https://swscs.med.unsw.edu.au"]}]}]},{"type":"character","attributes":{},"value":["CC BY-SA"]},{"type":"character","attributes":{},"value":["03-18-2020"]},{"type":"character","attributes":{},"value":["https://timchurches.github.io/blog/"]},{"type":"character","attributes":{},"value":["churches2020modellingcovid19rpart2"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["creator"]}},"value":[{"type":"character","attributes":{},"value":["@timchurches"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc","toc_depth","self_contained"]}},"value":[{"type":"logical","attributes":{},"value":[true]},{"type":"integer","attributes":{},"value":[3]},{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"logical","attributes":{},"value":[false]},{"type":"character","attributes":{},"value":["https://github.com/timchurches/blog/tree/master/_posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2"]},{"type":"character","attributes":{},"value":["churches2020modellingcovid19rpart2_references.bib"]},{"type":"character","attributes":{},"value":["https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"]},{"type":"character","attributes":{},"value":["https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/"]}]}
+</script>
+<!--/radix_placeholder_rmarkdown_metadata-->
+  
+  <script type="text/json" id="radix-resource-manifest">
+  {"type":"character","attributes":{},"value":["churches2020modellingcovid19rpart2_references.bib","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/bowser-1.9.3/bowser.min.js","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/DiagrammeR-styles-0.2/styles.css","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/distill-2.2.21/template.v2.js","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-1-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-10-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-11-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-11-2.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-12-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-12-2.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-13-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-14-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-15-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-16-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-17-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-18-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-19-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-2-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-20-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-21-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-22-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-23-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-24-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-25-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-3-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-4-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-7-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-8-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-9-1.png","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/grViz-binding-1.0.1/grViz.js","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/htmlwidgets-1.5.1/htmlwidgets.js","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/jquery-1.11.3/jquery.min.js","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/kePrint-0.0.1/kePrint.js","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/viz-0.3/viz.js","modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/webcomponents-2.0.0/webcomponents.js"]}
+  </script>
+  <!--radix_placeholder_navigation_in_header-->
+
+<script type="application/javascript">
+
+  window.headroom_prevent_pin = false;
+
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+
+    // initialize headroom for banner
+    var header = $('header').get(0);
+    var headerHeight = header.offsetHeight;
+    var headroom = new Headroom(header, {
+      onPin : function() {
+        if (window.headroom_prevent_pin) {
+          window.headroom_prevent_pin = false;
+          headroom.unpin();
+        }
+      }
+    });
+    headroom.init();
+    if(window.location.hash)
+      headroom.unpin();
+    $(header).addClass('headroom--transition');
+
+    // offset scroll location for banner on hash change
+    // (see: https://github.com/WickyNilliams/headroom.js/issues/38)
+    window.addEventListener("hashchange", function(event) {
+      window.scrollTo(0, window.pageYOffset - (headerHeight + 25));
+    });
+
+    // responsive menu
+    $('.distill-site-header').each(function(i, val) {
+      var topnav = $(this);
+      var toggle = topnav.find('.nav-toggle');
+      toggle.on('click', function() {
+        topnav.toggleClass('responsive');
+      });
+    });
+
+    // nav dropdowns
+    $('.nav-dropbtn').click(function(e) {
+      $(this).next('.nav-dropdown-content').toggleClass('nav-dropdown-active');
+      $(this).parent().siblings('.nav-dropdown')
+         .children('.nav-dropdown-content').removeClass('nav-dropdown-active');
+    });
+    $("body").click(function(e){
+      $('.nav-dropdown-content').removeClass('nav-dropdown-active');
+    });
+    $(".nav-dropdown").click(function(e){
+      e.stopPropagation();
+    });
+  });
+</script>
+
+<style type="text/css">
+
+/* Theme (user-documented overrideables for nav appearance) */
+
+.distill-site-nav {
+  color: rgba(255, 255, 255, 0.8);
+  background-color: #455a64;
+  font-size: 15px;
+  font-weight: 300;
+}
+
+.distill-site-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.distill-site-nav a:hover {
+  color: white;
+}
+
+@media print {
+  .distill-site-nav {
+    display: none;
+  }
+}
+
+.distill-site-header {
+
+}
+
+.distill-site-footer {
+
+}
+
+
+/* Site Header */
+
+.distill-site-header {
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 3;
+}
+
+.distill-site-header .nav-left {
+  display: inline-block;
+  margin-left: 8px;
+}
+
+@media screen and (max-width: 768px) {
+  .distill-site-header .nav-left {
+    margin-left: 0;
+  }
+}
+
+
+.distill-site-header .nav-right {
+  float: right;
+  margin-right: 8px;
+}
+
+.distill-site-header a,
+.distill-site-header .title {
+  display: inline-block;
+  text-align: center;
+  padding: 14px 10px 14px 10px;
+}
+
+.distill-site-header .title {
+  font-size: 18px;
+}
+
+.distill-site-header .logo {
+  padding: 0;
+}
+
+.distill-site-header .logo img {
+  display: none;
+  max-height: 20px;
+  width: auto;
+  margin-bottom: -4px;
+}
+
+.distill-site-header .nav-image img {
+  max-height: 18px;
+  width: auto;
+  display: inline-block;
+  margin-bottom: -3px;
+}
+
+
+
+@media screen and (min-width: 1000px) {
+  .distill-site-header .logo img {
+    display: inline-block;
+  }
+  .distill-site-header .nav-left {
+    margin-left: 20px;
+  }
+  .distill-site-header .nav-right {
+    margin-right: 20px;
+  }
+  .distill-site-header .title {
+    padding-left: 12px;
+  }
+}
+
+
+.distill-site-header .nav-toggle {
+  display: none;
+}
+
+.nav-dropdown {
+  display: inline-block;
+  position: relative;
+}
+
+.nav-dropdown .nav-dropbtn {
+  border: none;
+  outline: none;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 16px 10px;
+  background-color: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  margin: 0;
+  margin-top: 1px;
+  z-index: 2;
+}
+
+.nav-dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 200px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 4px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+  z-index: 1;
+  margin-top: 2px;
+  white-space: nowrap;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.nav-dropdown-content hr {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.nav-dropdown-active {
+  display: block;
+}
+
+.nav-dropdown-content a, .nav-dropdown-content .nav-dropdown-header {
+  color: black;
+  padding: 6px 24px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.nav-dropdown-content .nav-dropdown-header {
+  display: block;
+  padding: 5px 24px;
+  padding-bottom: 0;
+  text-transform: uppercase;
+  font-size: 14px;
+  color: #999999;
+  white-space: nowrap;
+}
+
+.nav-dropdown:hover .nav-dropbtn {
+  color: white;
+}
+
+.nav-dropdown-content a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.nav-right .nav-dropdown-content {
+  margin-left: -45%;
+  right: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .distill-site-header a, .distill-site-header .nav-dropdown  {display: none;}
+  .distill-site-header a.nav-toggle {
+    float: right;
+    display: block;
+  }
+  .distill-site-header .title {
+    margin-left: 0;
+  }
+  .distill-site-header .nav-right {
+    margin-right: 0;
+  }
+  .distill-site-header {
+    overflow: hidden;
+  }
+  .nav-right .nav-dropdown-content {
+    margin-left: 0;
+  }
+}
+
+
+@media screen and (max-width: 768px) {
+  .distill-site-header.responsive {position: relative;}
+  .distill-site-header.responsive a.nav-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  .distill-site-header.responsive a,
+  .distill-site-header.responsive .nav-dropdown {
+    display: block;
+    text-align: left;
+  }
+  .distill-site-header.responsive .nav-left,
+  .distill-site-header.responsive .nav-right {
+    width: 100%;
+  }
+  .distill-site-header.responsive .nav-dropdown {float: none;}
+  .distill-site-header.responsive .nav-dropdown-content {position: relative;}
+  .distill-site-header.responsive .nav-dropdown .nav-dropbtn {
+    display: block;
+    width: 100%;
+    text-align: left;
+  }
+}
+
+/* Site Footer */
+
+.distill-site-footer {
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  z-index: 3;
+  margin-top: 30px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  text-align: center;
+}
+
+/* Headroom */
+
+d-title {
+  padding-top: 6rem;
+}
+
+@media print {
+  d-title {
+    padding-top: 4rem;
+  }
+}
+
+.headroom {
+  z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.headroom--transition {
+  transition: all .4s ease-in-out;
+}
+
+.headroom--unpinned {
+  top: -100px;
+}
+
+.headroom--pinned {
+  top: 0;
+}
+
+</style>
+
+<link href="../../site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet"/>
+<link href="../../site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet"/>
+<script src="../../site_libs/headroom-0.9.4/headroom.min.js"></script>
+<!--/radix_placeholder_navigation_in_header-->
+  <!--radix_placeholder_distill-->
+
+<style type="text/css">
+
+body {
+  background-color: white;
+}
+
+.pandoc-table {
+  width: 100%;
+}
+
+.pandoc-table>caption {
+  margin-bottom: 10px;
+}
+
+.pandoc-table th:not([align]) {
+  text-align: left;
+}
+
+.pagedtable-footer {
+  font-size: 15px;
+}
+
+.html-widget {
+  margin-bottom: 2.0em;
+}
+
+.l-screen-inset {
+  padding-right: 16px;
+}
+
+.l-screen .caption {
+  margin-left: 10px;
+}
+
+.shaded {
+  background: rgb(247, 247, 247);
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.shaded .html-widget {
+  margin-bottom: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.shaded .shaded-content {
+  background: white;
+}
+
+.text-output {
+  margin-top: 0;
+  line-height: 1.5em;
+}
+
+.hidden {
+  display: none !important;
+}
+
+d-article {
+  padding-bottom: 30px;
+}
+
+d-appendix {
+  padding-top: 30px;
+}
+
+d-article>p>img {
+  width: 100%;
+}
+
+d-article iframe {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 2.0em;
+  width: 100%;
+}
+
+figure img.external {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+  padding: 18px;
+  box-sizing: border-box;
+}
+
+/* CSS for table of contents */
+
+.d-toc {
+  color: rgba(0,0,0,0.8);
+  font-size: 0.8em;
+  line-height: 1em;
+}
+
+.d-toc-header {
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+  margin-top: 0;
+  margin-bottom: 1.3em;
+}
+
+.d-toc a {
+  border-bottom: none;
+}
+
+.d-toc ul {
+  padding-left: 0;
+}
+
+.d-toc li>ul {
+  padding-top: 0.8em;
+  padding-left: 16px;
+  margin-bottom: 0.6em;
+}
+
+.d-toc ul,
+.d-toc li {
+  list-style-type: none;
+}
+
+.d-toc li {
+  margin-bottom: 0.9em;
+}
+
+.d-toc-separator {
+  margin-top: 20px;
+  margin-bottom: 2em;
+}
+
+.d-article-with-toc {
+  border-top: none;
+  padding-top: 0;
+}
+
+
+
+/* Tweak code blocks (note that this CSS is repeated above in an injection
+   into the d-code shadow dom) */
+
+d-code {
+  overflow-x: auto !important;
+}
+
+pre.d-code code.d-code {
+  padding-left: 10px;
+  font-size: 12px;
+  border-left: 2px solid rgba(0,0,0,0.1);
+}
+
+pre.text-output {
+
+  font-size: 12px;
+  color: black;
+  background: none;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+@media(min-width: 768px) {
+
+d-code {
+  overflow-x: visible !important;
+}
+
+pre.d-code code.d-code  {
+    padding-left: 18px;
+    font-size: 14px;
+}
+pre.text-output {
+  font-size: 14px;
+}
+}
+
+/* Figure */
+
+.figure {
+  position: relative;
+  margin-bottom: 2.5em;
+  margin-top: 1.5em;
+}
+
+.figure img {
+  width: 100%;
+}
+
+.figure .caption {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  line-height: 1.5em;
+}
+
+.figure img.external {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+  padding: 18px;
+  box-sizing: border-box;
+}
+
+.figure .caption a {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.figure .caption b,
+.figure .caption strong, {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 1.0);
+}
+
+
+
+/* Tweak 1000px media break to show more text */
+
+@media(min-width: 1000px) {
+  .base-grid,
+  distill-header,
+  d-title,
+  d-abstract,
+  d-article,
+  d-appendix,
+  distill-appendix,
+  d-byline,
+  d-footnote-list,
+  d-citation-list,
+  distill-footer {
+    grid-template-columns: [screen-start] 1fr [page-start kicker-start] 80px [middle-start] 50px [text-start kicker-end] 65px 65px 65px 65px 65px 65px 65px 65px [text-end gutter-start] 65px [middle-end] 65px [page-end gutter-end] 1fr [screen-end];
+    grid-column-gap: 16px;
+  }
+
+  .grid {
+    grid-column-gap: 16px;
+  }
+
+  d-article {
+    font-size: 1.06rem;
+    line-height: 1.7em;
+  }
+  figure .caption, .figure .caption, figure figcaption {
+    font-size: 13px;
+  }
+}
+
+@media(min-width: 1180px) {
+  .base-grid,
+  distill-header,
+  d-title,
+  d-abstract,
+  d-article,
+  d-appendix,
+  distill-appendix,
+  d-byline,
+  d-footnote-list,
+  d-citation-list,
+  distill-footer {
+    grid-template-columns: [screen-start] 1fr [page-start kicker-start] 60px [middle-start] 60px [text-start kicker-end] 60px 60px 60px 60px 60px 60px 60px 60px [text-end gutter-start] 60px [middle-end] 60px [page-end gutter-end] 1fr [screen-end];
+    grid-column-gap: 32px;
+  }
+
+  .grid {
+    grid-column-gap: 32px;
+  }
+}
+
+
+/* Get the citation styles for the appendix (not auto-injected on render since
+   we do our own rendering of the citation appendix) */
+
+d-appendix .citation-appendix,
+.d-appendix .citation-appendix {
+  font-size: 11px;
+  line-height: 15px;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  padding-left: 18px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: rgba(0, 0, 0, 0.02);
+  padding: 10px 18px;
+  border-radius: 3px;
+  color: rgba(150, 150, 150, 1);
+  overflow: hidden;
+  margin-top: -12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+
+/* Social footer */
+
+.social_footer {
+  margin-top: 30px;
+  margin-bottom: 0;
+  color: rgba(0,0,0,0.67);
+}
+
+.disqus-comments {
+  margin-right: 30px;
+}
+
+.disqus-comment-count {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+#disqus_thread {
+  margin-top: 30px;
+}
+
+.article-sharing a {
+  border-bottom: none;
+  margin-right: 8px;
+}
+
+.article-sharing a:hover {
+  border-bottom: none;
+}
+
+.sidebar-section.subscribe {
+  font-size: 12px;
+  line-height: 1.6em;
+}
+
+.subscribe p {
+  margin-bottom: 0.5em;
+}
+
+
+.article-footer .subscribe {
+  font-size: 15px;
+  margin-top: 45px;
+}
+
+
+/* Improve display for browsers without grid (IE/Edge <= 15) */
+
+.downlevel {
+  line-height: 1.6em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+}
+
+.downlevel .d-title {
+  padding-top: 6rem;
+  padding-bottom: 1.5rem;
+}
+
+.downlevel .d-title h1 {
+  font-size: 50px;
+  font-weight: 700;
+  line-height: 1.1em;
+  margin: 0 0 0.5rem;
+}
+
+.downlevel .d-title p {
+  font-weight: 300;
+  font-size: 1.2rem;
+  line-height: 1.55em;
+  margin-top: 0;
+}
+
+.downlevel .d-byline {
+  padding-top: 0.8em;
+  padding-bottom: 0.8em;
+  font-size: 0.8rem;
+  line-height: 1.8em;
+}
+
+.downlevel .section-separator {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.downlevel .d-article {
+  font-size: 1.06rem;
+  line-height: 1.7em;
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+
+.downlevel .d-appendix {
+  padding-left: 0;
+  padding-right: 0;
+  max-width: none;
+  font-size: 0.8em;
+  line-height: 1.7em;
+  margin-bottom: 0;
+  color: rgba(0,0,0,0.5);
+  padding-top: 40px;
+  padding-bottom: 48px;
+}
+
+.downlevel .footnotes ol {
+  padding-left: 13px;
+}
+
+.downlevel .base-grid,
+.downlevel .distill-header,
+.downlevel .d-title,
+.downlevel .d-abstract,
+.downlevel .d-article,
+.downlevel .d-appendix,
+.downlevel .distill-appendix,
+.downlevel .d-byline,
+.downlevel .d-footnote-list,
+.downlevel .d-citation-list,
+.downlevel .distill-footer,
+.downlevel .appendix-bottom,
+.downlevel .posts-container {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+@media(min-width: 768px) {
+  .downlevel .base-grid,
+  .downlevel .distill-header,
+  .downlevel .d-title,
+  .downlevel .d-abstract,
+  .downlevel .d-article,
+  .downlevel .d-appendix,
+  .downlevel .distill-appendix,
+  .downlevel .d-byline,
+  .downlevel .d-footnote-list,
+  .downlevel .d-citation-list,
+  .downlevel .distill-footer,
+  .downlevel .appendix-bottom,
+  .downlevel .posts-container {
+  padding-left: 150px;
+  padding-right: 150px;
+  max-width: 900px;
+}
+}
+
+.downlevel pre code {
+  display: block;
+  border-left: 2px solid rgba(0, 0, 0, .1);
+  padding: 0 0 0 20px;
+  font-size: 14px;
+}
+
+.downlevel code, .downlevel pre {
+  color: black;
+  background: none;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+</style>
+
+<script type="application/javascript">
+
+function is_downlevel_browser() {
+  if (bowser.isUnsupportedBrowser({ msie: "12", msedge: "16"},
+                                 window.navigator.userAgent)) {
+    return true;
+  } else {
+    return window.load_distill_framework === undefined;
+  }
+}
+
+// show body when load is complete
+function on_load_complete() {
+
+  // set body to visible
+  document.body.style.visibility = 'visible';
+
+  // force redraw for leaflet widgets
+  if (window.HTMLWidgets) {
+    var maps = window.HTMLWidgets.findAll(".leaflet");
+    $.each(maps, function(i, el) {
+      var map = this.getMap();
+      map.invalidateSize();
+      map.eachLayer(function(layer) {
+        if (layer instanceof L.TileLayer)
+          layer.redraw();
+      });
+    });
+  }
+
+  // trigger 'shown' so htmlwidgets resize
+  $('d-article').trigger('shown');
+}
+
+function init_distill() {
+
+  init_common();
+
+  // create front matter
+  var front_matter = $('<d-front-matter></d-front-matter>');
+  $('#distill-front-matter').wrap(front_matter);
+
+  // create d-title
+  $('.d-title').changeElementType('d-title');
+
+  // create d-byline
+  var byline = $('<d-byline></d-byline>');
+  $('.d-byline').replaceWith(byline);
+
+  // create d-article
+  var article = $('<d-article></d-article>');
+  $('.d-article').wrap(article).children().unwrap();
+
+  // move posts container into article
+  $('.posts-container').appendTo($('d-article'));
+
+  // create d-appendix
+  $('.d-appendix').changeElementType('d-appendix');
+
+  // create d-bibliography
+  var bibliography = $('<d-bibliography></d-bibliography>');
+  $('#distill-bibliography').wrap(bibliography);
+
+  // flag indicating that we have appendix items
+  var appendix = $('.appendix-bottom').children('h3').length > 0;
+
+  // replace citations with <d-cite>
+  $('.citation').each(function(i, val) {
+    appendix = true;
+    var cites = $(this).attr('data-cites').split(" ");
+    var dt_cite = $('<d-cite></d-cite>');
+    dt_cite.attr('key', cites.join());
+    $(this).replaceWith(dt_cite);
+  });
+  // remove refs
+  $('#refs').remove();
+
+  // replace footnotes with <d-footnote>
+  $('.footnote-ref').each(function(i, val) {
+    appendix = true;
+    var href = $(this).attr('href');
+    var id = href.replace('#', '');
+    var fn = $('#' + id);
+    var fn_p = $('#' + id + '>p');
+    fn_p.find('.footnote-back').remove();
+    var text = fn_p.html();
+    var dtfn = $('<d-footnote></d-footnote>');
+    dtfn.html(text);
+    $(this).replaceWith(dtfn);
+  });
+  // remove footnotes
+  $('.footnotes').remove();
+
+  $('h1.appendix, h2.appendix').each(function(i, val) {
+    $(this).changeElementType('h3');
+  });
+  $('h3.appendix').each(function(i, val) {
+    var id = $(this).attr('id');
+    $('.d-toc a[href="#' + id + '"]').parent().remove();
+    appendix = true;
+    $(this).nextUntil($('h1, h2, h3')).addBack().appendTo($('d-appendix'));
+  });
+
+  // show d-appendix if we have appendix content
+  $("d-appendix").css('display', appendix ? 'grid' : 'none');
+
+  // replace code blocks with d-code
+  $('pre>code').each(function(i, val) {
+    var code = $(this);
+    var pre = code.parent();
+    var clz = "";
+    var language = pre.attr('class');
+    if (language) {
+      // map unknown languages to "clike" (without this they just dissapear)
+      if ($.inArray(language, ["bash", "clike", "css", "go", "html",
+                               "javascript", "js", "julia", "lua", "markdown",
+                               "markup", "mathml", "python", "svg", "xml"]) == -1)
+        language = "clike";
+      language = ' language="' + language + '"';
+      var dt_code = $('<d-code block' + language + clz + '></d-code>');
+      dt_code.text(code.text());
+      pre.replaceWith(dt_code);
+    } else {
+      code.addClass('text-output').unwrap().changeElementType('pre');
+    }
+  });
+
+  // localize layout chunks to just output
+  $('.layout-chunk').each(function(i, val) {
+
+    // capture layout
+    var layout = $(this).attr('data-layout');
+
+    // apply layout to markdown level block elements
+    var elements = $(this).children().not('d-code, pre.text-output, script');
+    elements.each(function(i, el) {
+      var layout_div = $('<div class="' + layout + '"></div>');
+      if (layout_div.hasClass('shaded')) {
+        var shaded_content = $('<div class="shaded-content"></div>');
+        $(this).wrap(shaded_content);
+        $(this).parent().wrap(layout_div);
+      } else {
+        $(this).wrap(layout_div);
+      }
+    });
+
+
+    // unwrap the layout-chunk div
+    $(this).children().unwrap();
+  });
+
+  // load distill framework
+  load_distill_framework();
+
+  // wait for window.distillRunlevel == 4 to do post processing
+  function distill_post_process() {
+
+    if (!window.distillRunlevel || window.distillRunlevel < 4)
+      return;
+
+    // hide author/affiliations entirely if we have no authors
+    var front_matter = JSON.parse($("#distill-front-matter").html());
+    var have_authors = front_matter.authors && front_matter.authors.length > 0;
+    if (!have_authors)
+      $('d-byline').addClass('hidden');
+
+    // table of contents
+    if (have_authors) // adjust border if we are in authors
+      $('.d-toc').parent().addClass('d-article-with-toc');
+
+    // strip links that point to #
+    $('.authors-affiliations').find('a[href="#"]').removeAttr('href');
+
+    // hide elements of author/affiliations grid that have no value
+    function hide_byline_column(caption) {
+      $('d-byline').find('h3:contains("' + caption + '")').parent().css('visibility', 'hidden');
+    }
+
+    // affiliations
+    var have_affiliations = false;
+    for (var i = 0; i<front_matter.authors.length; ++i) {
+      var author = front_matter.authors[i];
+      if (author.affiliation !== "&nbsp;") {
+        have_affiliations = true;
+        break;
+      }
+    }
+    if (!have_affiliations)
+      $('d-byline').find('h3:contains("Affiliations")').css('visibility', 'hidden');
+
+    // published date
+    if (!front_matter.publishedDate)
+      hide_byline_column("Published");
+
+    // document object identifier
+    var doi = $('d-byline').find('h3:contains("DOI")');
+    var doi_p = doi.next().empty();
+    if (!front_matter.doi) {
+      // if we have a citation and valid citationText then link to that
+      if ($('#citation').length > 0 && front_matter.citationText) {
+        doi.html('Citation');
+        $('<a href="#citation"></a>')
+          .text(front_matter.citationText)
+          .appendTo(doi_p);
+      } else {
+        hide_byline_column("DOI");
+      }
+    } else {
+      $('<a></a>')
+         .attr('href', "https://doi.org/" + front_matter.doi)
+         .html(front_matter.doi)
+         .appendTo(doi_p);
+    }
+
+     // change plural form of authors/affiliations
+    if (front_matter.authors.length === 1) {
+      var grid = $('.authors-affiliations');
+      grid.children('h3:contains("Authors")').text('Author');
+      grid.children('h3:contains("Affiliations")').text('Affiliation');
+    }
+
+    // inject pre code styles (can't do this with a global stylesheet b/c a shadow root is used)
+    $('d-code').each(function(i, val) {
+      var style = document.createElement('style');
+      style.innerHTML = 'pre code { padding-left: 10px; font-size: 12px; border-left: 2px solid rgba(0,0,0,0.1); } ' +
+                        '@media(min-width: 768px) { pre code { padding-left: 18px; font-size: 14px; } }';
+      if (this.shadowRoot)
+        this.shadowRoot.appendChild(style);
+    });
+
+    // move appendix-bottom entries to the bottom
+    $('.appendix-bottom').appendTo('d-appendix').children().unwrap();
+    $('.appendix-bottom').remove();
+
+    // clear polling timer
+    clearInterval(tid);
+
+    // show body now that everything is ready
+    on_load_complete();
+  }
+
+  var tid = setInterval(distill_post_process, 50);
+  distill_post_process();
+
+}
+
+function init_downlevel() {
+
+  init_common();
+
+   // insert hr after d-title
+  $('.d-title').after($('<hr class="section-separator"/>'));
+
+  // check if we have authors
+  var front_matter = JSON.parse($("#distill-front-matter").html());
+  var have_authors = front_matter.authors && front_matter.authors.length > 0;
+
+  // manage byline/border
+  if (!have_authors)
+    $('.d-byline').remove();
+  $('.d-byline').after($('<hr class="section-separator"/>'));
+  $('.d-byline a').remove();
+
+  // remove toc
+  $('.d-toc-header').remove();
+  $('.d-toc').remove();
+  $('.d-toc-separator').remove();
+
+  // move appendix elements
+  $('h1.appendix, h2.appendix').each(function(i, val) {
+    $(this).changeElementType('h3');
+  });
+  $('h3.appendix').each(function(i, val) {
+    $(this).nextUntil($('h1, h2, h3')).addBack().appendTo($('.d-appendix'));
+  });
+
+
+  // inject headers into references and footnotes
+  var refs_header = $('<h3></h3>');
+  refs_header.text('References');
+  $('#refs').prepend(refs_header);
+
+  var footnotes_header = $('<h3></h3');
+  footnotes_header.text('Footnotes');
+  $('.footnotes').children('hr').first().replaceWith(footnotes_header);
+
+  // move appendix-bottom entries to the bottom
+  $('.appendix-bottom').appendTo('.d-appendix').children().unwrap();
+  $('.appendix-bottom').remove();
+
+  // remove appendix if it's empty
+  if ($('.d-appendix').children().length === 0)
+    $('.d-appendix').remove();
+
+  // prepend separator above appendix
+  $('.d-appendix').before($('<hr class="section-separator" style="clear: both"/>'));
+
+  // trim code
+  $('pre>code').each(function(i, val) {
+    $(this).html($.trim($(this).html()));
+  });
+
+  // move posts-container right before article
+  $('.posts-container').insertBefore($('.d-article'));
+
+  $('body').addClass('downlevel');
+
+  on_load_complete();
+}
+
+
+function init_common() {
+
+  // jquery plugin to change element types
+  (function($) {
+    $.fn.changeElementType = function(newType) {
+      var attrs = {};
+
+      $.each(this[0].attributes, function(idx, attr) {
+        attrs[attr.nodeName] = attr.nodeValue;
+      });
+
+      this.replaceWith(function() {
+        return $("<" + newType + "/>", attrs).append($(this).contents());
+      });
+    };
+  })(jQuery);
+
+  // prevent underline for linked images
+  $('a > img').parent().css({'border-bottom' : 'none'});
+
+  // mark non-body figures created by knitr chunks as 100% width
+  $('.layout-chunk').each(function(i, val) {
+    var figures = $(this).find('img, .html-widget');
+    if ($(this).attr('data-layout') !== "l-body") {
+      figures.css('width', '100%');
+    } else {
+      figures.css('max-width', '100%');
+      figures.filter("[width]").each(function(i, val) {
+        var fig = $(this);
+        fig.css('width', fig.attr('width') + 'px');
+      });
+
+    }
+  });
+
+  // auto-append index.html to post-preview links in file: protocol
+  // and in rstudio ide preview
+  $('.post-preview').each(function(i, val) {
+    if (window.location.protocol === "file:")
+      $(this).attr('href', $(this).attr('href') + "index.html");
+  });
+
+  // get rid of index.html references in header
+  if (window.location.protocol !== "file:") {
+    $('.distill-site-header a[href]').each(function(i,val) {
+      $(this).attr('href', $(this).attr('href').replace("index.html", "./"));
+    });
+  }
+
+  // add class to pandoc style tables
+  $('tr.header').parent('thead').parent('table').addClass('pandoc-table');
+  $('.kable-table').children('table').addClass('pandoc-table');
+
+  // add figcaption style to table captions
+  $('caption').parent('table').addClass("figcaption");
+
+  // initialize posts list
+  if (window.init_posts_list)
+    window.init_posts_list();
+
+  // implmement disqus comment link
+  $('.disqus-comment-count').click(function() {
+    window.headroom_prevent_pin = true;
+    $('#disqus_thread').toggleClass('hidden');
+    if (!$('#disqus_thread').hasClass('hidden')) {
+      var offset = $(this).offset();
+      $(window).resize();
+      $('html, body').animate({
+        scrollTop: offset.top - 35
+      });
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (is_downlevel_browser())
+    init_downlevel();
+  else
+    window.addEventListener('WebComponentsReady', init_distill);
+});
+
+</script>
+
+<!--/radix_placeholder_distill-->
+  <script src="../../site_libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+  <script src="../../site_libs/viz-0.3/viz.js"></script>
+  <link href="../../site_libs/DiagrammeR-styles-0.2/styles.css" rel="stylesheet" />
+  <script src="../../site_libs/grViz-binding-1.0.1/grViz.js"></script>
+  <script src="../../site_libs/jquery-1.11.3/jquery.min.js"></script>
+  <script src="../../site_libs/bowser-1.9.3/bowser.min.js"></script>
+  <script src="../../site_libs/webcomponents-2.0.0/webcomponents.js"></script>
+  <script src="../../site_libs/distill-2.2.21/template.v2.js"></script>
+  <!--radix_placeholder_site_in_header-->
+<!--/radix_placeholder_site_in_header-->
+
+
+</head>
+
+<body>
+
+<!--radix_placeholder_front_matter-->
+
+<script id="distill-front-matter" type="text/json">
+{"title":"Modelling the effects of public health interventions on COVID-19 transmission using R - part 2","description":"This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude and utility for COVID-19 simulation.","authors":[{"author":"Tim Churches","authorURL":"#","affiliation":"South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia","affiliationURL":"https://swscs.med.unsw.edu.au"}],"publishedDate":"2020-03-18T00:00:00.000+11:00","citationText":"Churches, 2020"}
+</script>
+
+<!--/radix_placeholder_front_matter-->
+<!--radix_placeholder_navigation_before_body-->
+<header class="header header--fixed" role="banner">
+<nav class="distill-site-nav distill-site-header">
+<div class="nav-left">
+<span class="logo">
+<img src="../../assets/TimC.jpg"/>
+</span>
+<a href="../../index.html" class="title">Tim Churches Health Data Science Blog</a>
+</div>
+<div class="nav-right">
+<a href="../../index.html">Home</a>
+<a href="../../about.html">About</a>
+<a href="../../index.xml">
+<i class="fa fa-rss" aria-hidden="true"></i>
+</a>
+<a href="javascript:void(0);" class="nav-toggle">&#9776;</a>
+</div>
+</nav>
+</header>
+<!--/radix_placeholder_navigation_before_body-->
+<!--radix_placeholder_site_before_body-->
+<!--/radix_placeholder_site_before_body-->
+
+<div class="d-title">
+<h1>Modelling the effects of public health interventions on COVID-19 transmission using R - part 2</h1>
+<p>This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the <code>EpiModel</code> library for R. In this post we extend the ICM SIR model provided by <code>EpiModel</code> in various ways to improve its verisimilitude and utility for COVID-19 simulation.</p>
+</div>
+
+<div class="d-byline">
+  Tim Churches  (South Western Sydney Clinical School, UNSW Medicine &amp; Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia)<a href="https://swscs.med.unsw.edu.au" class="uri">https://swscs.med.unsw.edu.au</a>
+  
+<br/>03-18-2020
+</div>
+
+<div class="d-article">
+<h3 class="d-toc-header">Table of Contents</h3>
+<nav class="d-toc" id="TOC">
+<ul>
+<li><a href="#disclaimer">DISCLAIMER</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#extensions-to-epimodel">Extensions to EpiModel</a><ul>
+<li><a href="#new-compartments">New compartments</a></li>
+<li><a href="#transition-diagram">Transition diagram</a></li>
+<li><a href="#simulation-parameters">Simulation parameters</a><ul>
+<li><a href="#time-variant-parameters">Time-variant parameters</a></li>
+</ul></li>
+<li><a href="#simulate-wrapper-function"><code>simulate()</code> wrapper function</a></li>
+</ul></li>
+<li><a href="#running-simulations">Running simulations</a><ul>
+<li><a href="#parallel-processing">Parallel processing</a></li>
+<li><a href="#examining-the-results">Examining the results</a><ul>
+<li><a href="#checking-distributions-of-duration-in-key-compartments">Checking distributions of duration in key compartments</a></li>
+</ul></li>
+<li><a href="#visualise-prevalence">Visualise prevalence</a></li>
+<li><a href="#checking-the-basic-reproduction-number-r_0">Checking the basic reproduction number <span class="math inline">\(R_{0}\)</span></a></li>
+</ul></li>
+<li><a href="#running-an-intervention-experiment">Running an intervention experiment</a></li>
+<li><a href="#running-lots-of-intervention-experiments">Running lots of intervention experiments</a><ul>
+<li><a href="#experiment-2---more-hospital-beds">Experiment 2 - more hospital beds</a></li>
+<li><a href="#experiment-3---more-social-distancing-starting-at-day-15">Experiment 3 - more social distancing starting at day 15</a></li>
+<li><a href="#experiment-4---more-social-distancing-but-starting-at-day-30">Experiment 4 - more social distancing but starting at day 30</a></li>
+<li><a href="#experiment-5---increase-both-social-distancing-and-increased-quarantine-rates-starting-day-15">Experiment 5 - increase both social distancing and increased quarantine rates starting day 15</a></li>
+<li><a href="#comparing-experiments">Comparing experiments</a></li>
+</ul></li>
+<li><a href="#conclusions">Conclusions</a></li>
+</ul>
+</nav>
+<hr class="d-toc-separator"/>
+<h1 id="disclaimer">DISCLAIMER</h1>
+<p>The simulation results in this blog post, or any other results produced by the <code>R</code> code described in it, should <strong>not</strong> be used as actual estimates of mortality or any other aspect of the COVID-19 pandemic. The simulations are intended to explain principles, and permit exploration of the potential effects of various combinations and timings of interventions on spread. Furthermore, the code for these simulations has been written hurriedly over just a few days, it has not yet been peer-reviewed, and is considered <em>alpha</em> quality, and the simulation parameterisation presented here has not yet been validated against real-world COVID-19 data.</p>
+<h1 id="introduction">Introduction</h1>
+<p>In the <a href="https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/">previous post</a>, which was just a week ago but seems like an eternity, I showed how to use the excellent <a href="https://www.epimodel.org"><code>EpiModel</code></a> library to implement a simple SIR (susceptible-infectious-recovered) stochastic individual contact model (ICM) to allow the effects of various public health interventions, specifically social distancing and hygiene measures, on the spread of an infectious agent such as the COVID-19 virus to be explored. If you haven’t already, please read <a href="https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/">that post</a> first for an explanation on how stochastic ICMs differ from dynamic disease models which rely on calculus. Essentially, ICMs are simple (but useful) micro-simulations of every individual in a population. Such a computational, rather than mathematical, approach to disease dynamics modelling allows for a lot more flexibility, as will be outlined below.</p>
+<h1 id="extensions-to-epimodel">Extensions to EpiModel</h1>
+<p>The <code>EpiModel</code> package is intended to be extended, and provides for drop-in replacements for the the main process functions that manage the simulations it provides. Unfortunately, the modifications needed to better model COVID-19 spread and public health interventions required modifications to some of the core <code>EpiModel</code> functions, thus I have forked the code on GitHub. At the time of writing, the forked package is not ready for use – I will update this post when it is – but it is still possible to use these extensions right now by <a href="https://en.wikipedia.org/wiki/Monkey_patch"><em>monkey patching</em></a> the <code>EpiModel</code> code.</p>
+<p>In this post, I will show all the required code required to run your own simulations. Or you can just copy the <code>Rmarkdown</code> source code for this post from the repository for this blog (see link at foot of page).</p>
+<p>First we need quite a few libraries: install these in the usual fashion (if you load the source for this document, then recent versions of RStudio should offer to install any missing libraries for you).</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(stringr)
+library(tibble)
+library(broom)
+library(ggplot2)
+library(gt)
+library(knitr)
+library(devtools)
+library(DiagrammeR)
+library(parallel)
+library(foreach)
+library(tictoc)
+suppressMessages(library(EpiModel))
+library(incidence)
+library(earlyR)
+
+tic(&quot;Time to complete&quot;)</code></pre>
+</div>
+<p>Then we can monkey patch the <code>EpiModel</code> code by sourcing the extensions, either locally (adjust the path as required) or from GitHub gists.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+source_files &lt;- c(&quot;_icm.mod.init.seiqhrf.R&quot;, &quot;_icm.mod.status.seiqhrf.R&quot;, 
+    &quot;_icm.mod.vital.seiqhrf.R&quot;, &quot;_icm.control.seiqhrf.R&quot;, &quot;_icm.utils.seiqhrf.R&quot;, 
+    &quot;_icm.saveout.seiqhrf.R&quot;, &quot;_icm.icm.seiqhrf.R&quot;)
+
+src_path &lt;- paste0(&quot;./_posts/2020-03-18-modelling-the-effects-of-public-health-&quot;, 
+    &quot;interventions-on-covid-19-transmission-part-2/&quot;)
+
+gist_url &lt;- &quot;https://gist.github.com/timchurches/92073d0ea75cfbd387f91f7c6e624bd7&quot;
+
+local_source &lt;- FALSE
+
+for (source_file in source_files) {
+    if (local_source) {
+        source(paste(src_path, source_file, sep = &quot;&quot;))
+    } else {
+        source_gist(gist_url, filename = source_file)
+    }
+}</code></pre>
+</div>
+<h2 id="new-compartments">New compartments</h2>
+<p>The extensions add quite a few compartments. Note the descriptions of each compartment, which may not be exactly what you might assume. For example, the <strong>E</strong> compartment is used for individuals who have been exposed to the virus <strong>and</strong> infected with it, but aren’t yet symptomatic – that is, they are asymptomatic. That’s also the case with traditional SEIR models, but the assumption is usually that the asymptomatic infected are not infectious to others. I have relaxed that assumption in the face of mounting evidence that the COVID-19 virus is transmissible during the asymptomatic incubation period.</p>
+<p>Similarly, the <strong>H</strong> compartment doesn’t represent those in hospital, but rather those needing hospitalisation. The assumption is that if hospital capacity were available, then people in the <strong>H</strong> compartment would be admitted to hospital. At the time of writing, it is clear that hospital capacity is likely to be exceeded in most countries due to COVID-19 morbidity, as has already occured in China and Italy. There’s a hospital capacity parameter <code>hosp.cap</code> that specifies the hospital capacity, and it is possible to specify elevated mortality rates for those in the <strong>H</strong> compartment needing hospitalisation but who can’t obtain such care because the total <code>hosp.cap</code> has been exceeded.</p>
+<p>Related to this, the <strong>F</strong> compartment represents <em>case fatalities</em> – that is, deaths in COVID-19 cases due to the virus. There are also parameters for background death rates for other causes (departure rates). I thought it was important to specifically model case fatalities, and having a compartment for that was the easiest way to do that. Note also that case fatalities are assumed only to occur in those in the <strong>H</strong> compartment, that is, those requiring hospitalisation (whether they can get it or not).</p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 86%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Compartment</th>
+<th>Functional definition</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>S</td>
+<td>Susceptible individuals</td>
+</tr>
+<tr class="even">
+<td>E</td>
+<td>Exposed <strong>and</strong> infected, not yet symptomatic but potentially infectious</td>
+</tr>
+<tr class="odd">
+<td>I</td>
+<td>Infected, symptomatic <strong>and</strong> infectious</td>
+</tr>
+<tr class="even">
+<td>Q</td>
+<td>Infectious, but (self-)quarantined</td>
+</tr>
+<tr class="odd">
+<td>H</td>
+<td>Requiring hospitalisation (would normally be hospitalised if capacity available)</td>
+</tr>
+<tr class="even">
+<td>R</td>
+<td>Recovered, immune from further infection</td>
+</tr>
+<tr class="odd">
+<td>F</td>
+<td>Case fatality (death due to COVID-19, not other causes)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="transition-diagram">Transition diagram</h2>
+<p>The supported transitions between compartments are as shown in the diagram below. The letters on the transition edges denote model parameters relating to that transition in the table that follows.</p>
+<div class="layout-chunk" data-layout="l-page">
+<div id="htmlwidget-81d316ed68423774a6f3" style="width:624px;height:384px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-81d316ed68423774a6f3">{"x":{"diagram":"\ndigraph SEIQHRF {\n\n  # a \"graph\" statement\n  graph [overlap = false, fontsize = 10] #, rankdir = LR]\n\n  # several \"node\" statements\n  node [shape = box,\n        fontname = Helvetica]\n  S[label=\"S=Susceptible\"];\n  E[label=\"E=Exposed and infected,\nasymptomatic,\npotentially infectious\"];\n  I[label=\"I=Infected and infectious\"];\n  Q[label=\"Q=(Self-)quarantined\n(infectious)\"];\n  H[label=\"H=Requires\nhospitalisation\"];\n  R[label=\"R=Recovered/immune\"];\n  F[label=\"F=Case fatality\"]\n\n  # several \"edge\" statements\n  S->E[label=\"a\"]\n  I->S[style=\"dashed\", label=\"x\"]\n  E->I[label=\"b\"]\n  E->S[style=\"dashed\", label=\"y\"]\n  I->Q[label=\"c\"]\n  Q->S[style=\"dashed\", label=\"z\"]\n  I->R[label=\"d\"]\n  I->H[label=\"e\"]\n  H->F[label=\"f\"]\n  H->R[label=\"g\"]\n  Q->R[label=\"h\"]\n  Q->H[label=\"i\"]\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+</div>
+<h2 id="simulation-parameters">Simulation parameters</h2>
+<p>We’ll define a function below called <code>simulate()</code> that wraps the various (extended) <code>EpiModel</code> simulation constructors and provides baseline defaults for the (very) many parameters. You can change the defaults in this function definition to suit your own model comparisons. The defaults were arrived at partly through heuristic estimates of disease behaviour that will be documented later, and partly through some trial-and-error tweaking. They result in a model that behaves in a way that mimics dynamic models (an assertion that will be better justified in due course).</p>
+<p>Public health interventions can then be investigated by changing just those parameters which relate to or represent the intervention.</p>
+<p>The main parameters of interest are as follows:</p>
+<div class="layout-chunk" data-layout="l-page">
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#btwnicxugt .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #000000;
+  font-size: 16px;
+  background-color: #FFFFFF;
+  /* table.background.color */
+  width: 90%;
+  /* table.width */
+  border-top-style: solid;
+  /* table.border.top.style */
+  border-top-width: 2px;
+  /* table.border.top.width */
+  border-top-color: #A8A8A8;
+  /* table.border.top.color */
+  border-bottom-style: solid;
+  /* table.border.bottom.style */
+  border-bottom-width: 2px;
+  /* table.border.bottom.width */
+  border-bottom-color: #A8A8A8;
+  /* table.border.bottom.color */
+}
+
+#btwnicxugt .gt_heading {
+  background-color: #FFFFFF;
+  /* heading.background.color */
+  border-bottom-color: #FFFFFF;
+}
+
+#btwnicxugt .gt_title {
+  color: #000000;
+  font-size: 125%;
+  /* heading.title.font.size */
+  padding-top: 4px;
+  /* heading.top.padding */
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#btwnicxugt .gt_subtitle {
+  color: #000000;
+  font-size: 85%;
+  /* heading.subtitle.font.size */
+  padding-top: 2px;
+  padding-bottom: 2px;
+  /* heading.bottom.padding */
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#btwnicxugt .gt_bottom_border {
+  border-bottom-style: solid;
+  /* heading.border.bottom.style */
+  border-bottom-width: 2px;
+  /* heading.border.bottom.width */
+  border-bottom-color: #A8A8A8;
+  /* heading.border.bottom.color */
+}
+
+#btwnicxugt .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#btwnicxugt .gt_col_heading {
+  color: #000000;
+  background-color: #FFFFFF;
+  /* column_labels.background.color */
+  font-size: 16px;
+  /* column_labels.font.size */
+  font-weight: initial;
+  /* column_labels.font.weight */
+  vertical-align: middle;
+  padding: 10px;
+  margin: 10px;
+}
+
+#btwnicxugt .gt_columns_top_border {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+}
+
+#btwnicxugt .gt_columns_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+}
+
+#btwnicxugt .gt_sep_right {
+  border-right: 5px solid #FFFFFF;
+}
+
+#btwnicxugt .gt_group_heading {
+  padding: 8px;
+  color: #000000;
+  background-color: #FFFFFF;
+  /* row_group.background.color */
+  font-size: 16px;
+  /* row_group.font.size */
+  font-weight: initial;
+  /* row_group.font.weight */
+  border-top-style: solid;
+  /* row_group.border.top.style */
+  border-top-width: 2px;
+  /* row_group.border.top.width */
+  border-top-color: #A8A8A8;
+  /* row_group.border.top.color */
+  border-bottom-style: solid;
+  /* row_group.border.bottom.style */
+  border-bottom-width: 2px;
+  /* row_group.border.bottom.width */
+  border-bottom-color: #A8A8A8;
+  /* row_group.border.bottom.color */
+  vertical-align: middle;
+}
+
+#btwnicxugt .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #000000;
+  background-color: #FFFFFF;
+  /* row_group.background.color */
+  font-size: 16px;
+  /* row_group.font.size */
+  font-weight: initial;
+  /* row_group.font.weight */
+  border-top-style: solid;
+  /* row_group.border.top.style */
+  border-top-width: 2px;
+  /* row_group.border.top.width */
+  border-top-color: #A8A8A8;
+  /* row_group.border.top.color */
+  border-bottom-style: solid;
+  /* row_group.border.bottom.style */
+  border-bottom-width: 2px;
+  /* row_group.border.bottom.width */
+  border-bottom-color: #A8A8A8;
+  /* row_group.border.bottom.color */
+  vertical-align: middle;
+}
+
+#btwnicxugt .gt_striped {
+  background-color: #f2f2f2;
+}
+
+#btwnicxugt .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#btwnicxugt .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#btwnicxugt .gt_row {
+  padding: 8px;
+  /* row.padding */
+  margin: 10px;
+  vertical-align: middle;
+}
+
+#btwnicxugt .gt_stub {
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #A8A8A8;
+  padding-left: 12px;
+}
+
+#btwnicxugt .gt_summary_row {
+  color: #000000;
+  background-color: #FFFFFF;
+  /* summary_row.background.color */
+  padding: 8px;
+  /* summary_row.padding */
+  text-transform: inherit;
+  /* summary_row.text_transform */
+}
+
+#btwnicxugt .gt_grand_summary_row {
+  color: #000000;
+  background-color: #FFFFFF;
+  /* grand_summary_row.background.color */
+  padding: 8px;
+  /* grand_summary_row.padding */
+  text-transform: inherit;
+  /* grand_summary_row.text_transform */
+}
+
+#btwnicxugt .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+}
+
+#btwnicxugt .gt_first_grand_summary_row {
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #A8A8A8;
+}
+
+#btwnicxugt .gt_table_body {
+  border-top-style: solid;
+  /* table_body.border.top.style */
+  border-top-width: 2px;
+  /* table_body.border.top.width */
+  border-top-color: #A8A8A8;
+  /* table_body.border.top.color */
+  border-bottom-style: solid;
+  /* table_body.border.bottom.style */
+  border-bottom-width: 2px;
+  /* table_body.border.bottom.width */
+  border-bottom-color: #A8A8A8;
+  /* table_body.border.bottom.color */
+}
+
+#btwnicxugt .gt_footnotes {
+  border-top-style: solid;
+  /* footnotes.border.top.style */
+  border-top-width: 2px;
+  /* footnotes.border.top.width */
+  border-top-color: #A8A8A8;
+  /* footnotes.border.top.color */
+}
+
+#btwnicxugt .gt_footnote {
+  font-size: 90%;
+  /* footnote.font.size */
+  margin: 0px;
+  padding: 4px;
+  /* footnote.padding */
+}
+
+#btwnicxugt .gt_sourcenotes {
+  border-top-style: solid;
+  /* sourcenotes.border.top.style */
+  border-top-width: 2px;
+  /* sourcenotes.border.top.width */
+  border-top-color: #A8A8A8;
+  /* sourcenotes.border.top.color */
+}
+
+#btwnicxugt .gt_sourcenote {
+  font-size: 90%;
+  /* sourcenote.font.size */
+  padding: 4px;
+  /* sourcenote.padding */
+}
+
+#btwnicxugt .gt_center {
+  text-align: center;
+}
+
+#btwnicxugt .gt_left {
+  text-align: left;
+}
+
+#btwnicxugt .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#btwnicxugt .gt_font_normal {
+  font-weight: normal;
+}
+
+#btwnicxugt .gt_font_bold {
+  font-weight: bold;
+}
+
+#btwnicxugt .gt_font_italic {
+  font-style: italic;
+}
+
+#btwnicxugt .gt_super {
+  font-size: 65%;
+}
+
+#btwnicxugt .gt_footnote_glyph {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="btwnicxugt" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <tr>
+    <th class="gt_col_heading gt_columns_bottom_border gt_columns_top_border gt_left" rowspan="1" colspan="1">DiagramRef</th>
+    <th class="gt_col_heading gt_columns_bottom_border gt_columns_top_border gt_left" rowspan="1" colspan="1">Parameter</th>
+    <th class="gt_col_heading gt_columns_bottom_border gt_columns_top_border gt_left" rowspan="1" colspan="1">Default</th>
+    <th class="gt_col_heading gt_columns_bottom_border gt_columns_top_border gt_left" rowspan="1" colspan="1">Explanation</th>
+  </tr>
+  <body class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>type</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>SEIQHRF</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Type of model: SI, SIR, SIS, SEIR, SEIQHR and SEIQHRF available, but only SEIQHRF is likely to work in the current version of the code.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>nsteps</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>366</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Number of days for simulation. Note that day 1 is for initialisation, day 2 is the first day of the simulation, hence default of 366 for 1 year.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>nsims</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>10</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Number of simulations to run and then average.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>ncores</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>10</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Number of CPU cores to use for parallel execution.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>b</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>prog.rand</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>FALSE</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Method for progression from E compartment to I. If TRUE, random binomial draws at <code>prog.rate</code>, if FALSE, random draws from a Weibull distribution (yes, I know it should be a discrete Weibull distribution but it makes little difference and speed of computation matters), with parameters <code>prog.dist.scale</code> and  <code>prog.dist.shape</code></p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>d,g,h</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>rec.rand</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>FALSE</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Method for recovery transition from I, Q or H to R. If TRUE, random binomial draws at <code>prog.rate</code>, if FALSE, random draws from a random draws from a Weibull distribution, with parameters <code>rec.dist.scale</code> and  <code>rec.dist.shape</code></p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>f</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>fat.rand</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>FALSE</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Method for case fatality transition from H to F. If TRUE, random binomial draws at <code>fat.rate.base</code>, if FALSE, random sample with a sample fraction also given by <code>fat.rate.base</code>. However, if the current number of patients in the H (needs hospitalisation) compartment is above a hospital capacity level specified by <code>hosp.cap</code>, then the fatality rate is the mean of the base fatality rate weighted by the hospital capacity, plus a higher rate, specified by <code>fat.rate.overcap</code>, weighted by the balance of those requiring hospitalisation (but who can't be accommodated). By setting <code>fat.rate.overcap</code> higher, the effect of exceeding the capacity of the health care system can be simulated. There is also a coefficient <code>fat.tcoeff</code> for the fatality rates that increases them as a linear function of the number of days the individual has been in the H compartment. Use of the co-efficient better approximates the trapezoid survival time distribution typical of ICU patients.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>c</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>quar.rand</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>FALSE</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Method for quarantine transition from I to Q. If TRUE, random binomial draws at <code>quar.rate</code>, if FALSE, random sample with a sample fraction also given by `quar.rate.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>e,i</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>hosp.rand</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>FALSE</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Method for transition from I or Q to H -- that is, from infectious or from quarantined/isolated to requiring hospitalisation. If TRUE, random binomial draws at <code>hosp.rate</code>, if FALSE, random sample with a sample fraction also given by `hosp.rate.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>e,i</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>disch.rand</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>FALSE</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Method for transition from H to R -- that is, from requiring hospitalisation to recovered. If TRUE, random binomial draws at <code>disch.rate</code>, if FALSE, random sample with a sample fraction also given by <code>disch.rate</code>. Note that the only way out of the <strong>H</strong> compartment is recovery or death.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>infection.FUN</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>infection.seiqhrf.icm</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>No, being infected with SARS-CoV2 is <strong>not</strong> fun. Rather this is the the name of the function to implement infection processes. Use the default.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>departures.FUN</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>departures.seiqhrf.icm</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Handles background demographics, specifically departures (deaths not due to the virus, and emigration). Use the default.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>arrivals.FUN</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>arrivals.icm</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Handles background demographics, specifically arrivals (births and immigration). Uses the original EpiModel code currently. A replacement that implements modelling the arrival of infected individuals is under development -- but for now, all arrivals go into the <strong>S</strong> compartment.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>get_prev.FUN</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>get_prev.seiqhrf.icm</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Utility function that collects prevalence and transition time data from each run and stores it away in the simulation result object. Use the default.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>s.num</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>9997</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Initial number of *<em>S</em> compartment individuals in the simulated population. An overall population of 10,000 is a good compromise. A set of models will still take several minutes or more to run, in parallel.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>e.num</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>0</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Initial number of <strong>E</strong> compartment individuals in the simulated population.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>i.num</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>3</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Initial number of <strong>I</strong> compartment individuals in the simulated population.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>q.num</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>0</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Initial number of <strong>Q</strong> compartment individuals in the simulated population.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>h.num</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>0</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Initial number of <strong>H</strong> compartment individuals in the simulated population.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>r.num</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>0</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Initial number of <strong>R</strong> compartment individuals in the simulated population.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>f.num</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>0</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Initial number of <strong>F</strong> compartment individuals in the simulated population.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>x</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>act.rate.i</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>10</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>The number of exposure events (<em>acts</em>) between infectious individuals in the <strong>I</strong> compartment and susceptible individuals in the <strong>S</strong> compartment, per day. It's stochastic, so the rate is an average, some individuals may have more or less. Note that not every exposure event results in infection - that is governed by the <code>inf.prob.i</code> parameters (see below). Reducing <code>act.rate.i</code> is equivalent to increasing social distancing by people in the <strong>I</strong> compartment.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>x</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>inf.prob.i</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>0.05</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Probability of passing on infection at each exposure event for interactions between infectious people in the <strong>I</strong> compartment and susceptibles in <strong>S</strong>. Reducing <code>inf.prob.i</code> is equivalent to increasing hygiene measures, such as not putting hands in eyes, nose or moth, use of hand sanitisers, wearing masks by the infected, and so on.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>y</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>act.rate.e</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>10</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>The number of exposure events (<em>acts</em>) between infectious individuals in the <strong>E</strong> compartment and susceptible individuals in the <strong>S</strong> compartment, per day. Otherwise as for <code>act.rate.i</code>.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>y</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>inf.prob.e</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>0.02</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Probability of passing on infection at each exposure event for interactions between infectious people in the <strong>E</strong> compartment and susceptibles in <strong>S</strong>. Note the default is lower than for <code>inf.prob.i</code> reflecting the reduced infectivity of infected but asymptomatic people (the <strong>E</strong> compartment). Otherwise as for <code>inf.exp.i</code>.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>z</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>act.rate.q</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>2.5</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>The number of exposure events (<em>acts</em>) between infectious individuals in the <strong>Q</strong> compartment (quarantined, self or otherwise) and susceptible individuals in the <strong>S</strong> compartment, per day. Note the much lower rate than for the <strong>I</strong> and <strong>E</strong> compartments, reflecting the much greater degree of social isolation for someone in (self-)quarantine (often incorrectly referred to as <em>self-isolation</em>, but <em>quarantine</em> is the term of isolation of infected people). The exposure event rate is not zero for this group, just much less. Otherwise as for <code>act.rate.i</code>.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>z</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>inf.prob.q</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>0.02</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Probability of passing on infection at each exposure event for interactions between infectious people in the <strong>Q</strong> compartment and susceptibles in <strong>S</strong>. Note the default is lower than for <code>inf.prob.i</code> reflecting the greater care that quarantined individuals will, on average, take regarding hygiene measures, such as wearing masks, to limit spread to others. Otherwise as for <code>inf.exp.i</code>.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>c</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>quar.rate</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>1/30</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Rate per day at which symptomatic (or tested positive), infected <strong>I</strong> compartment people enter quarantine (aka <em>self-isolation</em>, <strong>Q</strong> compartment). Asymptomatic <strong>E</strong> compartment people can't enter quarantine because they don't yet know they are infected. Default is a low rate reflecting low community awareness or compliance with quarantine/self-isolation requirements or practices, but this can be tweaked when exploring scenarios.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>e,i</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>hosp.rate</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>1/100</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Rate <strong>per day</strong> at which symptomatic (or tested positive), infected <strong>I</strong> compartment people or quarantined <strong>Q</strong> compartment people enter the state of requiring hospital care -- that is, become serious cases. A default rate of 1% per day with an average illness duration of about 10 days means a bit less than 10% of cases will require hospitalisation, which seems about right (but can be tweaked, of course).</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>g</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>disch.rate</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>1/15</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Rate per day at which people needing hospitalisation recover.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>b</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>prog.rate</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>1/10</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Rate per day at which people who are infected but asymptomatic (<strong>E</strong> compartment) progress to becoming symptomatic (or test-positive), the <strong>I</strong> compartment. See <code>prog.rand</code> above for more details.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>b</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>prog.dist.scale</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>5</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Scale parameter for Weibull distribution for progression, see <code>prog.rand</code> for details.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>b</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>prog.dist.shape</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>1.5</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Shape parameter for Weibull distribution for progression, see <code>prog.rand</code> for details. Read up on the Weibull distribution before changing the default.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>d</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>rec.rate</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>1/20</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Rate per day at which people who are infected and symptomatic (<strong>I</strong> compartment) recover, thus entering the <strong>R</strong> compartment. See <code>rec.rand</code> above for more details.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>d</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>rec.dist.scale</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>35</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Scale parameter for Weibull distribution for recovery, see <code>rec.rand</code> for details.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>d</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>rec.dist.shape</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>1.5</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Shape parameter for Weibull distribution for recovery, see <code>rec.rand</code> for details. Read up on the Weibull distribution before changing the default.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>f</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>fat.rate.base</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>1/50</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Baseline mortality rate per day for people needing hospitalisation (deaths due to the virus). See <code>fat.rand</code> for more details.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>f</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>hosp.cap</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>40</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Number of available hospital beds for the modelled population. See <code>fat.rand</code> for more details.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>f</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>fat.rate.overcap</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>1/25</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Mortality rate per day for people needing hospitalisation but who can't get into hospital due to the hospitals being full (see <code>hosp.cap</code> and <code>fat.rand</code>). The default rate is twice that for those who do get into hospital.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>f</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>fat.tcoeff</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>0.5</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Time co-efficient for increasing mortality rate as time in the <strong>H</strong> compartment increases for each individual in it. See <code>fat.rand</code> for details.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>vital</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>TRUE</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Enables demographics, that is, arrivals and departures, to and from the simulated population.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>a.rate</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>(10.5/365)/1000</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Background demographic arrival rate. Currently all arrivals go into the <strong>S</strong> compartment, the default is approximately the daily birth rate for Australia. Will be extended to cover immigration in future versions.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>ds.rate, de.rate, de.rate, dq.rate, dh.rate, dr.rate</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>various rates</p>
+</div></td>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Background demographic departure (death not due to virus) rates. Defaults based on Australian crude death rates. Can be used to model emigration as well as deaths.</p>
+</div></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'></div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>out</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>mean</p>
+</div></td>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Summary function for the simulation runs. median is also available, or percentiles, see the <code>EpiModel</code> documentation.</p>
+</div></td>
+    </tr>
+  </body>
+  
+  
+</table></div>
+</div>
+<p>Phew! That’s a lot of parameters. However, the trick is to establish a baseline model with a set of defaults (start with the ones given here, then adjust as you see fit), then modify only the ones you wish to for each intervention “experiment”.</p>
+<h3 id="time-variant-parameters">Time-variant parameters</h3>
+<p>Several of the simulation parameters can also be varied over time. That is, as well as accepting a single value, they also accept a vector of values with length equal to <code>nsteps</code>, the number of days over which the simulation runs. Assuming <code>nsteps=366</code>, we can, for example, set <code>quar.rate = c(rep(1/10,30), rep(1/3, 335))</code>. That defines a step function in which the transition-to-quarantine rate for the <strong>I</strong> compartment is 0.1 for the first 30 days, then steps up to 0.33 thereafter, reflecting, say, a campaign or government edict to self-quarantine. Of course, the vector of values can be a smooth function, or can go up then down again, or whatever you wish to model. This is an extremely powerful feature of computational models such as this, and one very hard to incorporate into purely mathematical models.</p>
+<p>Most of the parameters for which time-variation is useful support it. If they don’t, you will receive an error message (the table above will be updated to include this information later).</p>
+<h2 id="simulate-wrapper-function"><code>simulate()</code> wrapper function</h2>
+<p>Here is the definition of the <code>simulate()</code> function, that wraps the various simulation model constructors into one function and provides defaults (as documented above) for all their values, so that just one or two values can be over-ridden to run an “experiment” to see what effect certain interventions at certain times might have.</p>
+<p>The function returns a list with two elements: the simulation result object, and a data frame with one row per day, with the relevant columns ready for use.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# function to set-up and run the baseline simulations
+simulate &lt;- function(# control.icm params
+                     type = &quot;SEIQHRF&quot;, 
+                     nsteps = 366, 
+                     nsims = 8,
+                     ncores = 4,
+                     prog.rand = FALSE,
+                     rec.rand = FALSE,
+                     fat.rand = TRUE,
+                     quar.rand = FALSE,
+                     hosp.rand = FALSE,
+                     disch.rand = TRUE,
+                     infection.FUN = infection.seiqhrf.icm,
+                     recovery.FUN = progress.seiqhrf.icm,
+                     departures.FUN = departures.seiqhrf.icm,
+                     arrivals.FUN = arrivals.icm,
+                     get_prev.FUN = get_prev.seiqhrf.icm,
+                     # init.icm params
+                     s.num = 9997,
+                     e.num=0,
+                     i.num = 3,
+                     q.num=0,
+                     h.num=0,
+                     r.num = 0,
+                     f.num = 0,
+                     # param.icm params
+                     inf.prob.e = 0.02, 
+                     act.rate.e = 10,
+                     inf.prob.i = 0.05, 
+                     act.rate.i = 10,
+                     inf.prob.q = 0.02, 
+                     act.rate.q = 2.5,                    
+                     quar.rate = 1/30, 
+                     hosp.rate = 1/100,
+                     disch.rate = 1/15,
+                     prog.rate = 1/10,
+                     prog.dist.scale = 5,
+                     prog.dist.shape = 1.5,
+                     rec.rate = 1/20,
+                     rec.dist.scale = 35,
+                     rec.dist.shape = 1.5,
+                     fat.rate.base = 1/50,
+                     hosp.cap = 40,
+                     fat.rate.overcap = 1/25,
+                     fat.tcoeff = 0.5,
+                     vital = TRUE,
+                     a.rate = (10.5/365)/1000, 
+                     a.prop.e = 0.01,
+                     a.prop.i = 0.001,
+                     a.prop.q = 0.01,
+                     ds.rate = (7/365)/1000, 
+                     de.rate = (7/365)/1000, 
+                     di.rate = (7/365)/1000,
+                     dq.rate = (7/365)/1000,
+                     dh.rate = (20/365)/1000,
+                     dr.rate = (7/365)/1000,
+                     out=&quot;mean&quot;
+                    ) {
+
+  control &lt;- control.icm(type = type, 
+                         nsteps = nsteps, 
+                         nsims = nsims,
+                         ncores = ncores,
+                         prog.rand = prog.rand,
+                         rec.rand = rec.rand,
+                         infection.FUN = infection.FUN,
+                         recovery.FUN = recovery.FUN,
+                         arrivals.FUN = arrivals.FUN,
+                         departures.FUN = departures.FUN,
+                         get_prev.FUN = get_prev.FUN)
+
+  init &lt;- init.icm(s.num = s.num,
+                   e.num = e.num,
+                   i.num = i.num,
+                   q.num = q.num,
+                   h.num = h.num,
+                   r.num = r.num,
+                   f.num = f.num)
+
+  param &lt;-  param.icm(inf.prob.e = inf.prob.e, 
+                      act.rate.e = act.rate.e,
+                      inf.prob.i = inf.prob.i, 
+                      act.rate.i = act.rate.i,
+                      inf.prob.q = inf.prob.q, 
+                      act.rate.q = act.rate.q,                    
+                      quar.rate = quar.rate,
+                      hosp.rate = hosp.rate,
+                      disch.rate = disch.rate,
+                      prog.rate = prog.rate,
+                      prog.dist.scale = prog.dist.scale,
+                      prog.dist.shape = prog.dist.shape,
+                      rec.rate = rec.rate,
+                      rec.dist.scale = rec.dist.scale,
+                      rec.dist.shape = rec.dist.shape,
+                      fat.rate.base = fat.rate.base,
+                      hosp.cap = hosp.cap,
+                      fat.rate.overcap = fat.rate.overcap,
+                      fat.tcoeff = fat.tcoeff,
+                      vital = vital,
+                      a.rate = a.rate, 
+                      a.prop.e = a.prop.e,
+                      a.prop.i = a.prop.i,
+                      a.prop.q = a.prop.q,
+                      ds.rate = ds.rate, 
+                      de.rate = de.rate, 
+                      di.rate = di.rate,
+                      dq.rate = dq.rate,
+                      dh.rate = dh.rate,
+                      dr.rate = dr.rate)
+
+  sim &lt;- icm.seiqhrf(param, init, control)
+  sim_df &lt;- as.data.frame(sim, out=out)
+
+  return(list(sim=sim, df=sim_df))
+}</code></pre>
+</div>
+<h1 id="running-simulations">Running simulations</h1>
+<h2 id="parallel-processing">Parallel processing</h2>
+<p>Simulations are computationally intensive. Note that by default, <code>simulate()</code> will use parallel processing up to the value of <code>ncores</code>, if your computer has more than one core. I set <code>ncores</code> to 4 for my 2015 vintage Macbook Pro, but if you have more than 4 physical CPU cores available, set it higher, and it will run faster (mostly, in fact the number of simulation runs <code>nsims</code> needs to be a multiple of the number of physical cores for optimum use of computational resources, but don’t worry if they are not). Disable parallel computation by setting <code>ncores</code> to 1. Note that the code has only been tested on an Apple Mac, but it should work OK under Windows and linux, since it uses the <code>parallel</code> and <code>foreach</code> libraries for R.</p>
+<p>OK, let’s run a simulation.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+baseline_sim &lt;- simulate(ncores = 4)</code></pre>
+</div>
+<h2 id="examining-the-results">Examining the results</h2>
+<h3 id="checking-distributions-of-duration-in-key-compartments">Checking distributions of duration in key compartments</h3>
+<p>First, let’s examine the distributions of timings for various transitions. Refer to the diagram above to make sense of what these time distributions represent.</p>
+<p>We’ll define a function to extract the timings from the simulation result object. The <code>EpiModel</code> implementation doesn’t return these timings, so I added capture of them as part of the extension. Later they can be properly supported by the model result class, but we’ll code some support functions here, for now.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# define a function to extract timings and assemble a data
+# frame
+get_times &lt;- function(simulate_results) {
+    
+    sim &lt;- simulate_results$sim
+    
+    for (s in 1:sim$control$nsims) {
+        if (s == 1) {
+            times &lt;- sim$times[[paste(&quot;sim&quot;, s, sep = &quot;&quot;)]]
+            times &lt;- times %&gt;% mutate(s = s)
+        } else {
+            times &lt;- times %&gt;% bind_rows(sim$times[[paste(&quot;sim&quot;, 
+                s, sep = &quot;&quot;)]] %&gt;% mutate(s = s))
+        }
+    }
+    
+    times &lt;- times %&gt;% mutate(infTime = ifelse(infTime &lt; 0, -5, 
+        infTime), expTime = ifelse(expTime &lt; 0, -5, expTime)) %&gt;% 
+        mutate(incubation_period = infTime - expTime, illness_duration = recovTime - 
+            expTime, illness_duration_hosp = dischTime - expTime, 
+            hosp_los = dischTime - hospTime, quarantine_delay = quarTime - 
+                infTime, survival_time = fatTime - infTime) %&gt;% 
+        select(s, incubation_period, quarantine_delay, illness_duration, 
+            illness_duration_hosp, hosp_los, survival_time) %&gt;% 
+        pivot_longer(-s, names_to = &quot;period_type&quot;, values_to = &quot;duration&quot;) %&gt;% 
+        mutate(period_type = factor(period_type, levels = c(&quot;incubation_period&quot;, 
+            &quot;quarantine_delay&quot;, &quot;illness_duration&quot;, &quot;illness_duration_hosp&quot;, 
+            &quot;hosp_los&quot;, &quot;survival_time&quot;), labels = c(&quot;Incubation period&quot;, 
+            &quot;Delay entering quarantine&quot;, &quot;Illness duration&quot;, 
+            &quot;Illness duration (hosp)&quot;, &quot;Hospital care required duration&quot;, 
+            &quot;Survival time of case fatalities&quot;), ordered = TRUE))
+    return(times)
+}</code></pre>
+</div>
+<p>Now get the timing data.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+times &lt;- get_times(baseline_sim)</code></pre>
+</div>
+<p>And visualise it.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+times %&gt;% filter(duration &lt;= 30) %&gt;% ggplot(aes(x = duration)) + 
+    geom_bar() + facet_grid(period_type ~ ., scales = &quot;free_y&quot;) + 
+    labs(title = &quot;Duration frequency distributions&quot;, subtitle = &quot;Baseline simulation&quot;)</code></pre>
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-9-1.png" width="768" /></p>
+</div>
+<p>OK, all of those distributions of the time spent in the various states (compartments) look reasonable, with the exception of <em>Hospital care required duration</em>. For quite a few individuals, that duration is zero. You could argue that these are day-only admissions, but really, hospital care should be required for at least one day. It’s something that can be fixed later, but it makes little difference for now.</p>
+<p>Strictly, you should check these duration distributions for every model you run. In practice, I have used them to check the baseline model, and for spot checks on intervention “experiment” models. But if you change the Weibull distribution parameters for the progression and recovery rates, please do check the duration distributions to ensure they are still sensible.</p>
+<h2 id="visualise-prevalence">Visualise prevalence</h2>
+<p>Prevalence is the number of individuals in each compartment at each point in time (each day). That’s the usual way disease models are presented.</p>
+<p>It’s very straightforward to use the data frame output from our simulation to do this, using <code>tidyverse</code> tools.</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<pre class="r"><code>
+baseline_plot_df &lt;- baseline_sim$df %&gt;% # use only the prevalence columns
+select(time, s.num, e.num, i.num, q.num, h.num, r.num, f.num) %&gt;% 
+    # examine only the first 100 days since it is all over by
+# then using the default parameters
+filter(time &lt;= 100) %&gt;% pivot_longer(-c(time), names_to = &quot;compartment&quot;, 
+    values_to = &quot;count&quot;)
+
+# define a standard set of colours to represent compartments
+compcols &lt;- c(s.num = &quot;yellow&quot;, e.num = &quot;orange&quot;, i.num = &quot;red&quot;, 
+    q.num = &quot;cyan&quot;, h.num = &quot;magenta&quot;, r.num = &quot;lightgreen&quot;, 
+    f.num = &quot;black&quot;)
+complabels &lt;- c(s.num = &quot;Susceptible&quot;, e.num = &quot;Infected/asymptomatic&quot;, 
+    i.num = &quot;Infected/infectious&quot;, q.num = &quot;Quarantined&quot;, h.num = &quot;Requires hospitalisation&quot;, 
+    r.num = &quot;Recovered&quot;, f.num = &quot;Case fatality&quot;)
+
+baseline_plot_df %&gt;% ggplot(aes(x = time, y = count, colour = compartment)) + 
+    geom_line(size = 2, alpha = 0.7) + scale_colour_manual(values = compcols, 
+    labels = complabels) + theme_dark() + labs(title = &quot;Baseline simulation&quot;, 
+    x = &quot;Days since beginning of epidemic&quot;, y = &quot;Prevalence (persons)&quot;)</code></pre>
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-10-1.png" width="624" /></p>
+</div>
+<p>OK, that looks very reasonable. Note that almost the entire population ends up being infected. However, the <strong>S</strong> and <strong>R</strong> compartments dominate the plot (good, humanity survives!). Let’s re-plot leaving out those compartments.</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<pre class="r"><code>
+baseline_plot_df %&gt;% filter(compartment %in% c(&quot;e.num&quot;, &quot;i.num&quot;, 
+    &quot;q.num&quot;, &quot;h.num&quot;, &quot;f.num&quot;)) %&gt;% ggplot(aes(x = time, y = count, 
+    colour = compartment)) + geom_line(size = 2, alpha = 0.7) + 
+    scale_colour_manual(values = compcols, labels = complabels) + 
+    theme_dark() + labs(title = &quot;Baseline simulation&quot;, x = &quot;Days since beginning of epidemic&quot;, 
+    y = &quot;Prevalence (persons)&quot;)</code></pre>
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-11-1.png" width="624" /></p>
+</div>
+<p>What can we see in this plot of our simulation of our hypothetical world of 10,000 people (meaning the results may be indicative of virus behaviour in the real world, but not necessarily the same timings or values)?</p>
+<ul>
+<li>The epidemic is all over in two months.</li>
+<li>We see typical exponential behaviour, although these are prevalence numbers, not incidence (we can extract incidence from our simulation, as we will see later). We expect incidence to rise exponentially, prevalence tends to start with exponential growth then tapers off. That’s what we are seeing here, so that’s good.</li>
+<li>The prevalence in the <strong>I</strong> and <strong>Q</strong> compartments mirrors but lags behind the <strong>E</strong> compartment, as expected.</li>
+<li>The number requiring hospitalisation seems reasonable.</li>
+<li>The number in the case fatality compartment is monotonically increasing, as expected.</li>
+</ul>
+<h2 id="checking-the-basic-reproduction-number-r_0">Checking the basic reproduction number <span class="math inline">\(R_{0}\)</span></h2>
+<p>In the <a href="https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/">previous post on simulation</a>, we saw how we could check the <span class="math inline">\(R_{0}\)</span> for our simulated outbreak. Let’s repeat that for our baseline simulation. Refer to the <a href="https://timchurches.github.io/blog/posts/2020-03-10-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1/">previous post</a> for explanation of what’s being done here.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# get the S-&gt; E compartment flow, which is our daily
+# incidence rate
+incidence_counts &lt;- baseline_sim$df %&gt;% select(time, se.flow)
+# uncount them
+incident_case_dates &lt;- incidence_counts %&gt;% uncount(se.flow) %&gt;% 
+    pull(time)
+# convert to an incidence object
+incidence_all &lt;- incident_case_dates %&gt;% incidence(.)
+
+# plot the incidence curve
+plot(incidence_all)</code></pre>
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-12-1.png" width="624" /></p>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+# find the peak of the epidemic curve
+peak_of_epidemic_curve &lt;- find_peak(incidence_all)
+
+# repeat with just the growth part of the epidemic curve
+incident_case_dates_growth_phase &lt;- incidence_counts %&gt;% filter(time &lt;= 
+    peak_of_epidemic_curve) %&gt;% select(time, se.flow) %&gt;% uncount(se.flow) %&gt;% 
+    pull(time)
+
+incidence_growth_phase &lt;- incident_case_dates_growth_phase %&gt;% 
+    incidence(., last_date = peak_of_epidemic_curve)
+# specify serial interval mean and SD since the last blog
+# post new studies have appeared suggesting 4.5 is a better
+# mean for the SI
+si_mean &lt;- 4.5
+si_sd &lt;- 3.4
+
+# get a set of MLE estimates for R0 and plot
+res &lt;- get_R(incidence_growth_phase, si_mean = si_mean, si_sd = si_sd)
+plot(res, &quot;R&quot;)</code></pre>
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-13-1.png" width="624" /></p>
+</div>
+<p>That <span class="math inline">\(R_{0}\)</span> might seem s bit low - values of around 2 or 2.5 were being quoted in January 2020, but remember our value has been calculated using new estimates of the <em>serial interval</em> that are much shorter than previously assumed. We also have some people going into self-quarantine even in our baseline model, but at a desultory rate.</p>
+<h1 id="running-an-intervention-experiment">Running an intervention experiment</h1>
+<p>Now we are in a position to run an experiment, by altering some parameters of our baseline model.</p>
+<p>Let’s model the effect of increasing the rate at which people enter (self-)quarantine. Because we can use time-variant parameters, we will! Thus we ramp up the quarantine rate from it’s low level of 0.033 (as in the baseline simulation), starting at day 15, up to 0.5 at day 30. We’ll write a little function to do that.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+quar_rate_ramp &lt;- function(t) {
+    ifelse(t &lt; 15, 0.0333, ifelse(t &lt;= 30, 0.0333 + (t - 15) * 
+        (0.5 - 0.0333)/15, 0.5))
+}
+
+ramp_quar_rate_sim &lt;- simulate(quar.rate = quar_rate_ramp(1:366))</code></pre>
+</div>
+<p>Let’s examine the result. The code used is similar to that used above for the baseline model and won’t be shown here.</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-15-1.png" width="624" /></p>
+</div>
+<p>Let’s see that with the baseline again for comparison:</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<pre class="r"><code>
+baseline_plot_df %&gt;% mutate(experiment = &quot;Baseline&quot;) %&gt;% bind_rows(ramp_quar_rate_sim_plot_df %&gt;% 
+    mutate(experiment = &quot;Ramp up quarantine&quot;)) %&gt;% filter(compartment %in% 
+    c(&quot;e.num&quot;, &quot;i.num&quot;, &quot;q.num&quot;, &quot;h.num&quot;, &quot;f.num&quot;)) %&gt;% ggplot(aes(x = time, 
+    y = count, colour = compartment)) + geom_line(size = 2, alpha = 0.7) + 
+    facet_grid(experiment ~ .) + scale_colour_manual(values = compcols, 
+    labels = complabels) + theme_dark() + labs(title = &quot;Baseline vs ramping up quarantine simulations&quot;, 
+    x = &quot;Days since beginning of epidemic&quot;, y = &quot;Prevalence (persons)&quot;)</code></pre>
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-16-1.png" width="624" data-distill-preview=1 /></p>
+</div>
+<p>Yeah, that’s good! Everyone who gets sick should immediately self-quarantine! But let’s look at the same results, but only the <em>requiring hospitalisation</em> and <em>case fatality</em> prevalence numbers. We’ll draw a horizontal red line showing hospital capacity. Where the <em>Requires hospitalisation</em> prevalence numbers exceed the hospital capacity line, people who need to be in hospital miss out and start dying at a much higher rate (that’s what we are simulating in our model).</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-17-1.png" width="624" /></p>
+</div>
+<h1 id="running-lots-of-intervention-experiments">Running lots of intervention experiments</h1>
+<p>OK, the <em>interventionome</em> is a large (and scary) space, we need to start taking a more industrial approach to comparing experiments.</p>
+<p>Let’s run a whole lot of experiments with various interventions, described below.</p>
+<h2 id="experiment-2---more-hospital-beds">Experiment 2 - more hospital beds</h2>
+<p>Over a four week period, let’s ramp up hospital capacity to triple the baseline level, starting at day 15. Hey, China built a 1000+ bed COVID-19 hospital in Wuhan in just 10 days…</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+hosp_cap_ramp &lt;- function(t) {
+    ifelse(t &lt; 15, 40, ifelse(t &lt;= 45, 40 + (t - 15) * (120 - 
+        40)/30, 120))
+}
+
+raise_hosp_cap_sim &lt;- simulate(hosp.cap = hosp_cap_ramp(1:366))</code></pre>
+</div>
+<h2 id="experiment-3---more-social-distancing-starting-at-day-15">Experiment 3 - more social distancing starting at day 15</h2>
+<p>Let’s step up social distancing (decrease exposure opportunities), starting at day 15, in everyone except the quarantined, who are already practising it. But we’ll leave the self-quarantining rate at the baseline desultory rate. The increase in social distancing will, when full ramped up by day 30, halve the number of exposure events between the infected and the susceptible each day.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+social_distancing_day15_ramp &lt;- function(t) {
+    ifelse(t &lt; 15, 10, ifelse(t &lt;= 30, 10 - (t - 15) * (10 - 
+        5)/15, 5))
+}
+
+t15_social_distancing_sim &lt;- simulate(act.rate.i = social_distancing_day15_ramp(1:366), 
+    act.rate.e = social_distancing_day15_ramp(1:366))</code></pre>
+</div>
+<h2 id="experiment-4---more-social-distancing-but-starting-at-day-30">Experiment 4 - more social distancing but starting at day 30</h2>
+<p>Let’s repeat that, but we’ll delay starting the social distancing ramp-up until day 30.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+social_distancing_day30_ramp &lt;- function(t) {
+    ifelse(t &lt; 30, 10, ifelse(t &lt;= 45, 10 - (t - 30) * (10 - 
+        5)/15, 5))
+}
+
+t30_social_distancing_sim &lt;- simulate(act.rate.i = social_distancing_day30_ramp(1:366), 
+    act.rate.e = social_distancing_day30_ramp(1:366))</code></pre>
+</div>
+<h2 id="experiment-5---increase-both-social-distancing-and-increased-quarantine-rates-starting-day-15">Experiment 5 - increase both social distancing and increased quarantine rates starting day 15</h2>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+quar_rate_ramp &lt;- function(t) {
+    ifelse(t &lt; 15, 0.0333, ifelse(t &lt;= 30, 0.0333 + (t - 15) * 
+        (0.5 - 0.0333)/15, 0.5))
+}
+
+ramp_quar_rate_sim &lt;- simulate(quar.rate = quar_rate_ramp(1:366))</code></pre>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+t15_soc_dist_quar_sim &lt;- simulate(act.rate.i = social_distancing_day15_ramp(1:366), 
+    act.rate.e = social_distancing_day15_ramp(1:366), quar.rate = quar_rate_ramp(1:366))</code></pre>
+</div>
+<h2 id="comparing-experiments">Comparing experiments</h2>
+<p>Let’s visualise all those experiments in one plot.</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<pre class="r"><code>
+plot_df &lt;- baseline_sim$df %&gt;% select(time, s.num, e.num, i.num, 
+    q.num, h.num, r.num, f.num) %&gt;% mutate(experiment = &quot;0. Baseline&quot;) %&gt;% 
+    bind_rows(ramp_quar_rate_sim$df %&gt;% select(time, s.num, e.num, 
+        i.num, q.num, h.num, r.num, f.num) %&gt;% mutate(experiment = &quot;1. incr quar @ t=15&quot;)) %&gt;% 
+    bind_rows(raise_hosp_cap_sim$df %&gt;% select(time, s.num, e.num, 
+        i.num, q.num, h.num, r.num, f.num) %&gt;% mutate(experiment = &quot;2. incr hos cap @ t=15&quot;)) %&gt;% 
+    bind_rows(t15_social_distancing_sim$df %&gt;% select(time, s.num, 
+        e.num, i.num, q.num, h.num, r.num, f.num) %&gt;% mutate(experiment = &quot;3. incr soc dist @ t=15&quot;)) %&gt;% 
+    bind_rows(t30_social_distancing_sim$df %&gt;% select(time, s.num, 
+        e.num, i.num, q.num, h.num, r.num, f.num) %&gt;% mutate(experiment = &quot;4. incr soc dist @ t=30&quot;)) %&gt;% 
+    bind_rows(t15_soc_dist_quar_sim$df %&gt;% select(time, s.num, 
+        e.num, i.num, q.num, h.num, r.num, f.num) %&gt;% mutate(experiment = &quot;5. incr soc dist &amp; quar @ t=15&quot;)) %&gt;% 
+    filter(time &lt;= 150) %&gt;% pivot_longer(-c(time, experiment), 
+    names_to = &quot;compartment&quot;, values_to = &quot;count&quot;) %&gt;% filter(compartment %in% 
+    c(&quot;e.num&quot;, &quot;i.num&quot;, &quot;q.num&quot;, &quot;h.num&quot;, &quot;f.num&quot;))
+
+plot_df %&gt;% ggplot(aes(x = time, y = count, colour = compartment)) + 
+    geom_line(size = 1.5, alpha = 0.7) + facet_grid(experiment ~ 
+    .) + scale_colour_manual(values = compcols, labels = complabels) + 
+    theme_dark() + labs(title = &quot;Baseline vs experiments&quot;, x = &quot;Days since beginning of epidemic&quot;, 
+    y = &quot;Prevalence (persons)&quot;)</code></pre>
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-23-1.png" width="576" /></p>
+</div>
+<p>Let’s see that again showing just the <em>requiring hospitalisation</em> and <em>case fatality</em> prevalence numbers.</p>
+<div class="layout-chunk" data-layout="l-body-outset">
+<pre class="r"><code>
+plot_df %&gt;% filter(compartment %in% c(&quot;h.num&quot;, &quot;f.num&quot;)) %&gt;% 
+    ggplot(aes(x = time, y = count, colour = compartment)) + 
+    geom_line(size = 1.5, alpha = 0.7) + facet_grid(experiment ~ 
+    .) + scale_colour_manual(values = compcols, labels = complabels) + 
+    theme_dark() + labs(title = &quot;Baseline vs experiments&quot;, x = &quot;Days since beginning of epidemic&quot;, 
+    y = &quot;Prevalence (persons)&quot;)</code></pre>
+<p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-24-1.png" width="576" /></p>
+</div>
+<p>I won’t laboriously comment on each experiment, but there are a few things worth remarking upon.</p>
+<p>Firstly, increasing hospital capacity is probably sensible, but may have little effect on fatalities if the numbers swamp available capacity by an order of magnitude. And increasing hospital capcity is not easy, nor can it be done swiftly, except perhaps in China.</p>
+<p>Secondly, rigorous and swift self-quarantining in those who are symptomatic is very effective, especially if done early, even in teh presence of infectivity in the asymptomatic infected.</p>
+<p>Thirdly, increasing social distancing also works, but works much better if done early, possibly before there is an obvious need for it based on numbers infected or deaths. Implement early, implement hard!</p>
+<p>Fourthly, a combination of prompt self-quarantining plus moderate social distancing is also very effective, without necessarily killing the entire economy. This combination warrants further simulations. It is also the combination recommended by the Imperial College London group (see below).</p>
+<h1 id="conclusions">Conclusions</h1>
+<p>At this point, it looks like these extensions to <code>EpiModel</code> provide a potentially useful tool for exploring the effects of various public health interventions, in a somewhat realistic manner. It is not nearly as sophisticated as the individual contact model used by the WHO Collaborating Centre for Infectious Disease Modelling at Imperial College London (ICL) for their <a href="https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/news--wuhan-coronavirus/">latest report on the impact of non-pharmaceutical interventions (NPIs) to reduce COVID-19 mortality and healthcare demand</a>. Nevertheless, even the very preliminary insights provided by the experiments above are consistent with those contained in the ICL report.</p>
+<p>The next steps are: a) to move the code used here into a package to make deployment easier; b) implement modelling of infected arrivals, as discussed; c) improve the default parameterisation of the simulation; and d) validate the simulation results against some real-world data. Assistance from the <code>R</code> community in any or all of these tasks would be gratefully received.</p>
+<div class="layout-chunk" data-layout="l-body">
+<pre class="r"><code>
+toc()</code></pre>
+<pre><code>
+Time to complete: 203.548 sec elapsed</code></pre>
+</div>
+<!--radix_placeholder_article_footer-->
+<div class="article-footer">
+  <p class="social_footer">
+    <span class="article-sharing">
+      Share: &nbsp;
+      <a href="https://twitter.com/share?text=Modelling%20the%20effects%20of%20public%20health%20interventions%20on%20COVID-19%20transmission%20using%20R%20-%20part%202&amp;url=https%3A%2F%2Ftimchurches.github.io%2Fblog%2Fposts%2F2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2%2F">
+        <i class="fab fa-twitter"></i>
+      </a>
+      <a href="https://www.facebook.com/sharer/sharer.php?s=100&amp;p[url]=https%3A%2F%2Ftimchurches.github.io%2Fblog%2Fposts%2F2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2%2F">
+        <i class="fab fa-facebook"></i>
+      </a>
+    </span>
+  </p>
+  <p>
+    <div class="subscribe"><form method='post' action='https://blogtrottr.com'>
+  <p>Enjoy this blog? Be notified of new posts via email:</p>
+  <input type='text' name='btr_email' />
+  <input type='hidden' name='btr_url'
+         value='https://timchurches.github.io/blog/index.xml'/>
+  <input type='hidden' name='schedule_type' value='0' />
+  <input type='submit' value='Subscribe' />
+</form>
+</div>
+  </p>
+</div>
+<!--/radix_placeholder_article_footer-->
+</div>
+
+<div class="d-appendix">
+</div>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+<!--radix_placeholder_site_after_body-->
+<!--/radix_placeholder_site_after_body-->
+<!--radix_placeholder_appendices-->
+<div class="appendix-bottom">
+  <h3 id="updates-and-corrections">Corrections</h3>
+  <p>If you see mistakes or want to suggest changes, please <a href="https://github.com/timchurches/blog/tree/master/_posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/issues/new">create an issue</a> on the source repository.</p>
+  <h3 id="reuse">Reuse</h3>
+  <p>Text and figures are licensed under Creative Commons Attribution <a rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Source code is available at <a href="https://github.com/timchurches/blog/tree/master/_posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2">https://github.com/timchurches/blog/tree/master/_posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2</a>, unless otherwise noted. The figures that have been reused from other sources don't fall under this license and can be recognized by a note in their caption: "Figure from ...".</p>
+  <h3 id="citation">Citation</h3>
+  <p>For attribution, please cite this work as</p>
+  <pre class="citation-appendix short">Churches (2020, March 18). Tim Churches Health Data Science Blog: Modelling the effects of public health interventions on COVID-19 transmission using R - part 2. Retrieved from https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/</pre>
+  <p>BibTeX citation</p>
+  <pre class="citation-appendix long">@misc{churches2020modellingcovid19rpart2,
+  author = {Churches, Tim},
+  title = {Tim Churches Health Data Science Blog: Modelling the effects of public health interventions on COVID-19 transmission using R - part 2},
+  url = {https://timchurches.github.io/blog/posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/},
+  year = {2020}
+}</pre>
+</div>
+<script id="distill-bibliography" type="text/bibtex">
+%% This BibTeX bibliography file was created using BibDesk.
+%% http://bibdesk.sourceforge.net/
+
+%% Created for Tim Churches at 2020-03-09 10:28:14 +1100 
+
+
+%% Saved with string encoding Unicode (UTF-8) 
+
+
+
+@article{jenness2018,
+	Author = {Jenness, SM and Goodreau, SM and Morris, M.},
+	Date-Added = {2020-03-08 23:00:46 +0000},
+	Date-Modified = {2020-03-08 23:27:09 +0000},
+	Journal = {Journal of Statistical Software},
+	Number = {8},
+	Pages = {1-47},
+	Title = { EpiModel: An R Package for Mathematical Modeling of Infectious Disease over Networks. },
+	Volume = {84},
+	Year = {2018},
+	DOI = {10.18637/jss.v084.i08}}
+</script>
+<!--/radix_placeholder_appendices-->
+<!--radix_placeholder_navigation_after_body-->
+<div class="distill-site-nav distill-site-footer">
+  <p>More blog posts about <code>R</code> can be found at <a href="https://www.r-bloggers.com"><strong>R-bloggers</strong></a></p>
+</div>
+<!--/radix_placeholder_navigation_after_body-->
+
+
+</body>
+
+</html>
