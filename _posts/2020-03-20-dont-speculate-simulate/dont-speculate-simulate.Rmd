@@ -12,7 +12,7 @@ author:
 creative_commons: CC BY-SA
 date: 03-20-2020
 base_url: https://timchurches.github.io/blog/
-slug: churches2020modellingcovid19rpart2
+slug: churches2020dontspeculatesimulate
 twitter:
   creator: "@timchurches"
 output:
