@@ -30,4 +30,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 This post is just a pointer to [another post on the R Views blog](https://rviews.rstudio.com/2020/03/19/simulating-covid-19-interventions-with-r/) that I wrote on the use of simulations to explore the efects of various interventions on COVID-19 spread. It contains a few more simulation experiments on lock-downs, with some interesting results, explained in the [post](https://rviews.rstudio.com/2020/03/19/simulating-covid-19-interventions-with-r/).
 
+Note that the post on R Views contains a minor error of nomenclature  (a "thinko" on my part, caused by too much coding...): The **Q** compartment is referred to a (self)-quarantine, when it should be (self-)isolation. The results and conclusions are unaffected.
+
+
 
