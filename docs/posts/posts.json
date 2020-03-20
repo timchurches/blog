@@ -1,5 +1,24 @@
 [
   {
+    "path": "posts/2020-03-20-dont-speculate-simulate/",
+    "title": "Don't speculate, simulate!",
+    "description": "Just a pointer to a further post on COVID-19 simulation that I wrote for the R-Views blog.",
+    "author": [
+      {
+        "name": "Tim Churches",
+        "url": {}
+      }
+    ],
+    "date": "2020-03-20",
+    "categories": [
+      "R",
+      "COVID-19"
+    ],
+    "preview": "https://rviews.rstudio.com/2020/03/19/simulating-covid-19-interventions-with-r/exp-7A.png",
+    "last_modified": "2020-03-20T16:24:28+11:00",
+    "input_file": {}
+  },
+  {
     "path": "posts/2020-03-18-modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2/",
     "title": "Modelling the effects of public health interventions on COVID-19 transmission using R - part 2",
     "description": "This is the second of several posts which examine the effect of various public health interventions on the local epidemic spread of COVID-19 infection using stochastic individual compartmental models (ICMs) implemented by the `EpiModel` library for R. In this post we extend the ICM SIR model provided by `EpiModel` in various ways to improve its verisimilitude and utility for COVID-19 simulation.",

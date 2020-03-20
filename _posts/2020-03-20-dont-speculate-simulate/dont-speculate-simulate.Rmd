@@ -1,0 +1,33 @@
+---
+title: "Don't speculate, simulate!"
+description: |
+  Just a pointer to a further post on COVID-19 simulation that I wrote for the R-Views blog.
+categories:
+  - R
+  - "COVID-19"
+author:
+  - name: Tim Churches 
+    affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
+    affiliation_url: https://swscs.med.unsw.edu.au
+creative_commons: CC BY-SA
+date: 03-20-2020
+base_url: https://timchurches.github.io/blog/
+slug: churches2020modellingcovid19rpart2
+twitter:
+  creator: "@timchurches"
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 3
+    self_contained: false
+draft: false
+preview: https://rviews.rstudio.com/2020/03/19/simulating-covid-19-interventions-with-r/exp-7A.png
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+This post is just a pointer to [another post on the R Views blog](https://rviews.rstudio.com/2020/03/19/simulating-covid-19-interventions-with-r/) that I wrote on the use of simulations to explore the efects of various interventions on COVID-19 spread. It contains a few more simulation experiments on lock-downs, with some interesting results, explained in the [post](https://rviews.rstudio.com/2020/03/19/simulating-covid-19-interventions-with-r/).
+
+

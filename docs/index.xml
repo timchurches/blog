@@ -7,7 +7,18 @@
     <description>A blog dedicated to noodlings about health data science.
 </description>
     <generator>Distill</generator>
-    <lastBuildDate>Wed, 18 Mar 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 20 Mar 2020 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>Don't speculate, simulate!</title>
+      <dc:creator>Tim Churches</dc:creator>
+      <link>https://timchurches.github.io/blog/posts/2020-03-20-dont-speculate-simulate</link>
+      <description>Just a pointer to a further post on COVID-19 simulation that I wrote for the R-Views blog.</description>
+      <category>R</category>
+      <category>COVID-19</category>
+      <guid>https://timchurches.github.io/blog/posts/2020-03-20-dont-speculate-simulate</guid>
+      <pubDate>Fri, 20 Mar 2020 00:00:00 +0000</pubDate>
+      <media:content url="https://rviews.rstudio.com/2020/03/19/simulating-covid-19-interventions-with-r/exp-7A.png" medium="image" type="image/png"/>
+    </item>
     <item>
       <title>Modelling the effects of public health interventions on COVID-19 transmission using R - part 2</title>
       <dc:creator>Tim Churches</dc:creator>
