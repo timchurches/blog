@@ -1369,7 +1369,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <li><a href="#experiment-2---more-hospital-beds">Experiment 2 - more hospital beds</a></li>
 <li><a href="#experiment-3---more-social-distancing-starting-at-day-15">Experiment 3 - more social distancing starting at day 15</a></li>
 <li><a href="#experiment-4---more-social-distancing-but-starting-at-day-30">Experiment 4 - more social distancing but starting at day 30</a></li>
-<li><a href="#experiment-5---increase-both-social-distancing-and-increased-quarantine-rates-starting-day-15">Experiment 5 - increase both social distancing and increased quarantine rates starting day 15</a></li>
+<li><a href="#experiment-5---increase-both-social-distancing-and-increased-self-isolation-rates-starting-day-15">Experiment 5 - increase both social distancing and increased self-isolation rates starting day 15</a></li>
 <li><a href="#comparing-experiments">Comparing experiments</a></li>
 </ul></li>
 <li><a href="#conclusions">Conclusions</a></li>
@@ -1458,7 +1458,7 @@ for (source_file in source_files) {
 </tr>
 <tr class="even">
 <td>Q</td>
-<td>Infectious, but (self-)quarantined</td>
+<td>Infectious, but (self-)isolated</td>
 </tr>
 <tr class="odd">
 <td>H</td>
@@ -1477,8 +1477,8 @@ for (source_file in source_files) {
 <h2 id="transition-diagram">Transition diagram</h2>
 <p>The supported transitions between compartments are as shown in the diagram below. The letters on the transition edges denote model parameters relating to that transition in the table that follows.</p>
 <div class="layout-chunk" data-layout="l-page">
-<div id="htmlwidget-81d316ed68423774a6f3" style="width:624px;height:384px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-81d316ed68423774a6f3">{"x":{"diagram":"\ndigraph SEIQHRF {\n\n  # a \"graph\" statement\n  graph [overlap = false, fontsize = 10] #, rankdir = LR]\n\n  # several \"node\" statements\n  node [shape = box,\n        fontname = Helvetica]\n  S[label=\"S=Susceptible\"];\n  E[label=\"E=Exposed and infected,\nasymptomatic,\npotentially infectious\"];\n  I[label=\"I=Infected and infectious\"];\n  Q[label=\"Q=(Self-)quarantined\n(infectious)\"];\n  H[label=\"H=Requires\nhospitalisation\"];\n  R[label=\"R=Recovered/immune\"];\n  F[label=\"F=Case fatality\"]\n\n  # several \"edge\" statements\n  S->E[label=\"a\"]\n  I->S[style=\"dashed\", label=\"x\"]\n  E->I[label=\"b\"]\n  E->S[style=\"dashed\", label=\"y\"]\n  I->Q[label=\"c\"]\n  Q->S[style=\"dashed\", label=\"z\"]\n  I->R[label=\"d\"]\n  I->H[label=\"e\"]\n  H->F[label=\"f\"]\n  H->R[label=\"g\"]\n  Q->R[label=\"h\"]\n  Q->H[label=\"i\"]\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-4cbca188096eb8cd357f" style="width:624px;height:384px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-4cbca188096eb8cd357f">{"x":{"diagram":"\ndigraph SEIQHRF {\n\n  # a \"graph\" statement\n  graph [overlap = false, fontsize = 10] #, rankdir = LR]\n\n  # several \"node\" statements\n  node [shape = box,\n        fontname = Helvetica]\n  S[label=\"S=Susceptible\"];\n  E[label=\"E=Exposed and infected,\nasymptomatic,\npotentially infectious\"];\n  I[label=\"I=Infected and infectious\"];\n  Q[label=\"Q=(Self-)isolated\n(infectious)\"];\n  H[label=\"H=Requires\nhospitalisation\"];\n  R[label=\"R=Recovered/immune\"];\n  F[label=\"F=Case fatality\"]\n\n  # several \"edge\" statements\n  S->E[label=\"a\"]\n  I->S[style=\"dashed\", label=\"x\"]\n  E->I[label=\"b\"]\n  E->S[style=\"dashed\", label=\"y\"]\n  I->Q[label=\"c\"]\n  Q->S[style=\"dashed\", label=\"z\"]\n  I->R[label=\"d\"]\n  I->H[label=\"e\"]\n  H->F[label=\"f\"]\n  H->R[label=\"g\"]\n  Q->R[label=\"h\"]\n  Q->H[label=\"i\"]\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 </div>
 <h2 id="simulation-parameters">Simulation parameters</h2>
 <p>We’ll define a function below called <code>simulate()</code> that wraps the various (extended) <code>EpiModel</code> simulation constructors and provides baseline defaults for the (very) many parameters. You can change the defaults in this function definition to suit your own model comparisons. The defaults were arrived at partly through heuristic estimates of disease behaviour that will be documented later, and partly through some trial-and-error tweaking. They result in a model that behaves in a way that mimics dynamic models (an assertion that will be better justified in due course).</p>
@@ -1489,7 +1489,7 @@ for (source_file in source_files) {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#btwnicxugt .gt_table {
+#mbijoynvhw .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1514,13 +1514,13 @@ for (source_file in source_files) {
   /* table.border.bottom.color */
 }
 
-#btwnicxugt .gt_heading {
+#mbijoynvhw .gt_heading {
   background-color: #FFFFFF;
   /* heading.background.color */
   border-bottom-color: #FFFFFF;
 }
 
-#btwnicxugt .gt_title {
+#mbijoynvhw .gt_title {
   color: #000000;
   font-size: 125%;
   /* heading.title.font.size */
@@ -1531,7 +1531,7 @@ for (source_file in source_files) {
   border-bottom-width: 0;
 }
 
-#btwnicxugt .gt_subtitle {
+#mbijoynvhw .gt_subtitle {
   color: #000000;
   font-size: 85%;
   /* heading.subtitle.font.size */
@@ -1542,7 +1542,7 @@ for (source_file in source_files) {
   border-top-width: 0;
 }
 
-#btwnicxugt .gt_bottom_border {
+#mbijoynvhw .gt_bottom_border {
   border-bottom-style: solid;
   /* heading.border.bottom.style */
   border-bottom-width: 2px;
@@ -1551,7 +1551,7 @@ for (source_file in source_files) {
   /* heading.border.bottom.color */
 }
 
-#btwnicxugt .gt_column_spanner {
+#mbijoynvhw .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #A8A8A8;
@@ -1559,7 +1559,7 @@ for (source_file in source_files) {
   padding-bottom: 4px;
 }
 
-#btwnicxugt .gt_col_heading {
+#mbijoynvhw .gt_col_heading {
   color: #000000;
   background-color: #FFFFFF;
   /* column_labels.background.color */
@@ -1572,23 +1572,23 @@ for (source_file in source_files) {
   margin: 10px;
 }
 
-#btwnicxugt .gt_columns_top_border {
+#mbijoynvhw .gt_columns_top_border {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #A8A8A8;
 }
 
-#btwnicxugt .gt_columns_bottom_border {
+#mbijoynvhw .gt_columns_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #A8A8A8;
 }
 
-#btwnicxugt .gt_sep_right {
+#mbijoynvhw .gt_sep_right {
   border-right: 5px solid #FFFFFF;
 }
 
-#btwnicxugt .gt_group_heading {
+#mbijoynvhw .gt_group_heading {
   padding: 8px;
   color: #000000;
   background-color: #FFFFFF;
@@ -1612,7 +1612,7 @@ for (source_file in source_files) {
   vertical-align: middle;
 }
 
-#btwnicxugt .gt_empty_group_heading {
+#mbijoynvhw .gt_empty_group_heading {
   padding: 0.5px;
   color: #000000;
   background-color: #FFFFFF;
@@ -1636,33 +1636,33 @@ for (source_file in source_files) {
   vertical-align: middle;
 }
 
-#btwnicxugt .gt_striped {
+#mbijoynvhw .gt_striped {
   background-color: #f2f2f2;
 }
 
-#btwnicxugt .gt_from_md > :first-child {
+#mbijoynvhw .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#btwnicxugt .gt_from_md > :last-child {
+#mbijoynvhw .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#btwnicxugt .gt_row {
+#mbijoynvhw .gt_row {
   padding: 8px;
   /* row.padding */
   margin: 10px;
   vertical-align: middle;
 }
 
-#btwnicxugt .gt_stub {
+#mbijoynvhw .gt_stub {
   border-right-style: solid;
   border-right-width: 2px;
   border-right-color: #A8A8A8;
   padding-left: 12px;
 }
 
-#btwnicxugt .gt_summary_row {
+#mbijoynvhw .gt_summary_row {
   color: #000000;
   background-color: #FFFFFF;
   /* summary_row.background.color */
@@ -1672,7 +1672,7 @@ for (source_file in source_files) {
   /* summary_row.text_transform */
 }
 
-#btwnicxugt .gt_grand_summary_row {
+#mbijoynvhw .gt_grand_summary_row {
   color: #000000;
   background-color: #FFFFFF;
   /* grand_summary_row.background.color */
@@ -1682,19 +1682,19 @@ for (source_file in source_files) {
   /* grand_summary_row.text_transform */
 }
 
-#btwnicxugt .gt_first_summary_row {
+#mbijoynvhw .gt_first_summary_row {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #A8A8A8;
 }
 
-#btwnicxugt .gt_first_grand_summary_row {
+#mbijoynvhw .gt_first_grand_summary_row {
   border-top-style: double;
   border-top-width: 6px;
   border-top-color: #A8A8A8;
 }
 
-#btwnicxugt .gt_table_body {
+#mbijoynvhw .gt_table_body {
   border-top-style: solid;
   /* table_body.border.top.style */
   border-top-width: 2px;
@@ -1709,7 +1709,7 @@ for (source_file in source_files) {
   /* table_body.border.bottom.color */
 }
 
-#btwnicxugt .gt_footnotes {
+#mbijoynvhw .gt_footnotes {
   border-top-style: solid;
   /* footnotes.border.top.style */
   border-top-width: 2px;
@@ -1718,7 +1718,7 @@ for (source_file in source_files) {
   /* footnotes.border.top.color */
 }
 
-#btwnicxugt .gt_footnote {
+#mbijoynvhw .gt_footnote {
   font-size: 90%;
   /* footnote.font.size */
   margin: 0px;
@@ -1726,7 +1726,7 @@ for (source_file in source_files) {
   /* footnote.padding */
 }
 
-#btwnicxugt .gt_sourcenotes {
+#mbijoynvhw .gt_sourcenotes {
   border-top-style: solid;
   /* sourcenotes.border.top.style */
   border-top-width: 2px;
@@ -1735,48 +1735,48 @@ for (source_file in source_files) {
   /* sourcenotes.border.top.color */
 }
 
-#btwnicxugt .gt_sourcenote {
+#mbijoynvhw .gt_sourcenote {
   font-size: 90%;
   /* sourcenote.font.size */
   padding: 4px;
   /* sourcenote.padding */
 }
 
-#btwnicxugt .gt_center {
+#mbijoynvhw .gt_center {
   text-align: center;
 }
 
-#btwnicxugt .gt_left {
+#mbijoynvhw .gt_left {
   text-align: left;
 }
 
-#btwnicxugt .gt_right {
+#mbijoynvhw .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#btwnicxugt .gt_font_normal {
+#mbijoynvhw .gt_font_normal {
   font-weight: normal;
 }
 
-#btwnicxugt .gt_font_bold {
+#mbijoynvhw .gt_font_bold {
   font-weight: bold;
 }
 
-#btwnicxugt .gt_font_italic {
+#mbijoynvhw .gt_font_italic {
   font-style: italic;
 }
 
-#btwnicxugt .gt_super {
+#mbijoynvhw .gt_super {
   font-size: 65%;
 }
 
-#btwnicxugt .gt_footnote_glyph {
+#mbijoynvhw .gt_footnote_glyph {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="btwnicxugt" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="mbijoynvhw" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   
   <tr>
     <th class="gt_col_heading gt_columns_bottom_border gt_columns_top_border gt_left" rowspan="1" colspan="1">DiagramRef</th>
@@ -1858,7 +1858,7 @@ for (source_file in source_files) {
 </div></td>
       <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>FALSE</p>
 </div></td>
-      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Method for quarantine transition from I to Q. If TRUE, random binomial draws at <code>quar.rate</code>, if FALSE, random sample with a sample fraction also given by `quar.rate.</p>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Method for self-isolation transition from I to Q. If TRUE, random binomial draws at <code>quar.rate</code>, if FALSE, random sample with a sample fraction also given by `quar.rate.</p>
 </div></td>
     </tr>
     <tr>
@@ -1868,7 +1868,7 @@ for (source_file in source_files) {
 </div></td>
       <td class="gt_row gt_left"><div class='gt_from_md'><p>FALSE</p>
 </div></td>
-      <td class="gt_row gt_left"><div class='gt_from_md'><p>Method for transition from I or Q to H -- that is, from infectious or from quarantined/isolated to requiring hospitalisation. If TRUE, random binomial draws at <code>hosp.rate</code>, if FALSE, random sample with a sample fraction also given by `hosp.rate.</p>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Method for transition from I or Q to H -- that is, from infectious or from self-isolated to requiring hospitalisation. If TRUE, random binomial draws at <code>hosp.rate</code>, if FALSE, random sample with a sample fraction also given by `hosp.rate.</p>
 </div></td>
     </tr>
     <tr>
@@ -2027,7 +2027,7 @@ for (source_file in source_files) {
 </div></td>
       <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>2.5</p>
 </div></td>
-      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>The number of exposure events (<em>acts</em>) between infectious individuals in the <strong>Q</strong> compartment (quarantined, self or otherwise) and susceptible individuals in the <strong>S</strong> compartment, per day. Note the much lower rate than for the <strong>I</strong> and <strong>E</strong> compartments, reflecting the much greater degree of social isolation for someone in (self-)quarantine (often incorrectly referred to as <em>self-isolation</em>, but <em>quarantine</em> is the term of isolation of infected people). The exposure event rate is not zero for this group, just much less. Otherwise as for <code>act.rate.i</code>.</p>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>The number of exposure events (<em>acts</em>) between infectious individuals in the <strong>Q</strong> compartment (isolated, self or otherwise) and susceptible individuals in the <strong>S</strong> compartment, per day. Note the much lower rate than for the <strong>I</strong> and <strong>E</strong> compartments, reflecting the much greater degree of social isolation for someone in (self-)isolation. The exposure event rate is not zero for this group, just much less. Otherwise as for <code>act.rate.i</code>.</p>
 </div></td>
     </tr>
     <tr>
@@ -2037,7 +2037,7 @@ for (source_file in source_files) {
 </div></td>
       <td class="gt_row gt_left"><div class='gt_from_md'><p>0.02</p>
 </div></td>
-      <td class="gt_row gt_left"><div class='gt_from_md'><p>Probability of passing on infection at each exposure event for interactions between infectious people in the <strong>Q</strong> compartment and susceptibles in <strong>S</strong>. Note the default is lower than for <code>inf.prob.i</code> reflecting the greater care that quarantined individuals will, on average, take regarding hygiene measures, such as wearing masks, to limit spread to others. Otherwise as for <code>inf.exp.i</code>.</p>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Probability of passing on infection at each exposure event for interactions between infectious people in the <strong>Q</strong> compartment and susceptibles in <strong>S</strong>. Note the default is lower than for <code>inf.prob.i</code> reflecting the greater care that self-isolated individuals will, on average, take regarding hygiene measures, such as wearing masks, to limit spread to others. Otherwise as for <code>inf.exp.i</code>.</p>
 </div></td>
     </tr>
     <tr>
@@ -2047,7 +2047,7 @@ for (source_file in source_files) {
 </div></td>
       <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>1/30</p>
 </div></td>
-      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Rate per day at which symptomatic (or tested positive), infected <strong>I</strong> compartment people enter quarantine (aka <em>self-isolation</em>, <strong>Q</strong> compartment). Asymptomatic <strong>E</strong> compartment people can't enter quarantine because they don't yet know they are infected. Default is a low rate reflecting low community awareness or compliance with quarantine/self-isolation requirements or practices, but this can be tweaked when exploring scenarios.</p>
+      <td class="gt_row gt_left gt_striped"><div class='gt_from_md'><p>Rate per day at which symptomatic (or tested positive), infected <strong>I</strong> compartment people enter self-isolation (<strong>Q</strong> compartment). Asymptomatic <strong>E</strong> compartment people can't enter self-isolation because they don't yet know they are infected. Default is a low rate reflecting low community awareness or compliance with self-isolation requirements or practices, but this can be tweaked when exploring scenarios.</p>
 </div></td>
     </tr>
     <tr>
@@ -2057,7 +2057,7 @@ for (source_file in source_files) {
 </div></td>
       <td class="gt_row gt_left"><div class='gt_from_md'><p>1/100</p>
 </div></td>
-      <td class="gt_row gt_left"><div class='gt_from_md'><p>Rate <strong>per day</strong> at which symptomatic (or tested positive), infected <strong>I</strong> compartment people or quarantined <strong>Q</strong> compartment people enter the state of requiring hospital care -- that is, become serious cases. A default rate of 1% per day with an average illness duration of about 10 days means a bit less than 10% of cases will require hospitalisation, which seems about right (but can be tweaked, of course).</p>
+      <td class="gt_row gt_left"><div class='gt_from_md'><p>Rate <strong>per day</strong> at which symptomatic (or tested positive), infected <strong>I</strong> compartment people or self-isolated <strong>Q</strong> compartment people enter the state of requiring hospital care -- that is, become serious cases. A default rate of 1% per day with an average illness duration of about 10 days means a bit less than 10% of cases will require hospitalisation, which seems about right (but can be tweaked, of course).</p>
 </div></td>
     </tr>
     <tr>
@@ -2213,7 +2213,7 @@ for (source_file in source_files) {
 </div>
 <p>Phew! That’s a lot of parameters. However, the trick is to establish a baseline model with a set of defaults (start with the ones given here, then adjust as you see fit), then modify only the ones you wish to for each intervention “experiment”.</p>
 <h3 id="time-variant-parameters">Time-variant parameters</h3>
-<p>Several of the simulation parameters can also be varied over time. That is, as well as accepting a single value, they also accept a vector of values with length equal to <code>nsteps</code>, the number of days over which the simulation runs. Assuming <code>nsteps=366</code>, we can, for example, set <code>quar.rate = c(rep(1/10,30), rep(1/3, 335))</code>. That defines a step function in which the transition-to-quarantine rate for the <strong>I</strong> compartment is 0.1 for the first 30 days, then steps up to 0.33 thereafter, reflecting, say, a campaign or government edict to self-quarantine. Of course, the vector of values can be a smooth function, or can go up then down again, or whatever you wish to model. This is an extremely powerful feature of computational models such as this, and one very hard to incorporate into purely mathematical models.</p>
+<p>Several of the simulation parameters can also be varied over time. That is, as well as accepting a single value, they also accept a vector of values with length equal to <code>nsteps</code>, the number of days over which the simulation runs. Assuming <code>nsteps=366</code>, we can, for example, set <code>quar.rate = c(rep(1/10,30), rep(1/3, 335))</code>. That defines a step function in which the transition-to-isolation rate for the <strong>I</strong> compartment is 0.1 for the first 30 days, then steps up to 0.33 thereafter, reflecting, say, a campaign or government edict to self-isolate. Of course, the vector of values can be a smooth function, or can go up then down again, or whatever you wish to model. This is an extremely powerful feature of computational models such as this, and one very hard to incorporate into purely mathematical models.</p>
 <p>Most of the parameters for which time-variation is useful support it. If they don’t, you will receive an error message (the table above will be updated to include this information later).</p>
 <h2 id="simulate-wrapper-function"><code>simulate()</code> wrapper function</h2>
 <p>Here is the definition of the <code>simulate()</code> function, that wraps the various simulation model constructors into one function and provides defaults (as documented above) for all their values, so that just one or two values can be over-ridden to run an “experiment” to see what effect certain interventions at certain times might have.</p>
@@ -2378,9 +2378,9 @@ get_times &lt;- function(simulate_results) {
         mutate(period_type = factor(period_type, levels = c(&quot;incubation_period&quot;, 
             &quot;quarantine_delay&quot;, &quot;illness_duration&quot;, &quot;illness_duration_hosp&quot;, 
             &quot;hosp_los&quot;, &quot;survival_time&quot;), labels = c(&quot;Incubation period&quot;, 
-            &quot;Delay entering quarantine&quot;, &quot;Illness duration&quot;, 
-            &quot;Illness duration (hosp)&quot;, &quot;Hospital care required duration&quot;, 
-            &quot;Survival time of case fatalities&quot;), ordered = TRUE))
+            &quot;Delay entering isolation&quot;, &quot;Illness duration&quot;, &quot;Illness duration (hosp)&quot;, 
+            &quot;Hospital care required duration&quot;, &quot;Survival time of case fatalities&quot;), 
+            ordered = TRUE))
     return(times)
 }</code></pre>
 </div>
@@ -2416,7 +2416,7 @@ compcols &lt;- c(s.num = &quot;yellow&quot;, e.num = &quot;orange&quot;, i.num =
     q.num = &quot;cyan&quot;, h.num = &quot;magenta&quot;, r.num = &quot;lightgreen&quot;, 
     f.num = &quot;black&quot;)
 complabels &lt;- c(s.num = &quot;Susceptible&quot;, e.num = &quot;Infected/asymptomatic&quot;, 
-    i.num = &quot;Infected/infectious&quot;, q.num = &quot;Quarantined&quot;, h.num = &quot;Requires hospitalisation&quot;, 
+    i.num = &quot;Infected/infectious&quot;, q.num = &quot;Self-isolated&quot;, h.num = &quot;Requires hospitalisation&quot;, 
     r.num = &quot;Recovered&quot;, f.num = &quot;Case fatality&quot;)
 
 baseline_plot_df %&gt;% ggplot(aes(x = time, y = count, colour = compartment)) + 
@@ -2484,10 +2484,10 @@ res &lt;- get_R(incidence_growth_phase, si_mean = si_mean, si_sd = si_sd)
 plot(res, &quot;R&quot;)</code></pre>
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-13-1.png" width="624" /></p>
 </div>
-<p>That <span class="math inline">\(R_{0}\)</span> might seem s bit low - values of around 2 or 2.5 were being quoted in January 2020, but remember our value has been calculated using new estimates of the <em>serial interval</em> that are much shorter than previously assumed. We also have some people going into self-quarantine even in our baseline model, but at a desultory rate.</p>
+<p>That <span class="math inline">\(R_{0}\)</span> might seem s bit low - values of around 2 or 2.5 were being quoted in January 2020, but remember our value has been calculated using new estimates of the <em>serial interval</em> that are much shorter than previously assumed. We also have some people going into self-isolation even in our baseline model, but at a desultory rate.</p>
 <h1 id="running-an-intervention-experiment">Running an intervention experiment</h1>
 <p>Now we are in a position to run an experiment, by altering some parameters of our baseline model.</p>
-<p>Let’s model the effect of increasing the rate at which people enter (self-)quarantine. Because we can use time-variant parameters, we will! Thus we ramp up the quarantine rate from it’s low level of 0.033 (as in the baseline simulation), starting at day 15, up to 0.5 at day 30. We’ll write a little function to do that.</p>
+<p>Let’s model the effect of increasing the rate at which people enter (self-)isolation. Because we can use time-variant parameters, we will! Thus we ramp up the isolation rate (<code>quar.rate</code>) from it’s low level of 0.033 (as in the baseline simulation), starting at day 15, up to 0.5 at day 30. We’ll write a little function to do that.</p>
 <div class="layout-chunk" data-layout="l-body">
 <pre class="r"><code>
 quar_rate_ramp &lt;- function(t) {
@@ -2505,15 +2505,15 @@ ramp_quar_rate_sim &lt;- simulate(quar.rate = quar_rate_ramp(1:366))</code></pre
 <div class="layout-chunk" data-layout="l-body-outset">
 <pre class="r"><code>
 baseline_plot_df %&gt;% mutate(experiment = &quot;Baseline&quot;) %&gt;% bind_rows(ramp_quar_rate_sim_plot_df %&gt;% 
-    mutate(experiment = &quot;Ramp up quarantine&quot;)) %&gt;% filter(compartment %in% 
+    mutate(experiment = &quot;Ramp up isolation&quot;)) %&gt;% filter(compartment %in% 
     c(&quot;e.num&quot;, &quot;i.num&quot;, &quot;q.num&quot;, &quot;h.num&quot;, &quot;f.num&quot;)) %&gt;% ggplot(aes(x = time, 
     y = count, colour = compartment)) + geom_line(size = 2, alpha = 0.7) + 
     facet_grid(experiment ~ .) + scale_colour_manual(values = compcols, 
-    labels = complabels) + theme_dark() + labs(title = &quot;Baseline vs ramping up quarantine simulations&quot;, 
+    labels = complabels) + theme_dark() + labs(title = &quot;Baseline vs ramping up isolation simulations&quot;, 
     x = &quot;Days since beginning of epidemic&quot;, y = &quot;Prevalence (persons)&quot;)</code></pre>
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-16-1.png" width="624" data-distill-preview=1 /></p>
 </div>
-<p>Yeah, that’s good! Everyone who gets sick should immediately self-quarantine! But let’s look at the same results, but only the <em>requiring hospitalisation</em> and <em>case fatality</em> prevalence numbers. We’ll draw a horizontal red line showing hospital capacity. Where the <em>Requires hospitalisation</em> prevalence numbers exceed the hospital capacity line, people who need to be in hospital miss out and start dying at a much higher rate (that’s what we are simulating in our model).</p>
+<p>Yeah, that’s good! Everyone who gets sick should immediately self-isolate! But let’s look at the same results, but only the <em>requiring hospitalisation</em> and <em>case fatality</em> prevalence numbers. We’ll draw a horizontal red line showing hospital capacity. Where the <em>Requires hospitalisation</em> prevalence numbers exceed the hospital capacity line, people who need to be in hospital miss out and start dying at a much higher rate (that’s what we are simulating in our model).</p>
 <div class="layout-chunk" data-layout="l-body-outset">
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-2_files/figure-html5/unnamed-chunk-17-1.png" width="624" /></p>
 </div>
@@ -2532,7 +2532,7 @@ hosp_cap_ramp &lt;- function(t) {
 raise_hosp_cap_sim &lt;- simulate(hosp.cap = hosp_cap_ramp(1:366))</code></pre>
 </div>
 <h2 id="experiment-3---more-social-distancing-starting-at-day-15">Experiment 3 - more social distancing starting at day 15</h2>
-<p>Let’s step up social distancing (decrease exposure opportunities), starting at day 15, in everyone except the quarantined, who are already practising it. But we’ll leave the self-quarantining rate at the baseline desultory rate. The increase in social distancing will, when full ramped up by day 30, halve the number of exposure events between the infected and the susceptible each day.</p>
+<p>Let’s step up social distancing (decrease exposure opportunities), starting at day 15, in everyone except the self-isolated, who are already practising it. But we’ll leave the self-isolation rate at the baseline desultory rate. The increase in social distancing will, when full ramped up by day 30, halve the number of exposure events between the infected and the susceptible each day.</p>
 <div class="layout-chunk" data-layout="l-body">
 <pre class="r"><code>
 social_distancing_day15_ramp &lt;- function(t) {
@@ -2555,7 +2555,7 @@ social_distancing_day30_ramp &lt;- function(t) {
 t30_social_distancing_sim &lt;- simulate(act.rate.i = social_distancing_day30_ramp(1:366), 
     act.rate.e = social_distancing_day30_ramp(1:366))</code></pre>
 </div>
-<h2 id="experiment-5---increase-both-social-distancing-and-increased-quarantine-rates-starting-day-15">Experiment 5 - increase both social distancing and increased quarantine rates starting day 15</h2>
+<h2 id="experiment-5---increase-both-social-distancing-and-increased-self-isolation-rates-starting-day-15">Experiment 5 - increase both social distancing and increased self-isolation rates starting day 15</h2>
 <div class="layout-chunk" data-layout="l-body">
 <pre class="r"><code>
 quar_rate_ramp &lt;- function(t) {
@@ -2610,9 +2610,9 @@ plot_df %&gt;% filter(compartment %in% c(&quot;h.num&quot;, &quot;f.num&quot;)) 
 </div>
 <p>I won’t laboriously comment on each experiment, but there are a few things worth remarking upon.</p>
 <p>Firstly, increasing hospital capacity is probably sensible, but may have little effect on fatalities if the numbers swamp available capacity by an order of magnitude. And increasing hospital capcity is not easy, nor can it be done swiftly, except perhaps in China.</p>
-<p>Secondly, rigorous and swift self-quarantining in those who are symptomatic is very effective, especially if done early, even in teh presence of infectivity in the asymptomatic infected.</p>
+<p>Secondly, rigorous and swift self-isolation in those who are symptomatic is very effective, especially if done early, even in teh presence of infectivity in the asymptomatic infected.</p>
 <p>Thirdly, increasing social distancing also works, but works much better if done early, possibly before there is an obvious need for it based on numbers infected or deaths. Implement early, implement hard!</p>
-<p>Fourthly, a combination of prompt self-quarantining plus moderate social distancing is also very effective, without necessarily killing the entire economy. This combination warrants further simulations. It is also the combination recommended by the Imperial College London group (see below).</p>
+<p>Fourthly, a combination of prompt self-isolation plus moderate social distancing is also very effective, without necessarily killing the entire economy. This combination warrants further simulations. It is also the combination recommended by the Imperial College London group (see below).</p>
 <h1 id="conclusions">Conclusions</h1>
 <p>At this point, it looks like these extensions to <code>EpiModel</code> provide a potentially useful tool for exploring the effects of various public health interventions, in a somewhat realistic manner. It is not nearly as sophisticated as the individual contact model used by the WHO Collaborating Centre for Infectious Disease Modelling at Imperial College London (ICL) for their <a href="https://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/news--wuhan-coronavirus/">latest report on the impact of non-pharmaceutical interventions (NPIs) to reduce COVID-19 mortality and healthcare demand</a>. Nevertheless, even the very preliminary insights provided by the experiments above are consistent with those contained in the ICL report.</p>
 <p>The next steps are: a) to move the code used here into a package to make deployment easier; b) implement modelling of infected arrivals, as discussed; c) improve the default parameterisation of the simulation; and d) validate the simulation results against some real-world data. Assistance from the <code>R</code> community in any or all of these tasks would be gratefully received.</p>
@@ -2620,7 +2620,7 @@ plot_df %&gt;% filter(compartment %in% c(&quot;h.num&quot;, &quot;f.num&quot;)) 
 <pre class="r"><code>
 toc()</code></pre>
 <pre><code>
-Time to complete: 203.548 sec elapsed</code></pre>
+Time to complete: 240.319 sec elapsed</code></pre>
 </div>
 <!--radix_placeholder_article_footer-->
 <div class="article-footer">

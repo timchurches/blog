@@ -111,7 +111,7 @@ Related to this, the **F** compartment represents _case fatalities_ -- that is, 
 | S           | Susceptible individuals                                                           |
 | E           | Exposed **and** infected, not yet symptomatic but potentially infectious          |
 | I           | Infected, symptomatic **and** infectious                                          |
-| Q           | Infectious, but (self-)quarantined                                                |
+| Q           | Infectious, but (self-)isolated                                                |
 | H           | Requiring hospitalisation (would normally be hospitalised if capacity available) |
 | R           | Recovered, immune from further infection                                          |
 | F           | Case fatality (death due to COVID-19, not other causes)                           |
@@ -133,7 +133,7 @@ digraph SEIQHRF {
   S[label='S=Susceptible'];
   E[label='E=Exposed and infected,\nasymptomatic,\npotentially infectious'];
   I[label='I=Infected and infectious'];
-  Q[label='Q=(Self-)quarantined\n(infectious)'];
+  Q[label='Q=(Self-)isolated\n(infectious)'];
   H[label='H=Requires\nhospitalisation'];
   R[label='R=Recovered/immune'];
   F[label='F=Case fatality']
@@ -179,9 +179,9 @@ param_docs <- tribble(~DiagramRef, ~Parameter, ~Default, ~Explanation,
 
   "f", "fat.rand", FALSE, "Method for case fatality transition from H to F. If TRUE, random binomial draws at `fat.rate.base`, if FALSE, random sample with a sample fraction also given by `fat.rate.base`. However, if the current number of patients in the H (needs hospitalisation) compartment is above a hospital capacity level specified by `hosp.cap`, then the fatality rate is the mean of the base fatality rate weighted by the hospital capacity, plus a higher rate, specified by `fat.rate.overcap`, weighted by the balance of those requiring hospitalisation (but who can't be accommodated). By setting `fat.rate.overcap` higher, the effect of exceeding the capacity of the health care system can be simulated. There is also a coefficient `fat.tcoeff` for the fatality rates that increases them as a linear function of the number of days the individual has been in the H compartment. Use of the co-efficient better approximates the trapezoid survival time distribution typical of ICU patients.",
 
-  "c", "quar.rand", FALSE, "Method for quarantine transition from I to Q. If TRUE, random binomial draws at `quar.rate`, if FALSE, random sample with a sample fraction also given by `quar.rate.",
+  "c", "quar.rand", FALSE, "Method for self-isolation transition from I to Q. If TRUE, random binomial draws at `quar.rate`, if FALSE, random sample with a sample fraction also given by `quar.rate.",
 
-  "e,i", "hosp.rand", FALSE, "Method for transition from I or Q to H -- that is, from infectious or from quarantined/isolated to requiring hospitalisation. If TRUE, random binomial draws at `hosp.rate`, if FALSE, random sample with a sample fraction also given by `hosp.rate.",
+  "e,i", "hosp.rand", FALSE, "Method for transition from I or Q to H -- that is, from infectious or from self-isolated to requiring hospitalisation. If TRUE, random binomial draws at `hosp.rate`, if FALSE, random sample with a sample fraction also given by `hosp.rate.",
 
   "e,i", "disch.rand", FALSE, "Method for transition from H to R -- that is, from requiring hospitalisation to recovered. If TRUE, random binomial draws at `disch.rate`, if FALSE, random sample with a sample fraction also given by `disch.rate`. Note that the only way out of the **H** compartment is recovery or death.  ",
 
@@ -215,13 +215,13 @@ param_docs <- tribble(~DiagramRef, ~Parameter, ~Default, ~Explanation,
 
   "y", "inf.prob.e", "0.02", "Probability of passing on infection at each exposure event for interactions between infectious people in the **E** compartment and susceptibles in **S**. Note the default is lower than for `inf.prob.i` reflecting the reduced infectivity of infected but asymptomatic people (the **E** compartment). Otherwise as for `inf.exp.i`.",
 
-  "z", "act.rate.q", "2.5", "The number of exposure events (_acts_) between infectious individuals in the **Q** compartment (quarantined, self or otherwise) and susceptible individuals in the **S** compartment, per day. Note the much lower rate than for the **I** and **E** compartments, reflecting the much greater degree of social isolation for someone in (self-)quarantine (often incorrectly referred to as _self-isolation_, but _quarantine_ is the term of isolation of infected people). The exposure event rate is not zero for this group, just much less. Otherwise as for `act.rate.i`.",
+  "z", "act.rate.q", "2.5", "The number of exposure events (_acts_) between infectious individuals in the **Q** compartment (isolated, self or otherwise) and susceptible individuals in the **S** compartment, per day. Note the much lower rate than for the **I** and **E** compartments, reflecting the much greater degree of social isolation for someone in (self-)isolation. The exposure event rate is not zero for this group, just much less. Otherwise as for `act.rate.i`.",
 
-  "z", "inf.prob.q", "0.02", "Probability of passing on infection at each exposure event for interactions between infectious people in the **Q** compartment and susceptibles in **S**. Note the default is lower than for `inf.prob.i` reflecting the greater care that quarantined individuals will, on average, take regarding hygiene measures, such as wearing masks, to limit spread to others. Otherwise as for `inf.exp.i`.",
+  "z", "inf.prob.q", "0.02", "Probability of passing on infection at each exposure event for interactions between infectious people in the **Q** compartment and susceptibles in **S**. Note the default is lower than for `inf.prob.i` reflecting the greater care that self-isolated individuals will, on average, take regarding hygiene measures, such as wearing masks, to limit spread to others. Otherwise as for `inf.exp.i`.",
 
-  "c", "quar.rate", "1/30", "Rate per day at which symptomatic (or tested positive), infected **I** compartment people enter quarantine (aka _self-isolation_, **Q** compartment). Asymptomatic **E** compartment people can't enter quarantine because they don't yet know they are infected. Default is a low rate reflecting low community awareness or compliance with quarantine/self-isolation requirements or practices, but this can be tweaked when exploring scenarios.",
+  "c", "quar.rate", "1/30", "Rate per day at which symptomatic (or tested positive), infected **I** compartment people enter self-isolation (**Q** compartment). Asymptomatic **E** compartment people can't enter self-isolation because they don't yet know they are infected. Default is a low rate reflecting low community awareness or compliance with self-isolation requirements or practices, but this can be tweaked when exploring scenarios.",
 
-  "e,i", "hosp.rate", "1/100", "Rate **per day** at which symptomatic (or tested positive), infected **I** compartment people or quarantined **Q** compartment people enter the state of requiring hospital care -- that is, become serious cases. A default rate of 1% per day with an average illness duration of about 10 days means a bit less than 10% of cases will require hospitalisation, which seems about right (but can be tweaked, of course).",
+  "e,i", "hosp.rate", "1/100", "Rate **per day** at which symptomatic (or tested positive), infected **I** compartment people or self-isolated **Q** compartment people enter the state of requiring hospital care -- that is, become serious cases. A default rate of 1% per day with an average illness duration of about 10 days means a bit less than 10% of cases will require hospitalisation, which seems about right (but can be tweaked, of course).",
 
   "g", "disch.rate", "1/15", "Rate per day at which people needing hospitalisation recover.",
 
@@ -264,7 +264,7 @@ Phew! That's a lot of parameters. However, the trick is to establish a baseline 
 
 ### Time-variant parameters
 
-Several of the simulation parameters can also be varied over time. That is, as well as accepting a single value, they also accept a vector of values with length equal to `nsteps`, the number of days over which the simulation runs. Assuming `nsteps=366`, we can, for example, set `quar.rate = c(rep(1/10,30), rep(1/3, 335))`. That defines a step function in which the transition-to-quarantine rate for the **I** compartment is 0.1 for the first 30 days, then steps up to 0.33 thereafter, reflecting, say, a campaign or government edict to self-quarantine. Of course, the vector of values can be a smooth function, or can go up then down again, or whatever you wish to model. This is an extremely powerful feature of computational models such as this, and one very hard to incorporate into purely mathematical models.
+Several of the simulation parameters can also be varied over time. That is, as well as accepting a single value, they also accept a vector of values with length equal to `nsteps`, the number of days over which the simulation runs. Assuming `nsteps=366`, we can, for example, set `quar.rate = c(rep(1/10,30), rep(1/3, 335))`. That defines a step function in which the transition-to-isolation rate for the **I** compartment is 0.1 for the first 30 days, then steps up to 0.33 thereafter, reflecting, say, a campaign or government edict to self-isolate. Of course, the vector of values can be a smooth function, or can go up then down again, or whatever you wish to model. This is an extremely powerful feature of computational models such as this, and one very hard to incorporate into purely mathematical models.
 
 Most of the parameters for which time-variation is useful support it. If they don't, you will receive an error message (the table above will be updated to include this information later).
 
@@ -454,7 +454,7 @@ get_times <- function(simulate_results) {
                                             "hosp_los",
                                             "survival_time"),
                                    labels=c("Incubation period",
-                                            "Delay entering quarantine",
+                                            "Delay entering isolation",
                                             "Illness duration",
                                             "Illness duration (hosp)",
                                             "Hospital care required duration",
@@ -509,7 +509,7 @@ compcols <- c("s.num" = "yellow", "e.num" = "orange", "i.num" = "red",
               "q.num" = "cyan", "h.num" = "magenta", "r.num" = "lightgreen",
               "f.num" = "black")
 complabels <- c("s.num" = "Susceptible", "e.num" = "Infected/asymptomatic", 
-                "i.num" = "Infected/infectious", "q.num" = "Quarantined",
+                "i.num" = "Infected/infectious", "q.num" = "Self-isolated",
                 "h.num" = "Requires hospitalisation", "r.num" = "Recovered",
                 "f.num" = "Case fatality")
 
@@ -592,13 +592,13 @@ res <- get_R(incidence_growth_phase, si_mean =si_mean, si_sd = si_sd)
 plot(res, "R")
 ```
 
-That $R_{0}$ might seem s bit low - values of around 2 or 2.5 were being quoted in January 2020, but remember our value has been calculated using new estimates of the _serial interval_ that are much shorter than previously assumed. We also have some people going into self-quarantine even in our baseline model, but at a desultory rate.
+That $R_{0}$ might seem s bit low - values of around 2 or 2.5 were being quoted in January 2020, but remember our value has been calculated using new estimates of the _serial interval_ that are much shorter than previously assumed. We also have some people going into self-isolation even in our baseline model, but at a desultory rate.
 
 # Running an intervention experiment
 
 Now we are in a position to run an experiment, by altering some parameters of our baseline model.
 
-Let's model the effect of increasing the rate at which people enter (self-)quarantine. Because we can use time-variant parameters, we will! Thus we ramp up the quarantine rate from it's low level of 0.033 (as in the baseline simulation), starting at day 15, up to 0.5 at day 30. We'll write a little function to do that.
+Let's model the effect of increasing the rate at which people enter (self-)isolation. Because we can use time-variant parameters, we will! Thus we ramp up the isolation rate (`quar.rate`) from it's low level of 0.033 (as in the baseline simulation), starting at day 15, up to 0.5 at day 30. We'll write a little function to do that.
 
 ```{r, echo=TRUE, eval=TRUE}
 quar_rate_ramp <- function(t) {
@@ -630,7 +630,7 @@ ramp_quar_rate_sim_plot_df %>%
     geom_line(size=2, alpha=0.7) +
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
-    labs(title="Ramp up quarantining rates from day 15 to day 30",
+    labs(title="Ramp up isolation rates from day 15 to day 30",
          x="Days since beginning of epidemic",
          y="Prevalence (persons)")
 ```
@@ -641,7 +641,7 @@ Let's see that with the baseline again for comparison:
 baseline_plot_df %>%
   mutate(experiment="Baseline") %>%
   bind_rows(ramp_quar_rate_sim_plot_df %>%
-              mutate(experiment="Ramp up quarantine")) %>%
+              mutate(experiment="Ramp up isolation")) %>%
   filter(compartment %in% c("e.num","i.num",
                             "q.num","h.num",
                             "f.num")) %>%
@@ -650,18 +650,18 @@ baseline_plot_df %>%
     facet_grid(experiment ~ .) +
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
-    labs(title="Baseline vs ramping up quarantine simulations",
+    labs(title="Baseline vs ramping up isolation simulations",
          x="Days since beginning of epidemic",
          y="Prevalence (persons)")
 ```
 
-Yeah, that's good! Everyone who gets sick should immediately self-quarantine! But let's look at the same results, but only the _requiring hospitalisation_ and _case fatality_ prevalence numbers. We'll draw a horizontal red line showing hospital capacity. Where the _Requires hospitalisation_ prevalence numbers exceed the hospital capacity line, people who need to be in hospital miss out and start dying at a much higher rate (that's what we are simulating in our model).
+Yeah, that's good! Everyone who gets sick should immediately self-isolate! But let's look at the same results, but only the _requiring hospitalisation_ and _case fatality_ prevalence numbers. We'll draw a horizontal red line showing hospital capacity. Where the _Requires hospitalisation_ prevalence numbers exceed the hospital capacity line, people who need to be in hospital miss out and start dying at a much higher rate (that's what we are simulating in our model).
 
 ```{r, echo=FALSE, eval=TRUE, layout="l-body-outset"}
 baseline_plot_df %>%
   mutate(experiment="Baseline") %>%
   bind_rows(ramp_quar_rate_sim_plot_df %>%
-              mutate(experiment="Ramp up quarantine")) %>%
+              mutate(experiment="Ramp up isolation")) %>%
   filter(compartment %in% c("h.num",
                             "f.num")) %>%
   ggplot(aes(x=time, y=count, colour=compartment)) +
@@ -670,7 +670,7 @@ baseline_plot_df %>%
     facet_grid(experiment ~ .) +
     scale_colour_manual(values = compcols, labels=complabels) +
     theme_dark() +
-    labs(title="Baseline vs ramping up quarantine simulations",
+    labs(title="Baseline vs ramping up isolation simulations",
          x="Days since beginning of epidemic",
          y="Prevalence (persons)")
 ```
@@ -696,7 +696,7 @@ raise_hosp_cap_sim <- simulate(hosp.cap = hosp_cap_ramp(1:366))
 
 ## Experiment 3 - more social distancing starting at day 15
 
-Let's step up social distancing (decrease exposure opportunities), starting at day 15, in everyone except the quarantined, who are already practising it. But we'll leave the self-quarantining rate at the baseline desultory rate. The increase in social distancing will, when full ramped up by day 30, halve the number of exposure events between the infected and the susceptible each day.
+Let's step up social distancing (decrease exposure opportunities), starting at day 15, in everyone except the self-isolated, who are already practising it. But we'll leave the self-isolation rate at the baseline desultory rate. The increase in social distancing will, when full ramped up by day 30, halve the number of exposure events between the infected and the susceptible each day.
 
 ```{r, echo=TRUE, eval=TRUE}
 social_distancing_day15_ramp <- function(t) {
@@ -720,7 +720,7 @@ t30_social_distancing_sim <- simulate(act.rate.i = social_distancing_day30_ramp(
                                       act.rate.e = social_distancing_day30_ramp(1:366))
 ```
 
-## Experiment 5 - increase both social distancing and increased quarantine rates starting day 15
+## Experiment 5 - increase both social distancing and increased self-isolation rates starting day 15
 
 ```{r, echo=TRUE, eval=FALSE}
 quar_rate_ramp <- function(t) {
@@ -804,11 +804,11 @@ I won't laboriously comment on each experiment, but there are a few things worth
 
 Firstly, increasing hospital capacity is probably sensible, but may have little effect on fatalities if the numbers swamp available capacity by an order of magnitude. And increasing hospital capcity is not easy, nor can it be done swiftly, except perhaps in China.
 
-Secondly, rigorous and swift self-quarantining in those who are symptomatic is very effective, especially if done early, even in teh presence of infectivity in the asymptomatic infected. 
+Secondly, rigorous and swift self-isolation in those who are symptomatic is very effective, especially if done early, even in teh presence of infectivity in the asymptomatic infected. 
 
 Thirdly, increasing social distancing also works, but works much better if done early, possibly before there is an obvious need for it based on numbers infected or deaths. Implement early, implement hard!
 
-Fourthly, a combination of prompt self-quarantining plus moderate social distancing is also very effective, without necessarily killing the entire economy. This combination warrants further simulations. It is also the combination recommended by the Imperial College London group (see below).
+Fourthly, a combination of prompt self-isolation plus moderate social distancing is also very effective, without necessarily killing the entire economy. This combination warrants further simulations. It is also the combination recommended by the Imperial College London group (see below).
 
 # Conclusions
 

@@ -1,0 +1,174 @@
+---
+title: "COVID-19 trends and trajectories"
+description: |
+  A short description of the post.
+categories:
+  - R
+  - "COVID-19"
+author:
+  - name: Tim Churches 
+    affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
+    affiliation_url: https://swscs.med.unsw.edu.au
+creative_commons: CC BY-SA
+date: 03-20-2020
+base_url: https://timchurches.github.io/blog/
+slug: churches2020covid19trendsandtrajectories
+twitter:
+  creator: "@timchurches"
+output:
+  distill::distill_article:
+    toc: true
+    toc_depth: 3
+    self_contained: true
+draft: true
+repository_url: https://github.com/timchurches/blog/tree/master/_posts/2020-03-20-covid-19-trends-and-trajectories
+---
+
+```{r setup, include=FALSE}
+version <- "1.8"
+version_date <- lubridate::ymd("2020-02-28")
+
+knitr::opts_chunk$set(echo = FALSE, cache=FALSE,
+                      tidy.opts=list(width.cutoff=60),
+                      tidy=TRUE)
+
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(tibble)
+library(ggplot2)
+library(ggthemes)
+library(hrbrthemes)
+library(rvest)
+library(gt)
+library(deSolve)
+library(EpiEstim)
+library(incidence)
+library(distcrete)
+library(epitrix)
+library(projections)
+library(ggiraph)
+library(ggrepel)
+```
+
+```{r}
+  provinces_confirmed_jh <- read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv") %>%
+    rename(province="Province/State",
+           country_region="Country/Region") %>%
+    pivot_longer(-c(province, country_region, Lat, Long), 
+                 names_to = "Date",
+                 values_to="cumulative_cases") %>%
+    mutate(Date=mdy(Date)) %>%
+    arrange(country_region, province, Date) %>%
+    group_by(country_region, province) %>%
+    mutate(incident_cases = c(0,diff(cumulative_cases))) %>%
+    ungroup()
+
+  incidence_countries <- provinces_confirmed_jh %>%
+    group_by(country_region, Date) %>%
+    summarise(incident_cases = sum(incident_cases),
+              cumulative_cases = sum(cumulative_cases))
+ 
+    incidence_global <- provinces_confirmed_jh %>%
+    group_by(Date) %>%
+    summarise(incident_cases = sum(incident_cases),
+              cumulative_cases = sum(cumulative_cases))
+ 
+```
+
+```{r}
+# find dates on which 100 cumulative cases occurred
+high_incidence_countries <- incidence_countries %>%
+  arrange(country_region, Date) %>%
+  mutate(lag_cum_cases = lag(cumulative_cases)) %>%
+  mutate(hit_100 = ifelse((cumulative_cases >= 100) & 
+                          (lag(cumulative_cases) < 100),
+                          TRUE,
+                          FALSE))
+
+high_incidence_countries <- high_incidence_countries %>% 
+    left_join(high_incidence_countries %>% 
+      group_by(country_region) %>%
+      summarise(over_100 = any(hit_100))) %>%
+  ungroup() %>%
+  filter(over_100 == TRUE)
+
+high_incidence_countries <- high_incidence_countries %>%
+  arrange(country_region, Date) %>%
+  group_by(country_region) %>%
+  mutate(rnum = row_number()) %>%
+  ungroup()
+
+high_incidence_countries <- high_incidence_countries %>%
+  left_join(high_incidence_countries %>% 
+              filter(hit_100) %>%
+              mutate(offset = rnum) %>%
+              select(country_region, offset)) %>%
+  mutate(normalised_date = rnum - offset) %>%
+  select(-c(lag_cum_cases, over_100, offset)) %>%
+  mutate(alpha = case_when(country_region == "Australia" ~ 1.0,
+                           country_region == "Japan" ~ 0.2,
+                           country_region == "Korea, South" ~ 0.2,
+                           country_region == "Singapore" ~ 0.2,
+                           country_region == "Italy" ~ 0.2,
+                           TRUE ~ 0)) %>%
+  arrange(country_region, normalised_date) %>%
+  group_by(country_region) %>%
+  mutate(clabel_value = ifelse(country_region %in% c("Japan", "Korea, South",
+                                               "Singapore", "Australia", "Italy",
+                                               "Denmark", "Sweden", "Norway"),
+                         country_region,
+                         NA),
+         clabel_x = max(normalised_date),
+         clabel_y = last(cumulative_cases))
+
+```
+
+```{r, layout="l-page"}
+high_incidence_countries %>%
+  filter(normalised_date >= 0,
+         country_region != "Cruise Ship") %>%
+  ggplot(aes(x=normalised_date, y=cumulative_cases, 
+             colour=country_region, alpha=alpha)) +
+  geom_line(size=1.2) + 
+  geom_label(aes(x=clabel_x, y=clabel_y, label=clabel_value),
+             hjust = 0, nudge_x = 0.2) +
+  scale_y_log10(labels=scales::comma) +
+  scale_alpha(range=c(0.2, 1)) +
+  expand_limits(x=c(0, max(high_incidence_countries$normalised_date) + 3)) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(y="Cumulative cases (logarithmic scale)",
+       x="Days since cumulative cases exceeded 100")
+
+```
+
+```{r, layout="l-page"}
+gg <- high_incidence_countries %>%
+  filter(normalised_date >= 0,
+         country_region != "Cruise Ship") %>%
+  ggplot(aes(x=normalised_date, y=cumulative_cases, 
+             colour=country_region, alpha=alpha, 
+             tooltip=country_region,
+             data_id=country_region)) +
+  geom_line_interactive(size=1.2) + 
+  geom_label(aes(x=clabel_x, y=clabel_y, label=clabel_value),
+             hjust = 0, nudge_x = 0.2) +
+  scale_y_log10(labels=scales::comma) +
+  scale_alpha(range=c(0.2, 1)) +
+  expand_limits(x=c(0, max(high_incidence_countries$normalised_date) + 3)) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(y="Cumulative cases (logarithmic scale)",
+       x="Days since cumulative cases exceeded 100",
+       title="COVID-19 epidemic trajectories",
+       subtitle="(click on a line to identify country)",
+       caption="CC-BY-SA-NC Centre for Big Data research in Health, UNSW")
+
+girafe(ggobj=gg,
+       options = list(opts_tooltip(use_stroke = TRUE, opacity=0.7),
+                      opts_hover(css = "stroke:black;"),
+                      opts_toolbar(position = "topright", saveaspng = TRUE)
+                      ))
+```
+
