@@ -9,7 +9,10 @@ author:
   - name: Tim Churches 
     affiliation: South Western Sydney Clinical School, UNSW Medicine & Ingham Institute of Applied Medical Research, Liverpool, Sydney, Australia
     affiliation_url: https://swscs.med.unsw.edu.au
-creative_commons: CC BY-SA
+  - name: Nick Tierney 
+    affiliation: Monash University
+    affiliation_url: 
+creative_commons: CC BY-NC-SA
 date: 03-20-2020
 base_url: https://timchurches.github.io/blog/
 slug: churches2020covid19trendsandtrajectories
