@@ -48,7 +48,6 @@ library(distcrete)
 library(epitrix)
 library(projections)
 library(ggiraph)
-library(ggrepel)
 ```
 
 ```{r}
@@ -99,6 +98,12 @@ high_incidence_countries <- high_incidence_countries %>%
   mutate(rnum = row_number()) %>%
   ungroup()
 
+highlight_countries <- c("Japan", "Korea, South",
+                          "Singapore", "Italy",
+                          "Iran", "China", "France",
+                          "United Kingdom",
+                          "Sweden", "Australia")
+
 high_incidence_countries <- high_incidence_countries %>%
   left_join(high_incidence_countries %>% 
               filter(hit_100) %>%
@@ -107,16 +112,11 @@ high_incidence_countries <- high_incidence_countries %>%
   mutate(normalised_date = rnum - offset) %>%
   select(-c(lag_cum_cases, over_100, offset)) %>%
   mutate(alpha = case_when(country_region == "Australia" ~ 1.0,
-                           country_region == "Japan" ~ 0.2,
-                           country_region == "Korea, South" ~ 0.2,
-                           country_region == "Singapore" ~ 0.2,
-                           country_region == "Italy" ~ 0.2,
+                           country_region %in% highlight_countries ~ 0.2,
                            TRUE ~ 0)) %>%
   arrange(country_region, normalised_date) %>%
   group_by(country_region) %>%
-  mutate(clabel_value = ifelse(country_region %in% c("Japan", "Korea, South",
-                                               "Singapore", "Australia", "Italy",
-                                               "Denmark", "Sweden", "Norway"),
+  mutate(clabel_value = ifelse(country_region %in% highlight_countries,
                          country_region,
                          NA),
          clabel_x = max(normalised_date),
@@ -124,24 +124,7 @@ high_incidence_countries <- high_incidence_countries %>%
 
 ```
 
-```{r, layout="l-page"}
-high_incidence_countries %>%
-  filter(normalised_date >= 0,
-         country_region != "Cruise Ship") %>%
-  ggplot(aes(x=normalised_date, y=cumulative_cases, 
-             colour=country_region, alpha=alpha)) +
-  geom_line(size=1.2) + 
-  geom_label(aes(x=clabel_x, y=clabel_y, label=clabel_value),
-             hjust = 0, nudge_x = 0.2) +
-  scale_y_log10(labels=scales::comma) +
-  scale_alpha(range=c(0.2, 1)) +
-  expand_limits(x=c(0, max(high_incidence_countries$normalised_date) + 3)) +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  labs(y="Cumulative cases (logarithmic scale)",
-       x="Days since cumulative cases exceeded 100")
-
-```
+## The "Grattan Institute" plot
 
 ```{r, layout="l-page"}
 gg <- high_incidence_countries %>%
@@ -161,9 +144,10 @@ gg <- high_incidence_countries %>%
   theme(legend.position = "none") +
   labs(y="Cumulative cases (logarithmic scale)",
        x="Days since cumulative cases exceeded 100",
-       title="COVID-19 epidemic trajectories",
+       title=paste("COVID-19 epidemic trajectories up to", format(max(high_incidence_countries$Date), "%d %B %Y")),
        subtitle="(click on a line to identify country)",
-       caption="CC-BY-SA-NC Centre for Big Data research in Health, UNSW")
+       caption=paste0("CC-BY-SA-NC Tim Churches (UNSW) & Nick Tierney (Monash)\n",
+                "Data source: Johns Hopkins University"))
 
 girafe(ggobj=gg,
        options = list(opts_tooltip(use_stroke = TRUE, opacity=0.7),
@@ -172,3 +156,17 @@ girafe(ggobj=gg,
                       ))
 ```
 
+## Instantaneous effective reproduction number
+
+```{r, eval=FALSE, echo=FALSE}
+hubei_incidence_function_data <- provinces_confirmed %>%
+      filter(Date >= ymd("2020-01-11")) %>% 
+      mutate(HubeiSansWuhan = ifelse(is.na(HubeiSansWuhan), 
+                                      0, HubeiSansWuhan)) %>%
+      mutate(incident_cases = ifelse(Date < ymd("2020-02-15"),
+                                     Wuhan + HubeiSansWuhan, Hubei)) %>% mutate(Date = format(Date, 
+    "%Y-%m-%d")) %>% 
+    select(Date, incident_cases) 
+    %>% uncount(incident_cases)
+
+hubei_incidence_object <- incidence(hubei_incidence_function_data$Date)
