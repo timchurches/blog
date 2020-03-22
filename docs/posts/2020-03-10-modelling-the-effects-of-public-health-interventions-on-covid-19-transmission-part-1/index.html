@@ -1417,7 +1417,7 @@ init &lt;- init.icm(s.num = 997, i.num = 3, r.num = 0)</code></pre>
 <div class="layout-chunk" data-layout="l-body">
 <pre class="r"><code>
 param &lt;- param.icm(inf.prob = 0.05, act.rate = 10, rec.rate = 1/20, 
-    a.rate = (10.5/365)/1000, ds.rate = (7/365)/1000, di.rate = (3.5/365)/1000, 
+    a.rate = (10.5/365)/1000, ds.rate = (7/365)/1000, di.rate = (14/365)/1000, 
     dr.rate = (7/365)/1000)</code></pre>
 </div>
 <p>OK, we can now run the simulation and print a description of the model results object.</p>
@@ -1445,7 +1445,7 @@ act.rate = 10
 rec.rate = 0.05
 a.rate = 2.876712e-05
 ds.rate = 1.917808e-05
-di.rate = 9.589041e-06
+di.rate = 3.835616e-05
 dr.rate = 1.917808e-05
 
 Model Output
@@ -1469,7 +1469,7 @@ plot(sim, y = &quot;si.flow&quot;, mean.col = &quot;red&quot;, qnts.col = &quot;
 <div class="layout-chunk" data-layout="l-body">
 <p><img src="modelling-the-effects-of-public-health-interventions-on-covid-19-transmission-part-1_files/figure-html5/unnamed-chunk-7-1.png" width="624" /></p>
 </div>
-<p>A MLE estimate of <span class="math inline">\(R_{0}\)</span> of 2.4 is consistent with current WHO estimates of the COVID-19 basic reproduction number, so our initial set of parameters are consistent with reality. On that basis, and despite the simplifications inherent in our model, we can start to use it to explore the effects of various public health interventions.</p>
+<p>A MLE estimate of <span class="math inline">\(R_{0}\)</span> of 2.2 is consistent with current WHO estimates of the COVID-19 basic reproduction number, so our initial set of parameters are consistent with reality. On that basis, and despite the simplifications inherent in our model, we can start to use it to explore the effects of various public health interventions.</p>
 <h2 id="exploring-public-health-interventions-using-our-icm-sir-model">Exploring public health interventions using our ICM SIR model</h2>
 <h3 id="avoiding-opportunities-for-exposure-through-social-distancing">Avoiding opportunities for exposure through <em>social distancing</em></h3>
 <p>One of key public health measures is <em>social distancing</em>. As <a href="https://en.wikipedia.org/wiki/Social_distancing">wikipedia says</a>:</p>
@@ -1496,7 +1496,7 @@ run_sir_sim &lt;- function(inf_prob, act_rate, pop_size = 1000,
     # set up simulation parameters
     param &lt;- param.icm(inf.prob = inf_prob, act.rate = act_rate, 
         rec.rate = 1/20, a.rate = (10.5/365)/1000, ds.rate = (7/365)/1000, 
-        di.rate = (3.5/365)/1000, dr.rate = (7/365)/1000)
+        di.rate = (14/365)/1000, dr.rate = (7/365)/1000)
     init &lt;- init.icm(s.num = pop_size - i_num, i.num = i_num, 
         r.num = 0)
     control &lt;- control.icm(type = &quot;SIR&quot;, nsteps = n_steps, nsims = n_sims)

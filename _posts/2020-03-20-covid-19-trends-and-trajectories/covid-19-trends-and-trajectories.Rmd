@@ -61,6 +61,9 @@ library(ggiraph)
                  names_to = "Date",
                  values_to="cumulative_cases") %>%
     mutate(Date=mdy(Date)) %>%
+    mutate(country_region = case_when(country_region == "Korea, South" ~ "South Korea",
+                                      country_region == "United Kingdom" ~ "UK",
+                                      TRUE ~ country_region)) %>%
     arrange(country_region, province, Date) %>%
     group_by(country_region, province) %>%
     mutate(incident_cases = c(0,diff(cumulative_cases))) %>%
@@ -86,7 +89,10 @@ high_incidence_countries <- incidence_countries %>%
   mutate(hit_100 = ifelse((cumulative_cases >= 100) & 
                           (lag(cumulative_cases) < 100),
                           TRUE,
-                          FALSE))
+                          FALSE)) %>%
+  mutate(hit_100 = ifelse(country_region == "China" & Date == min(Date),
+                          TRUE,
+                          hit_100))
 
 high_incidence_countries <- high_incidence_countries %>% 
     left_join(high_incidence_countries %>% 
@@ -101,10 +107,10 @@ high_incidence_countries <- high_incidence_countries %>%
   mutate(rnum = row_number()) %>%
   ungroup()
 
-highlight_countries <- c("Japan", "Korea, South",
+highlight_countries <- c("Japan", "South Korea",
                           "Singapore", "Italy",
                           "Iran", "China", "France",
-                          "United Kingdom",
+                          "UK",
                           "Sweden", "Australia")
 
 high_incidence_countries <- high_incidence_countries %>%
@@ -142,14 +148,14 @@ gg <- high_incidence_countries %>%
              hjust = 0, nudge_x = 0.2) +
   scale_y_log10(labels=scales::comma) +
   scale_alpha(range=c(0.2, 1)) +
-  expand_limits(x=c(0, max(high_incidence_countries$normalised_date) + 3)) +
+  expand_limits(x=c(0, max(high_incidence_countries$normalised_date) + 5)) +
   theme_minimal() +
   theme(legend.position = "none") +
   labs(y="Cumulative cases (logarithmic scale)",
        x="Days since cumulative cases exceeded 100",
        title=paste("COVID-19 epidemic trajectories up to", format(max(high_incidence_countries$Date), "%d %B %Y")),
        subtitle="(click on a line to identify country)",
-       caption=paste0("CC-BY-SA-NC Tim Churches (UNSW) & Nick Tierney (Monash)\n",
+       caption=paste0("CC BY-NC-SA Tim Churches (UNSW)\n",
                 "Data source: Johns Hopkins University"))
 
 girafe(ggobj=gg,
@@ -161,15 +167,85 @@ girafe(ggobj=gg,
 
 ## Instantaneous effective reproduction number
 
-```{r, eval=FALSE, echo=FALSE}
-hubei_incidence_function_data <- provinces_confirmed %>%
-      filter(Date >= ymd("2020-01-11")) %>% 
-      mutate(HubeiSansWuhan = ifelse(is.na(HubeiSansWuhan), 
-                                      0, HubeiSansWuhan)) %>%
-      mutate(incident_cases = ifelse(Date < ymd("2020-02-15"),
-                                     Wuhan + HubeiSansWuhan, Hubei)) %>% mutate(Date = format(Date, 
-    "%Y-%m-%d")) %>% 
-    select(Date, incident_cases) 
-    %>% uncount(incident_cases)
+```{r, eval=TRUE, echo=FALSE, fig.height=8, fig.width=8, layout="l-page"}
 
-hubei_incidence_object <- incidence(hubei_incidence_function_data$Date)
+country_counter <- 0
+for (country in unique(high_incidence_countries$country_region)) {
+  if (country %in% c("Bahrain", "Cruise Ship", "Iran",
+                     "Lebanon") |
+      !country %in% c(highlight_countries, "US", "Germany", "Denmark")) next
+
+  country_counter <- country_counter + 1
+  
+  incidence_data <- high_incidence_countries %>%
+    ungroup() %>%
+    filter(country_region == country) %>%
+    mutate(I = incident_cases) %>%
+    rename(dates=Date) %>%
+    select(dates, I)
+
+  # monkey-patch Japanese negative incidences
+  if (country == "Japan") {
+    incidence_data <- incidence_data %>%
+      mutate(I = case_when(
+                      dates == ymd("2020-01-23") ~ 0,
+                      dates == ymd("2020-02-06") ~ 3,
+                      dates == ymd("2020-02-07") ~ 0,
+                      dates == ymd("2020-03-15") ~ 52,
+                      dates == ymd("2020-03-16") ~ 0,
+                      TRUE ~ I))
+  }
+  
+  res_parametric_si <- estimate_R(incidence_data,
+                                  method="uncertain_si",
+                                  config = make_config(list(
+                                  mean_si = 4.8, std_mean_si = 3.0,
+                                  min_mean_si = 2, max_mean_si = 7.5,
+                                  std_si = 3.0, std_std_si = 1.0,
+                                  min_std_si = 0.5, max_std_si = 4.0,
+                                  n1 = 1000, n2 = 1000)))
+  
+  R_df <-  res_parametric_si$R
+  R_df <- R_df %>% 
+    mutate(country = country)
+  if (country_counter == 1) {
+    country_eff_Rs <- R_df
+  } else {
+    country_eff_Rs <- country_eff_Rs %>%
+      bind_rows(R_df)
+  }
+}
+
+country_eff_Rs$Date <- res_parametric_si$dates[8:length(res_parametric_si$dates)]
+
+start_dates <- high_incidence_countries %>%
+  filter(hit_100 == TRUE) %>%
+  rename(country=country_region,
+         start_date=Date) %>%
+  select(country, start_date)
+
+country_eff_Rs <- country_eff_Rs %>%
+  left_join(start_dates) %>%
+  filter(Date >= start_date) %>%
+  rename(mean_R="Mean(R)")
+
+country_eff_Rs %>%
+  ggplot(aes(x=Date, y=mean_R, colour=country)) +
+  geom_line(size=1.5) +
+  geom_hline(yintercept = 1.0, colour="red") +
+  facet_wrap(~country, ncol = 2) +
+  scale_y_log10() +
+  scale_x_date(date_breaks = "1 week",
+               date_labels = "%d %b") +
+  labs(title=paste("7-day sliding window of effective reproduction number up to",
+                   format(max(country_eff_Rs$Date), "%d %B %Y")),
+       subtitle="Outbreak is under control if effective R is under red line",
+       x = "End date of 7-day sliding window",
+       y="Effective R (log scale)",
+       caption=paste0("CC BY-NC-SA Tim Churches (UNSW)\n",
+                      "Data source: Johns Hopkins University")) +
+  theme_dark() + 
+  theme(legend.position = "none") 
+
+```
+  

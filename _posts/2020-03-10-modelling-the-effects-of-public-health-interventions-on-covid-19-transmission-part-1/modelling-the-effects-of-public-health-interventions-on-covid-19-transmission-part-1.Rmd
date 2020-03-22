@@ -133,7 +133,7 @@ param <-  param.icm(inf.prob = 0.05,
                     rec.rate = 1/20,
                     a.rate = (10.5/365)/1000, 
                     ds.rate = (7/365)/1000, 
-                    di.rate = (3.5/365)/1000,
+                    di.rate = (14/365)/1000,
                     dr.rate = (7/365)/1000)
 ```
 
@@ -230,7 +230,7 @@ run_sir_sim <- function(inf_prob, act_rate, pop_size=1000, i_num=3,
                   rec.rate = 1/20,
                   a.rate = (10.5/365)/1000, 
                   ds.rate = (7/365)/1000, 
-                  di.rate = (3.5/365)/1000,
+                  di.rate = (14/365)/1000,
                   dr.rate = (7/365)/1000)
   init <- init.icm(s.num = pop_size - i_num, i.num = i_num, r.num = 0)
   control <- control.icm(type = "SIR", nsteps = n_steps, nsims = n_sims)
