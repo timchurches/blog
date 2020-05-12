@@ -1,3 +1,5 @@
+[![eRum2020::CovidR](https://badgen.net/https/runkit.io/erum2020-covidr/badge/branches/master/tim-churches-COVID-19-blog-posts?cache=300)](https://milano-r.github.io/erum2020-covidr-contest/tim-churches-COVID-19-blog-posts.html)
+
 # Tim Churches Health Data Science Blog
 
 This repository contains code for posts to [Tim Churches Health Data Science Blog](https://timchurches.github.io/blog/). All files are licensed under a [Creative Commons Attribution-ShareAlike International (CC BY-SA 4.0) license](https://creativecommons.org/licenses/by-sa/4.0/). Please observe the terms of this licence.
